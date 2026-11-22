@@ -7,12 +7,12 @@
   English | <a href="README.zh-CN.md">简体中文</a> · <a href="https://huacnlee.github.io/pobt/">Website</a>
 </p>
 
-<p align="center"><img src="docs/screenshot.png" alt="The POBT launcher" width="800"></p>
+<p align="center"><img src="website/public/screenshot.png" alt="The POBT launcher" width="800"></p>
 
 <p align="center">
-  <img src="docs/screenshot-tree.png" alt="The passive tree, translated" width="32%">
-  <img src="docs/screenshot-pob.png" alt="The calculations, translated" width="32%">
-  <img src="docs/screenshot-pob2.png" alt="Path of Building for Path of Exile 2, translated" width="32%">
+  <img src="website/public/screenshot-tree.png" alt="The passive tree, translated" width="32%">
+  <img src="website/public/screenshot-pob.png" alt="The calculations, translated" width="32%">
+  <img src="website/public/screenshot-pob2.png" alt="Path of Building for Path of Exile 2, translated" width="32%">
 </p>
 
 POBT runs the [Path of Building Community](https://pathofbuilding.community/) you already have — for Path of Exile
