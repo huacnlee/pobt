@@ -409,7 +409,7 @@ function __pobt_hookClasses()
 end
 
 function __pobt_hookEdit(classes)
-	if not classes.EditControl or classes.EditControl.__pobt or type(classes.EditControl.Draw) ~= "function" then
+	if not classes.EditControl or rawget(classes.EditControl, "__pobt") or type(classes.EditControl.Draw) ~= "function" then
 		return
 	end
 	local edit = classes.EditControl
@@ -507,7 +507,8 @@ function __pobt_hookGemSelect(classes)
 	-- A search in another script matches the gems' translated names: they stand in for the English while POB
 	-- builds its list.
 	local gemSelect = classes.GemSelectControl
-	if gemSelect and type(gemSelect.BuildList) == "function" and not gemSelect.__pobt then
+	-- A class reads what its parents have (POB's newClass copies it in): the edit box's mark is not the gem box's.
+	if gemSelect and type(gemSelect.BuildList) == "function" and not rawget(gemSelect, "__pobt") then
 		local buildList = gemSelect.BuildList
 		gemSelect.BuildList = function(self, buf, ...)
 			if type(buf) ~= "string" or not buf:find("[\128-\255]") or type(self.gems) ~= "table" then
