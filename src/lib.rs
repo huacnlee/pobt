@@ -105,6 +105,20 @@ impl Pob {
         }
     }
 
+    /// The `Assets` folder of an installed Path of Building, with forward
+    /// slashes: Path of Exile's own interface art, which the launcher
+    /// draws with. "" when there is none.
+    pub fn assets_dir() -> String {
+        let s = Settings::load();
+        [s.poe1_dir, s.poe2_dir]
+            .into_iter()
+            .flatten()
+            .map(|d| d.join("Assets"))
+            .find(|d| d.join("keystonepassiveheaderleft.png").is_file())
+            .map(|d| d.to_string_lossy().replace('\\', "/"))
+            .unwrap_or_default()
+    }
+
     /// Switches the translation on or off while POB runs.
     pub fn set_translate(on: bool) {
         if let Some(s) = SESSION.get() {

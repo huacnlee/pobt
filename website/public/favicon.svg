@@ -59,8 +59,6 @@
   <circle cx="512" cy="512" r="250" fill="none" stroke="#180503" stroke-width="10"/>
   <path d="M340 400 A200 200 0 0 1 560 300" fill="none" stroke="#ffd6cf" stroke-opacity=".55" stroke-width="22" stroke-linecap="round"/>
 
-  <!-- The T, forged in iron -->
-  <g stroke="#140806" stroke-width="12" stroke-linejoin="round" fill="url(#iron)">
-    <path d="M352 360 H672 L690 420 L640 404 H560 V640 L596 676 H428 L464 640 V404 H384 L334 420 Z"/>
-  </g>
+  <!-- POB, forged in iron -->
+  <text x="512" y="586" text-anchor="middle" font-family="Palatino Linotype, Book Antiqua, Georgia, serif" font-weight="700" font-size="200" letter-spacing="-4" fill="url(#iron)" stroke="#140806" stroke-width="10" paint-order="stroke">POB</text>
 </svg>

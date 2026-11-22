@@ -1,21 +1,21 @@
 /* Path of Exile's look: near-black stone, bronze and gold trim, Fontin-like capitals, item tooltips. */
 :root {
   color-scheme: dark;
-  --bg: #090807;
+  --bg: #07080a;
   --stone: #121010;
   --panel: #121010;
   --panel-2: #181514;
-  --text: #ece8e1;
-  --muted: #9a948b;
-  --dim: #67615a;
-  --gold: #ece8e1;
-  --gold-hi: #ffffff;
-  --bronze: #4a423a;
-  --bronze-dk: #2c2824;
+  --text: #cfc8bb;
+  --muted: #948b7b;
+  --dim: #655d50;
+  --gold: #d8bd85;
+  --gold-hi: #f0dcaa;
+  --bronze: #6b522c;
+  --bronze-dk: #3a2c18;
   --unique: #e04a3a;
   --magic: #8888ff;
   --flavour: #b3291f;
-  --line: #2c2824;
+  --line: #3a2e1d;
   --serif: 'Cormorant Garamond', 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', serif;
   --display: 'Cinzel', 'Noto Serif SC', 'Source Han Serif SC', serif;
 }
@@ -23,8 +23,8 @@
 * { box-sizing: border-box; }
 html {
   background:
-    radial-gradient(ellipse 80% 60% at 50% -10%, #1f1b19 0%, transparent 60%),
-    radial-gradient(ellipse 60% 50% at 50% 110%, #3a0d08 0%, transparent 60%),
+    radial-gradient(ellipse 45% 60% at 18% 18%, rgba(150,180,230,0.28) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 60% at 50% 110%, rgba(40,50,70,0.35) 0%, transparent 60%),
     var(--bg);
   color: var(--text);
   font-family: var(--serif);
@@ -67,7 +67,7 @@ nav .lang { border: 1px solid var(--bronze); padding: 4px 12px; color: var(--gol
   min-height: 54px; padding: 0 34px; text-decoration: none; cursor: pointer;
   color: var(--gold-hi); font-size: 17px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
   background: linear-gradient(#8e2218, #5e1209 55%, #3a0a05);
-  border: 1px solid #c4473a8c;
+  border: 2px solid #b18d4e;
   box-shadow: inset 0 1px 0 #e06a5560, 0 0 0 1px #000, 0 6px 22px #000a;
   transition: filter .15s, transform .1s;
 }

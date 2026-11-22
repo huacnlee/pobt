@@ -1,11 +1,20 @@
-import { Image, mount, openUrl, signal, Text, View } from "nsh";
+import { Image, mount, openUrl, Shader, signal, Text, View, type ViewStyle } from "nsh";
 import { checkForUpdate, downloadUpdate, installAndRestart, installOnQuit, shellInfo, type AppUpdate } from "nsh/updater";
 import { Pob, PobCanvas } from "pobt/native";
 import Cinzel from "./assets/fonts/Cinzel-Bold.woff2";
 import "./assets/fonts/Cinzel-SemiBold.woff2";
-import button from "./assets/ui/button.png";
+import darkLeft from "./assets/ui/dark-left.png";
+import darkMiddle from "./assets/ui/dark-middle.png";
+import darkRight from "./assets/ui/dark-right.png";
+import brassLeft from "./assets/ui/brass-left.png";
+import brassMiddle from "./assets/ui/brass-middle.png";
+import brassRight from "./assets/ui/brass-right.png";
+import redLeft from "./assets/ui/red-left.png";
+import redMiddle from "./assets/ui/red-middle.png";
+import redRight from "./assets/ui/red-right.png";
+import rule from "./assets/ui/rule.png";
+import { GATE } from "./gate";
 import icon from "./icon.png";
-
 type Game = "Poe1" | "Poe2";
 
 interface Settings {
@@ -127,78 +136,119 @@ function strings(language: string | null): Strings {
 }
 
 // Path of Exile 2's look: near-black stone, low saturation, white text, a dark red accent.
+// Path of Exile 2's look: aged gold trim, plaques with pointed ends, cold light through a gothic door.
 const C = {
-  bg: "#090807",
-  panel: "rgba(255,255,255,0.025)",
-  panelOn: "rgba(179,41,31,0.07)",
-  line: "#2c2824",
-  lineHi: "#4a423a",
-  text: "#ece8e1",
-  muted: "#9a948b",
-  dim: "#67615a",
-  red: "#b3291f",
-  redHi: "#e04a3a",
+  bg: "#07080a",
+  panel: "rgba(9,9,10,0.82)",
+  trim: "#6b522c",
+  trimHi: "#b18d4e",
+  gold: "#d8bd85",
+  goldHi: "#dcc792",
+  text: "#cfc8bb",
+  muted: "#948b7b",
+  dim: "#655d50",
+  ink: "#140d05",
+  unique: "#e6894a",
+  red: "#e0604a",
 };
 const DISPLAY = `${Cinzel}, Microsoft YaHei, Malgun Gothic, serif`;
 const BODY = "Microsoft YaHei, Malgun Gothic, Segoe UI, sans-serif";
 
-function dirOf(s: Settings, game: Game): string | null {
-  return game === "Poe1" ? s.poe1_dir : s.poe2_dir;
-}
+// Buttons light up under the pointer and sink when pressed: pushed in, smaller and darker.
+// Letters cut into brass: dark, with light catching their lower edge.
+const ENGRAVED = "0 1px 0 rgba(255,236,190,0.45)";
+const HOVER: ViewStyle = { filter: "brightness(1.18)" };
+const PRESSED: ViewStyle = { filter: "brightness(0.62)", transform: [{ translateY: 3 }, { scale: 0.96 }] };
 
-/** A thin rule fading out at both ends. */
-function Rule(props: { width?: number; color?: string }) {
-  const c = props.color ?? C.lineHi;
-  return (
-    <View
-      style={{
-        width: props.width,
-        alignSelf: props.width ? "center" : "stretch",
-        height: 1,
-        backgroundImage: `linear-gradient(90deg, transparent, ${c}, transparent)`,
-      }}
-    />
-  );
-}
+const PLAQUES = {
+  red: { left: redLeft, middle: redMiddle, right: redRight },
+  dark: { left: darkLeft, middle: darkMiddle, right: darkRight },
+  brass: { left: brassLeft, middle: brassMiddle, right: brassRight },
+};
+type PlaqueKind = keyof typeof PLAQUES;
 
-/** Path of Exile 2's red stone button. */
-function PrimaryButton(props: { label: string; onPress: () => void }) {
+/** A plaque with pointed ends (art 64×96 caps), `height` tall, its content centred over it. */
+function Plaque(props: { kind: () => PlaqueKind; height: number; children: any }) {
+  const cap = (props.height * 64) / 96;
+  const art = () => PLAQUES[props.kind()];
   return (
-    <View role="button" onPress={props.onPress} style={{ width: 280, height: 63 }} hoverStyle={{ opacity: 0.9 }} pressedStyle={{ opacity: 0.75 }}>
-      <Image src={button} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, objectFit: "fill" }} />
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <Text style={{ fontFamily: DISPLAY, fontSize: 22, fontWeight: "700", letterSpacing: 6, color: "#fff4ee" }}>{props.label}</Text>
+    <View style={{ height: props.height, flexDirection: "row" }}>
+      <Image src={art().left} style={{ width: cap, height: props.height }} />
+      <Image src={art().middle} style={{ flex: 1, height: props.height, objectFit: "fill" }} />
+      <Image src={art().right} style={{ width: cap, height: props.height }} />
+      <View
+        style={{
+          position: "absolute",
+          top: 0,
+          bottom: 0,
+          left: cap * 0.75,
+          right: cap * 0.75,
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {props.children}
       </View>
     </View>
   );
 }
 
-/** A quiet outlined button. */
+function dirOf(s: Settings, game: Game): string | null {
+  return game === "Poe1" ? s.poe1_dir : s.poe2_dir;
+}
+
+/** The start button: the red banner with gold trim. */
+function PrimaryButton(props: { label: string; onPress: () => void }) {
+  return (
+    <View role="button" onPress={props.onPress} style={{ width: 360 }} hoverStyle={HOVER} pressedStyle={PRESSED}>
+      <Plaque kind={() => "red"} height={64}>
+        <Text style={{ fontFamily: DISPLAY, fontSize: 24, fontWeight: "700", letterSpacing: 6, color: "#f6e6c2" }}>{props.label}</Text>
+      </Plaque>
+    </View>
+  );
+}
+
+/** A small brass button, as the site's store buttons. */
 function Button(props: { label: string; onPress: () => void }) {
   return (
-    <View
-      role="button"
-      onPress={props.onPress}
-      style={{ paddingHorizontal: 14, paddingVertical: 6, borderWidth: 1, borderColor: C.lineHi, backgroundColor: "rgba(0,0,0,0.4)" }}
-      hoverStyle={{ borderColor: C.muted }}
-      pressedStyle={{ opacity: 0.7 }}
-    >
-      <Text style={{ fontFamily: BODY, fontSize: 13, color: C.text }}>{props.label}</Text>
+    <View role="button" onPress={props.onPress} style={{ minWidth: 150 }} hoverStyle={HOVER} pressedStyle={PRESSED}>
+      <Plaque kind={() => "brass"} height={38}>
+        <Text style={{ fontFamily: BODY, fontSize: 13, fontWeight: "700", color: C.ink, textShadow: ENGRAVED }}>{props.label}</Text>
+      </Plaque>
     </View>
   );
 }
 
 /** A footer link, set in the display face as the game's menus are. */
 function Link(props: { label: string; url: string }) {
+  // Lights up under the pointer.
+  const hover = signal(false);
   return (
-    <View role="link" onPress={() => openUrl(props.url)} style={{ paddingVertical: 2 }} hoverStyle={{ opacity: 0.7 }}>
-      <Text style={{ fontFamily: DISPLAY, fontSize: 12, fontWeight: "600", letterSpacing: 2, color: C.muted }}>{props.label.toUpperCase()}</Text>
+    <View
+      role="link"
+      onPress={() => openUrl(props.url)}
+      onMouseEnter={() => hover.set(true)}
+      onMouseLeave={() => hover.set(false)}
+      style={{ paddingVertical: 4 }}
+    >
+      <Text
+        style={{
+          fontFamily: DISPLAY,
+          fontSize: 12,
+          fontWeight: "600",
+          letterSpacing: 2,
+          color: hover() ? "#fff3d0" : C.gold,
+          textShadow: hover() ? "0 0 10px rgba(240,220,170,0.8)" : "none",
+        }}
+      >
+        {props.label.toUpperCase()}
+      </Text>
     </View>
   );
 }
 
 function Dot() {
-  return <View style={{ width: 4, height: 4, backgroundColor: C.dim, transform: [{ rotate: "45deg" }] }} />;
+  return <View style={{ width: 5, height: 5, backgroundColor: C.trimHi, transform: [{ rotate: "45deg" }] }} />;
 }
 
 // Checks for a newer POBT at start. A newer version downloads on its own and replaces the app when it quits; the
@@ -252,15 +302,15 @@ function UpdateBadge(props: { t: () => Strings }) {
             paddingHorizontal: 10,
             paddingVertical: 3,
             borderWidth: 1,
-            borderColor: C.red,
-            backgroundColor: "rgba(179,41,31,0.12)",
+            borderColor: C.trim,
+            backgroundColor: "rgba(0,0,0,0.6)",
           }}
-          hoverStyle={{ backgroundColor: "rgba(179,41,31,0.25)" }}
+          hoverStyle={{ borderColor: C.trimHi }}
         >
-          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: C.redHi }} />
+          <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: C.unique }} />
           <Text style={{ fontFamily: BODY, fontSize: 12, color: C.text }}>{message(u())}</Text>
           <If when={state() === "ready"}>
-            <Text style={{ fontFamily: BODY, fontSize: 12, color: C.redHi }}>{props.t().restart} ›</Text>
+            <Text style={{ fontFamily: BODY, fontSize: 12, color: C.unique }}>{props.t().restart} ›</Text>
           </If>
         </View>
       )}
@@ -271,38 +321,45 @@ function UpdateBadge(props: { t: () => Strings }) {
 function GameCard(props: { game: Game; settings: () => Settings; t: () => Strings; onSelect: () => void; onPick: () => void }) {
   const selected = () => props.settings().game === props.game;
   const dir = () => dirOf(props.settings(), props.game);
-  const english = () => UI.en.games[props.game];
   return (
-    <View
-      onPress={props.onSelect}
-      style={{
-        flex: 1,
-        padding: 22,
-        gap: 14,
-        borderWidth: 1,
-        borderColor: selected() ? C.red : C.line,
-        backgroundColor: selected() ? C.panelOn : C.panel,
-      }}
-      hoverStyle={selected() ? undefined : { borderColor: C.lineHi }}
-    >
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-        <View style={{ width: 4, alignSelf: "stretch", backgroundColor: selected() ? C.redHi : C.lineHi }} />
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text style={{ fontFamily: DISPLAY, fontSize: 24, fontWeight: "700", color: C.text }}>{props.t().games[props.game]}</Text>
-          <Text style={{ fontFamily: DISPLAY, fontSize: 12, letterSpacing: 3, color: selected() ? C.redHi : C.dim }}>
-            {english().toUpperCase()}
-          </Text>
-        </View>
-      </View>
-      <Rule />
-      <View style={{ gap: 4 }}>
-        <Text style={{ fontFamily: DISPLAY, fontSize: 11, letterSpacing: 2, color: C.dim }}>{props.t().pobFolder}</Text>
-        <Text style={{ fontFamily: BODY, fontSize: 12, color: dir() ? C.muted : C.redHi, numberOfLines: 2 }}>
+    <View onPress={props.onSelect} style={{ flex: 1, paddingTop: 22 }}>
+      {/* The panel, framed by a double trim line */}
+      <View
+        style={{
+          borderWidth: 1,
+          borderColor: selected() ? C.trimHi : C.trim,
+          backgroundColor: C.panel,
+          boxShadow: selected()
+            ? "inset 0 0 0 3px rgba(0,0,0,0.7), inset 0 0 0 4px rgba(177,141,78,0.45), 0 0 36px rgba(140,170,220,0.18)"
+            : "inset 0 0 0 3px rgba(0,0,0,0.7), inset 0 0 0 4px rgba(107,82,44,0.35), 0 12px 30px rgba(0,0,0,0.7)",
+          paddingTop: 38,
+          paddingBottom: 22,
+          paddingHorizontal: 24,
+          gap: 12,
+          alignItems: "center",
+        }}
+        hoverStyle={selected() ? undefined : { borderColor: C.trimHi }}
+      >
+        <If when={props.t().games[props.game] !== UI.en.games[props.game]}>
+          <Text style={{ fontFamily: DISPLAY, fontSize: 11, letterSpacing: 3, color: selected() ? C.gold : C.dim }}>
+          {UI.en.games[props.game].toUpperCase()}
+        </Text>
+        </If>
+        <Image src={rule} style={{ width: 260, height: 9, opacity: selected() ? 1 : 0.5 }} />
+        <Text style={{ fontFamily: BODY, fontSize: 12, color: dir() ? C.muted : C.red, textAlign: "center", numberOfLines: 2 }}>
           {dir() ?? props.t().notFound}
         </Text>
-      </View>
-      <View style={{ flexDirection: "row" }}>
         <Button label={props.t().pick} onPress={props.onPick} />
+      </View>
+      {/* Its title plaque, set over the top edge */}
+      <View style={{ position: "absolute", top: 0, left: 0, right: 0, alignItems: "center" }}>
+        <View style={{ width: 300 }}>
+          <Plaque kind={() => (selected() ? "red" : "dark")} height={46}>
+            <Text style={{ fontFamily: DISPLAY, fontSize: 19, fontWeight: "700", color: selected() ? "#f6e6c2" : C.goldHi }}>
+              {props.t().games[props.game]}
+            </Text>
+          </Plaque>
+        </View>
       </View>
     </View>
   );
@@ -351,56 +408,55 @@ function Launcher(props: { onStart: () => void }) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: C.bg, backgroundImage: "radial-gradient(ellipse at 50% 35%, #1a1614 0%, #090807 70%)" }}>
+    <View style={{ flex: 1, backgroundColor: C.bg }}>
+      <Shader source={GATE} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
 
       {/* Header */}
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 32, paddingVertical: 16 }}>
-        <Image src={icon} style={{ width: 30, height: 30 }} />
-        <Text style={{ fontFamily: DISPLAY, fontSize: 20, fontWeight: "700", letterSpacing: 6, color: C.text }}>POBT</Text>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 32, paddingVertical: 14 }}>
+        <Image src={icon} style={{ width: 28, height: 28 }} />
+        <Text style={{ fontFamily: DISPLAY, fontSize: 19, fontWeight: "700", letterSpacing: 6, color: C.goldHi }}>POBT</Text>
         <Text style={{ fontFamily: BODY, fontSize: 11, color: C.dim }}>v{shellInfo().version ?? "dev"}</Text>
         <UpdateBadge t={t} />
       </View>
-      <Rule />
 
-      <View style={{ flex: 1, paddingHorizontal: 56, paddingVertical: 24, gap: 24, justifyContent: "center" }}>
-
+      <View style={{ flex: 1, paddingHorizontal: 72, paddingVertical: 16, gap: 24, justifyContent: "center" }}>
         {/* Title */}
-        <View style={{ alignItems: "center", gap: 10 }}>
-          <Text style={{ fontFamily: DISPLAY, fontSize: 46, fontWeight: "700", letterSpacing: 6, color: C.text }}>PATH OF BUILDING</Text>
-          <Rule width={420} color={C.red} />
-          <Text style={{ fontFamily: BODY, fontSize: 14, color: C.muted }}>{t().subtitle}</Text>
+        <View style={{ alignItems: "center", gap: 4 }}>
+          <Text
+            style={{
+              fontFamily: DISPLAY,
+              fontSize: 50,
+              fontWeight: "700",
+              letterSpacing: 5,
+              color: C.goldHi,
+              textShadow: "0 2px 1px #000, 0 0 3px #000, 0 0 26px rgba(0,0,0,0.9)",
+            }}
+          >
+            PATH OF BUILDING
+          </Text>
+          <Image src={rule} style={{ width: 560, height: 19 }} />
+          <Text style={{ fontFamily: BODY, fontSize: 14, color: C.text, textShadow: "0 1px 2px #000" }}>{t().subtitle}</Text>
         </View>
 
         {/* Games */}
-        <View style={{ flexDirection: "row", gap: 20 }}>
+        <View style={{ flexDirection: "row", gap: 28 }}>
           <Each of={GAMES}>
-            {(g) => (
-              <GameCard game={g().id} settings={settings} t={t} onSelect={() => update({ game: g().id })} onPick={() => pick(g())} />
-            )}
+            {(g) => <GameCard game={g().id} settings={settings} t={t} onSelect={() => update({ game: g().id })} onPick={() => pick(g())} />}
           </Each>
         </View>
 
         {/* Language */}
-        <View style={{ flexDirection: "row", alignSelf: "center", borderWidth: 1, borderColor: C.line, backgroundColor: "rgba(0,0,0,0.35)" }}>
+        <View style={{ flexDirection: "row", alignSelf: "center", gap: 6 }}>
           <Each of={languages}>
-            {(l, i) => {
+            {(l) => {
               const selected = () => settings().language === l().value;
               return (
-                <View
-                  role="button"
-                  onPress={() => chooseLanguage(l().value)}
-                  style={{
-                    minWidth: 104,
-                    alignItems: "center",
-                    paddingHorizontal: 18,
-                    paddingVertical: 8,
-                    borderLeftWidth: i() === 0 ? 0 : 1,
-                    borderColor: C.line,
-                    backgroundColor: selected() ? C.red : "transparent",
-                  }}
-                  hoverStyle={selected() ? undefined : { backgroundColor: "rgba(255,255,255,0.05)" }}
-                >
-                  <Text style={{ fontFamily: BODY, fontSize: 14, color: selected() ? "#fff" : C.muted }}>{l().name}</Text>
+                <View role="button" onPress={() => chooseLanguage(l().value)} style={{ width: 132 }} hoverStyle={HOVER} pressedStyle={PRESSED}>
+                  <Plaque kind={() => (selected() ? "brass" : "dark")} height={40}>
+                    <Text style={{ fontFamily: BODY, fontSize: 14, fontWeight: selected() ? "700" : "400", color: selected() ? C.ink : C.gold, textShadow: selected() ? ENGRAVED : "0 1px 2px #000" }}>
+                      {l().name}
+                    </Text>
+                  </Plaque>
                 </View>
               );
             }}
@@ -408,18 +464,17 @@ function Launcher(props: { onStart: () => void }) {
         </View>
 
         <If when={error()}>
-          <Text style={{ fontFamily: BODY, fontSize: 13, color: C.redHi, textAlign: "center" }}>{error()}</Text>
+          <Text style={{ fontFamily: BODY, fontSize: 13, color: C.red, textAlign: "center", textShadow: "0 1px 2px #000" }}>{error()}</Text>
         </If>
 
         {/* Start */}
-        <View style={{ alignItems: "center", gap: 10 }}>
+        <View style={{ alignItems: "center" }}>
           <PrimaryButton label={t().start} onPress={start} />
         </View>
       </View>
 
       {/* Footer */}
-      <Rule />
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 16, paddingHorizontal: 32, paddingVertical: 14 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 16, paddingHorizontal: 32, paddingVertical: 14, backgroundColor: "rgba(0,0,0,0.45)" }}>
         <Link label={LINKS[0].label} url={LINKS[0].url} />
         <Dot />
         <Link label={LINKS[1].label} url={LINKS[1].url} />
