@@ -217,11 +217,18 @@ fn paint(frame: &Frame) -> Painter {
                 let p = set_alpha(p, *a);
                 p.draw_image_part(uri, Some(src_rect(*src)), rect(dst[0], dst[1], dst[2], dst[3]))
             }
-            Cmd::ImageAffine { uri, src, m, alpha: a } => {
+            Cmd::ImageAffine { uri, src, dst, m, clip, alpha: a } => {
                 let p = set_alpha(p, *a);
                 p.save()
+                    .begin_path()
+                    .move_to(clip[0], clip[1])
+                    .line_to(clip[2], clip[3])
+                    .line_to(clip[4], clip[5])
+                    .line_to(clip[6], clip[7])
+                    .close_path()
+                    .clip()
                     .transform(*m)
-                    .draw_image_part(uri, Some(src_rect(*src)), rect(src[0], src[1], src[2], src[3]))
+                    .draw_image_part(uri, Some(src_rect(*src)), rect(dst[0], dst[1], dst[2], dst[3]))
                     .restore()
             }
             Cmd::Text { x, y, baseline, font: f, text, color } => {
@@ -328,15 +335,29 @@ fn pob_view(shared: Arc<Shared>) -> impl IntoElement {
         s.poke.store(true, Ordering::SeqCst);
     };
     let s = shared.clone();
-    let on_down = move |e: &PressEvent| {
-        *s.cursor.lock().unwrap() = (e.position.x.0, e.position.y.0);
+    // The left button through the responder system, so a drag keeps
+    // reporting where the pointer is (POB pans the tree from it).
+    let last_click = std::cell::Cell::new((f64::MIN, 0.0f32, 0.0f32));
+    let on_down = move |e: &ResponderEvent| {
+        let (x, y) = (e.location.x.0, e.location.y.0);
+        let (t, lx, ly) = last_click.get();
+        let double = e.timestamp - t < 450.0 && (x - lx).abs() < 5.0 && (y - ly).abs() < 5.0;
+        last_click.set(if double { (f64::MIN, 0.0, 0.0) } else { (e.timestamp, x, y) });
+        *s.cursor.lock().unwrap() = (x, y);
         sync_modifiers(&s, &e.modifiers);
         s.set_key("LEFTBUTTON", true);
-        s.send(Input::KeyDown("LEFTBUTTON".into(), e.clicks == 2));
+        s.send(Input::KeyDown("LEFTBUTTON".into(), double));
         s.poke.store(true, Ordering::SeqCst);
     };
     let s = shared.clone();
-    let on_up = move |_e: &PressEvent| {
+    let on_drag = move |e: &ResponderEvent| {
+        *s.cursor.lock().unwrap() = (e.location.x.0, e.location.y.0);
+        *s.last_input.lock().unwrap() = std::time::Instant::now();
+        s.poke.store(true, Ordering::SeqCst);
+    };
+    let s = shared.clone();
+    let on_up = move |e: &ResponderEvent| {
+        *s.cursor.lock().unwrap() = (e.location.x.0, e.location.y.0);
         if s.keys.lock().unwrap().contains("LEFTBUTTON") {
             s.set_key("LEFTBUTTON", false);
             s.send(Input::KeyUp("LEFTBUTTON".into()));
@@ -420,8 +441,11 @@ fn pob_view(shared: Arc<Shared>) -> impl IntoElement {
                 .capture_keys(KeyCapture::All)
                 .on_layout(on_layout)
                 .on_mouse_move(on_move)
-                .on_press_down(on_down)
-                .on_press_up(on_up)
+                .claim_touches(TouchClaim::on_start())
+                .keep_touches(true)
+                .on_responder_grant(on_down)
+                .on_responder_move(on_drag)
+                .on_responder_release(on_up)
                 .on_context_menu(on_context)
                 .on_mouse_up(on_mouse_up)
                 .on_wheel(on_wheel)

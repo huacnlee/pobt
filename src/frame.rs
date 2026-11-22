@@ -11,7 +11,7 @@ pub enum Cmd {
     /// Part of an image (`src` in its pixels) into `dst`.
     Image { uri: Arc<str>, src: [f32; 4], dst: [f32; 4], alpha: f32 },
     /// Part of an image mapped by an affine transform from its pixels.
-    ImageAffine { uri: Arc<str>, src: [f32; 4], m: [f32; 6], alpha: f32 },
+    ImageAffine { uri: Arc<str>, src: [f32; 4], dst: [f32; 4], m: [f32; 6], clip: [f32; 8], alpha: f32 },
     /// A filled quadrilateral of colour.
     Poly { pts: [f32; 8], color: Color },
     /// A run of text, its top-left at (`x`, `y`) and its baseline below.

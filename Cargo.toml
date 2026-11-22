@@ -9,7 +9,6 @@ publish = false
 
 [dependencies]
 nsh-core = "0.6.1"
-nsh-base = "0.6.1"
 log = "0.4"
 libloading = "0.8"
 ab_glyph = "0.2"

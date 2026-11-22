@@ -1468,7 +1468,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "pobcn"
+name = "pobt"
 version = "0.1.0"
 dependencies = [
  "ab_glyph",

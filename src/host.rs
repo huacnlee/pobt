@@ -665,6 +665,8 @@ fn draw_image(h: &mut Host, id: u32, layer: u32, dst: [f32; 4], uv: [f32; 4], co
 /// An image mapped onto a parallelogram through an affine transform from
 /// its pixels: corners `p` (x, y pairs) take texture coordinates `t`.
 fn quad_image(h: &mut Host, uri: Arc<str>, w: f32, hh: f32, p: [f32; 8], t: [f32; 8], alpha: f32) {
+    // The affine map from the image's (unwrapped) pixels to the screen,
+    // fixed by three corners.
     let px = |i: usize| (t[i * 2] * w, t[i * 2 + 1] * hh);
     let sc = |i: usize| (p[i * 2], p[i * 2 + 1]);
     let (p0, p1, p3) = (px(0), px(1), px(3));
@@ -681,14 +683,36 @@ fn quad_image(h: &mut Host, uri: Arc<str>, w: f32, hh: f32, p: [f32; 8], t: [f32
     let d = (-e1.1 * d3.0 + e3.1 * d1.0) / det;
     let e = s0.0 - a * p0.0 - c * p0.1;
     let f = s0.1 - b * p0.0 - d * p0.1;
-    let us = [t[0], t[2], t[4], t[6]].map(|u| (u * w).clamp(0.0, w));
-    let vs = [t[1], t[3], t[5], t[7]].map(|v| (v * hh).clamp(0.0, hh));
-    let (x0, x1) = (us.iter().copied().fold(f32::MAX, f32::min), us.iter().copied().fold(f32::MIN, f32::max));
-    let (y0, y1) = (vs.iter().copied().fold(f32::MAX, f32::min), vs.iter().copied().fold(f32::MIN, f32::max));
-    if x1 <= x0 || y1 <= y0 {
+    let m = [a, b, c, d, e, f];
+    let us = [t[0], t[2], t[4], t[6]];
+    let vs = [t[1], t[3], t[5], t[7]];
+    let (u0, u1) = (us.iter().copied().fold(f32::MAX, f32::min), us.iter().copied().fold(f32::MIN, f32::max));
+    let (v0, v1) = (vs.iter().copied().fold(f32::MAX, f32::min), vs.iter().copied().fold(f32::MIN, f32::max));
+    if u1 <= u0 || v1 <= v0 {
         return;
     }
-    emit(h, Cmd::ImageAffine { uri, src: [x0, y0, x1 - x0, y1 - y0], m: [a, b, c, d, e, f], alpha });
+    // Texture coordinates past 0..1 repeat the image: one draw per tile,
+    // each clipped to the quad.
+    let (ku0, ku1) = ((u0 + 1e-4).floor() as i32, (u1 - 1e-4).ceil() as i32);
+    let (kv0, kv1) = ((v0 + 1e-4).floor() as i32, (v1 - 1e-4).ceil() as i32);
+    if ((ku1 - ku0).max(1) as i64) * ((kv1 - kv0).max(1) as i64) > 512 {
+        return;
+    }
+    for kv in kv0..kv1.max(kv0 + 1) {
+        let (a0, a1) = ((kv as f32).max(v0), ((kv + 1) as f32).min(v1));
+        if a1 <= a0 {
+            continue;
+        }
+        for ku in ku0..ku1.max(ku0 + 1) {
+            let (b0, b1) = ((ku as f32).max(u0), ((ku + 1) as f32).min(u1));
+            if b1 <= b0 {
+                continue;
+            }
+            let src = [(b0 - ku as f32) * w, (a0 - kv as f32) * hh, (b1 - b0) * w, (a1 - a0) * hh];
+            let dst = [b0 * w, a0 * hh, (b1 - b0) * w, (a1 - a0) * hh];
+            emit(h, Cmd::ImageAffine { uri: uri.clone(), src, dst, m, clip: p, alpha });
+        }
+    }
 }
 
 native!(n_draw_image_quad, |l| {
