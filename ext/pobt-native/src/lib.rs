@@ -163,6 +163,15 @@ impl Pob {
         });
     }
 
+    /// Opens `dir` in Explorer, off the UI thread as `open_url`.
+    pub fn open_dir(dir: String) {
+        std::thread::spawn(move || {
+            if let Err(e) = std::process::Command::new("explorer").arg(&dir).spawn() {
+                log::warn!("opening {dir}: {e}");
+            }
+        });
+    }
+
     /// Installs a game's Path of Building ("poe1" or "poe2") from its latest
     /// release beside POBT.exe, in the background; false while one installs.
     pub fn install(game: String) -> bool {

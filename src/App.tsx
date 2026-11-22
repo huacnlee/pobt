@@ -9,6 +9,7 @@ import title from "../assets/ui/title.png";
 import { GATE, GATE_MOTION } from "./gate";
 // The icon at the size the launcher shows it (icon.png is the app's, 1024 square).
 import icon from "../assets/ui/icon-64.png";
+import folderOpen from "../assets/ui/folder-open.svg";
 type Game = "Poe1" | "Poe2";
 
 interface Settings {
@@ -47,6 +48,7 @@ interface Strings {
   notFound: string;
   pick: string;
   install: string;
+  openFolder: string;
   installing: (done: number, total: number) => string;
   unpacking: (percent: number) => string;
   installFailed: string;
@@ -76,6 +78,7 @@ const UI: Record<string, Strings> = {
     notFound: "Path of Building not found: choose its folder",
     pick: "Choose folder…",
     install: "Install",
+    openFolder: "Open folder",
     installing: (d, t) => `Downloading ${d} / ${t} MB`,
     unpacking: (p) => `Unpacking ${p}%`,
     installFailed: "Install failed",
@@ -102,6 +105,7 @@ const UI: Record<string, Strings> = {
     notFound: "未找到 Path of Building，请选择它的安装目录",
     pick: "选择目录…",
     install: "安装",
+    openFolder: "打开目录",
     installing: (d, t) => `下载中 ${d} / ${t} MB`,
     unpacking: (p) => `解压中 ${p}%`,
     installFailed: "安装失败",
@@ -128,6 +132,7 @@ const UI: Record<string, Strings> = {
     notFound: "找不到 Path of Building，請選擇它的安裝目錄",
     pick: "選擇目錄…",
     install: "安裝",
+    openFolder: "打開目錄",
     installing: (d, t) => `下載中 ${d} / ${t} MB`,
     unpacking: (p) => `解壓中 ${p}%`,
     installFailed: "安裝失敗",
@@ -154,6 +159,7 @@ const UI: Record<string, Strings> = {
     notFound: "Path of Building을 찾을 수 없습니다. 폴더를 선택하세요",
     pick: "폴더 선택…",
     install: "설치",
+    openFolder: "폴더 열기",
     installing: (d, t) => `다운로드 중 ${d} / ${t} MB`,
     unpacking: (p) => `압축 해제 중 ${p}%`,
     installFailed: "설치 실패",
@@ -498,6 +504,10 @@ function GameCard(props: {
     return t.installing(mb(p.done), mb(p.total));
   };
   const busy = () => install()?.phase === "downloading" || install()?.phase === "unpacking";
+  // Hovering the folder shows a button after it that opens it.
+  const dirHover = signal(false);
+  const openHover = signal(false);
+  const canOpen = () => !install() && !!dir();
   return (
     <View onPress={props.onSelect} style={{ flex: 1, paddingTop: 22 }}>
       {/* The panel, framed by a double trim line */}
@@ -526,17 +536,40 @@ function GameCard(props: {
         </Text>
         </If>
         <Rule width={260} dim={!selected()} />
-        <Text
-          style={{
-            fontFamily: BODY,
-            fontSize: 12,
-            color: install() ? (install()!.phase === "failed" ? C.red : C.gold) : dir() ? C.muted : C.red,
-            textAlign: "center",
-            numberOfLines: 2,
-          }}
+        <View
+          onMouseEnter={() => dirHover.set(true)}
+          onMouseLeave={() => dirHover.set(false)}
+          style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
         >
-          {install() ? status(install()!) : (dir() ?? props.t().notFound)}
-        </Text>
+          {/* As wide as the button, so the text stays centred */}
+          <If when={canOpen()}>
+            <View style={{ width: 16 }} />
+          </If>
+          <Text
+            style={{
+              flexShrink: 1,
+              fontFamily: BODY,
+              fontSize: 12,
+              color: install() ? (install()!.phase === "failed" ? C.red : C.gold) : dir() ? C.muted : C.red,
+              textAlign: "center",
+              numberOfLines: 2,
+            }}
+          >
+            {install() ? status(install()!) : (dir() ?? props.t().notFound)}
+          </Text>
+          <If when={canOpen()}>
+            <View
+              role="button"
+              accessibilityLabel={props.t().openFolder}
+              onPress={() => Pob.openDir(dir()!)}
+              onMouseEnter={() => openHover.set(true)}
+              onMouseLeave={() => openHover.set(false)}
+              style={{ opacity: dirHover() ? 1 : 0 }}
+            >
+              <Image src={folderOpen} style={{ width: 16, height: 16, tintColor: openHover() ? C.goldHi : C.gold }} />
+            </View>
+          </If>
+        </View>
         {/* No Path of Building yet: install it from its release, or choose where it is */}
         <View style={{ flexDirection: "row", gap: 12, opacity: busy() ? 0.5 : 1 }}>
           <If when={!dir()}>
