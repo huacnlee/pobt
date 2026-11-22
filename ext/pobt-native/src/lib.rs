@@ -27,7 +27,7 @@ use nsh_core::{
     element::desktop::current_window,
     geometry::ScaledPixels,
     element::input,
-    keymap::Modifiers,
+    keymap::{Modifiers, When},
     prelude::*,
 };
 
@@ -562,7 +562,7 @@ fn pob_view(shared: Arc<Shared>) -> impl IntoElement {
         s.poke.store(true, Ordering::SeqCst);
     };
     let s = shared.clone();
-    let on_key_down = move |e: &KeyEvent| key_down(&s, e, true);
+    let on_key_down = move |e: &KeyEvent| key_down(&s, e, frame.with_untracked(|f| f.text_input.is_none()));
     let s = shared.clone();
     let on_key_up = move |e: &KeyEvent| key_up(&s, e);
 
@@ -573,10 +573,37 @@ fn pob_view(shared: Arc<Shared>) -> impl IntoElement {
     let composing = signal(String::new());
     let s = shared.clone();
     let sink = move |rect: [f32; 4]| {
-        let (down, up) = (s.clone(), s.clone());
+        // A focused native input gets no key events: its keys reach POB through bindings, which fire before the
+        // input, and not while an input method composes (it keeps its keys).
+        for &(keystroke, key, ctrl, shift) in SINK_KEYS {
+            let s = s.clone();
+            let options = KeyOptions { when: When::Always, repeat: true, for_focus: true, ..Default::default() };
+            on_key_with(keystroke, options, move |_| {
+                s.set_key("CTRL", ctrl);
+                s.set_key("SHIFT", shift);
+                s.send(Input::KeyDown(key.to_string(), false));
+                s.send(Input::KeyUp(key.to_string()));
+                s.poke.store(true, Ordering::SeqCst);
+            });
+        }
         let typed = s.clone();
-        // What the sink holds: what changes in it is what was typed (deletions are the keys').
+        // What the sink holds, and its text held back while an input method composes: it reports the committed
+        // text just before the composition ends. What changes in it is what was typed (deletions are the keys').
         let held = std::rc::Rc::new(std::cell::RefCell::new(String::new()));
+        let pending = std::rc::Rc::new(std::cell::RefCell::new(None::<String>));
+        let is_composing = std::rc::Rc::new(std::cell::Cell::new(false));
+        let take = {
+            let held = held.clone();
+            move |text: &str| {
+                let mut held = held.borrow_mut();
+                for c in inserted(&held, text).chars().filter(|c| !c.is_control()) {
+                    typed.send(Input::Char(c.to_string()));
+                }
+                *held = text.to_owned();
+                typed.poke.store(true, Ordering::SeqCst);
+            }
+        };
+        let (take_now, pending_now, composing_now) = (take.clone(), pending.clone(), is_composing.clone());
         input()
             .element_ref(&sink_ref)
             .absolute()
@@ -589,25 +616,28 @@ fn pob_view(shared: Arc<Shared>) -> impl IntoElement {
             .opacity(0.02)
             .pointer_events(PointerEvents::None)
             .caret(false)
+            // Return is POB's, never a submit that would take the focus away.
+            .multiline(true)
             .auto_focus(true)
             .auto_correct(false)
             .auto_capitalize(AutoCapitalize::None)
             // POB pastes with Ctrl+V itself.
             .paste_behavior(PasteBehavior::Report)
-            .capture_keys(KeyCapture::All)
-            .on_key_down(move |e: &KeyEvent| key_down(&down, e, false))
-            .on_key_up(move |e: &KeyEvent| key_up(&up, e))
-            .on_composition_change(move |c: &Composition| composing.set(if c.composing { c.text.clone() } else { String::new() }))
+            .on_composition_change(move |c: &Composition| {
+                is_composing.set(c.composing);
+                composing.set(c.text.clone());
+                if !c.composing {
+                    if let Some(text) = pending.borrow_mut().take() {
+                        take(&text);
+                    }
+                }
+            })
             .on_change(move |text: &str| {
-                if !composing.get_untracked().is_empty() {
-                    return;
+                if composing_now.get() {
+                    *pending_now.borrow_mut() = Some(text.to_owned());
+                } else {
+                    take_now(text);
                 }
-                let mut held = held.borrow_mut();
-                for c in inserted(&held, text).chars().filter(|c| !c.is_control()) {
-                    typed.send(Input::Char(c.to_string()));
-                }
-                *held = text.to_owned();
-                typed.poke.store(true, Ordering::SeqCst);
             })
     };
     // Back to the canvas once no box has the focus; back to the sink after a click while one has.
@@ -684,8 +714,40 @@ fn pob_view(shared: Arc<Shared>) -> impl IntoElement {
         }))
 }
 
-/// A key pressed on the canvas or the input method's sink; `chars` sends the
-/// character it types too (the sink's come from its text).
+/// The keys POB's edit boxes use, bound while the input method's sink has
+/// the focus: the keystroke, POB's key, and whether Ctrl and Shift are down.
+const SINK_KEYS: &[(&str, &str, bool, bool)] = &[
+    ("backspace", "BACK", false, false),
+    ("delete", "DELETE", false, false),
+    ("enter", "RETURN", false, false),
+    ("escape", "ESCAPE", false, false),
+    ("tab", "TAB", false, false),
+    ("shift+tab", "TAB", false, true),
+    ("left", "LEFT", false, false),
+    ("right", "RIGHT", false, false),
+    ("up", "UP", false, false),
+    ("down", "DOWN", false, false),
+    ("home", "HOME", false, false),
+    ("end", "END", false, false),
+    ("pageup", "PAGEUP", false, false),
+    ("pagedown", "PAGEDOWN", false, false),
+    ("shift+left", "LEFT", false, true),
+    ("shift+right", "RIGHT", false, true),
+    ("shift+home", "HOME", false, true),
+    ("shift+end", "END", false, true),
+    ("mod+left", "LEFT", true, false),
+    ("mod+right", "RIGHT", true, false),
+    ("mod+backspace", "BACK", true, false),
+    ("mod+a", "a", true, false),
+    ("mod+c", "c", true, false),
+    ("mod+v", "v", true, false),
+    ("mod+x", "x", true, false),
+    ("mod+z", "z", true, false),
+    ("mod+y", "y", true, false),
+];
+
+/// A key pressed on the canvas; `chars` sends the character it types too
+/// (not while an edit box has the focus: the sink types them).
 fn key_down(s: &Shared, e: &KeyEvent, chars: bool) {
     sync_modifiers(s, &e.modifiers);
     // Ctrl+Shift+T switches the translation on and off.
