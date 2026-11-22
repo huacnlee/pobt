@@ -131,14 +131,11 @@ fn char_advance(kind: FontKind, ch: char) -> f32 {
 }
 
 /// Distance from the top of a POB text line to the baseline, for an em of
-/// `size` px in a line of `height` px.
-pub fn baseline(kind: FontKind, size: f32, height: f32) -> f32 {
-    let f = fonts();
-    let font = match kind {
-        FontKind::Fixed => f.mono.as_ref(),
-        _ => f.var.as_ref(),
-    };
-    let ascent = font.map(|f| f.ascent).unwrap_or(0.9);
+/// `size` px in a line of `height` px. Every face sits on YaHei's baseline,
+/// as POB's own fonts share one: Consolas' smaller ascent would lift `FIXED`
+/// text off the middle of its line.
+pub fn baseline(_kind: FontKind, size: f32, height: f32) -> f32 {
+    let ascent = fonts().var.as_ref().map(|f| f.ascent).unwrap_or(0.9);
     let descent_gap = (height - size * 1.15).max(0.0) / 2.0;
     descent_gap + ascent * size * 0.92
 }
