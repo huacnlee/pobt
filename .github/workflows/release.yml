@@ -3,7 +3,8 @@
 # `releases/latest/download/<archive>`, which the website, README and install.ps1 link, always resolves:
 #
 # - `pobt-windows-x86_64.zip`
-# - `pobt-macos-universal.tar.gz` (Apple silicon and Intel)
+# - `pobt-macos-aarch64.tar.gz`
+# - `pobt-linux-aarch64.tar.gz`
 # - `pobt-linux-x86_64.tar.gz`
 #
 # The app's updater (`nsh.json` "updater") fetches `latest.json` beside them, which names those same archives.
@@ -38,12 +39,15 @@ jobs:
           - os: windows-latest
             platform: windows
             asset: pobt-windows-x86_64.zip
-          - os: macos-latest
+          - os: macos-15
             platform: macos
-            asset: pobt-macos-universal.tar.gz
+            asset: pobt-macos-aarch64.tar.gz
           - os: ubuntu-24.04
             platform: linux
             asset: pobt-linux-x86_64.tar.gz
+          - os: ubuntu-24.04-arm
+            platform: linux
+            asset: pobt-linux-aarch64.tar.gz
     runs-on: ${{ matrix.os }}
     env:
       ASSET: ${{ matrix.asset }}
@@ -51,13 +55,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          # The universal macOS package builds for Intel too.
-          targets: ${{ matrix.platform == 'macos' && 'x86_64-apple-darwin' || '' }}
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: ext/pobt-native
-          key: release-${{ matrix.platform }}
+          key: release-${{ matrix.asset }}
 
       - name: Install Linux system libraries
         if: matrix.platform == 'linux'
@@ -96,11 +97,11 @@ jobs:
               (cd "$out" && 7z a -tzip POBT-*.zip POBT/trs > /dev/null)
               ;;
             macos)
-              nsh package --target macos --arch universal -o "$out" "${args[@]}"
+              nsh package --target macos --arch aarch64 -o "$out" "${args[@]}"
               cp -r trs "$out/POBT.app/Contents/Resources/trs"
               # Adding files breaks the bundle's ad hoc signature: sign it again.
               codesign --force --sign - --timestamp=none "$out/POBT.app"
-              lipo -archs "$out/POBT.app/Contents/MacOS/"*
+              test "$(lipo -archs "$out/POBT.app/Contents/MacOS/POBT")" = arm64
               for f in "$out"/POBT-*.tar.gz; do
                 COPYFILE_DISABLE=1 tar -czf "$f" -C "$out" POBT.app
               done
@@ -119,8 +120,10 @@ jobs:
             [ -e "$f" ] || continue
             mv "$f" "dist/$(basename "$f" | tr '[:upper:]' '[:lower:]')"
           done
-          # A universal macOS package has one archive per architecture, the same bytes.
-          cp "$(ls dist/pobt-* | head -n1)" "dist/$ASSET"
+          archives=(dist/pobt-*)
+          test "${#archives[@]}" -eq 1
+          test "${archives[0]##*-}" = "${ASSET##*-}"
+          cp "${archives[0]}" "dist/$ASSET"
           ls -l dist
 
       # The installer, run against this package served locally.
@@ -146,7 +149,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: pobt-${{ matrix.platform }}
+          name: ${{ matrix.asset }}
           path: dist/
           if-no-files-found: error
 
@@ -177,11 +180,10 @@ jobs:
           nsh update-manifest dist/pobt-"$version"-* --out dist
           # The manifest names the versioned archives `nsh package` made; each is the same file as its platform's
           # unversioned archive, so the release carries those only.
-          jq '.platforms |= with_entries(.value.url = (
-                if (.key | startswith("windows-")) then "pobt-windows-x86_64.zip"
-                elif (.key | startswith("macos-")) then "pobt-macos-universal.tar.gz"
-                elif (.key | startswith("linux-")) then "pobt-linux-x86_64.tar.gz"
-                else error("unexpected platform \(.key)") end))' dist/latest.json > "$RUNNER_TEMP/latest.json"
+          jq -e 'if (.platforms | keys) == ["linux-aarch64","linux-x86_64","macos-aarch64","windows-x86_64"]
+            then .platforms |= with_entries(.value.url = ("pobt-" + .key +
+              (if .key == "windows-x86_64" then ".zip" else ".tar.gz" end)))
+            else error("unexpected platform set") end' dist/latest.json > "$RUNNER_TEMP/latest.json"
           mv "$RUNNER_TEMP/latest.json" dist/latest.json
           rm dist/pobt-"$version"-*
           # The manifest must describe the archives the release carries.
