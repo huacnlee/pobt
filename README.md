@@ -24,6 +24,35 @@ Chinese, Traditional Chinese and Korean are included.
 - The translations are plain CSV files in the `trs` folder beside `POBT.exe`: edit them to fix one or add your own (an update of POBT replaces the folder, so keep a copy of your changes).
 - POBT updates itself when a new version is out.
 
+## Performance
+
+POBT can stand in for Path of Building's own program: it runs Path of Building's code with its own program in place
+of `Path of Building.exe` and its graphics runtime. Measured on the same PC with the same build open on the passive
+tree:
+
+| | POBT 0.2.0 | Path of Building 2.68.1 |
+| --- | ---: | ---: |
+| Start to the build on screen | **2.71 s** | 3.33 s |
+| Start to the build list | **1.65 s** | 2.06 s |
+| CPU while idle | **8.8% of a core** | 47.3% of a core |
+| Private memory | **895 MB** | 1,022 MB |
+| Peak private memory while loading | **1,016 MB** | 1,510 MB |
+| Working set | 724 MB | **514 MB** |
+| Program size | 48 MB (19 MB zipped) | **20 MB** of native files |
+
+How it was measured:
+
+- **Runs**: medians of 3 to 4 warm runs.
+- **Machine**: i7-13700KF, 32 GB of memory, RTX 3060 Ti, Windows 11.
+- **Windows**: both windows were 1600×1000 and in front.
+- **POBT**: showing Chinese.
+- **Startup**: ends when the screen shows Path of Building. For POBT it adds the time to its launcher and the time
+  from **Start** to Path of Building on screen.
+- **CPU and memory**: taken over 30 s once the build was open and loading had settled. CPU is the process's average
+  over those 30 s.
+- **Program size**: POBT's unpacked program without its translations, against the native files of Path of Building
+  that it replaces: `Path of Building.exe`, `SimpleGraphic.dll` and their DLLs.
+
 ## Download
 
 **[Download POBT for Windows (.zip)](https://github.com/huacnlee/pobt/releases/latest/download/pobt-windows-x86_64.zip)**

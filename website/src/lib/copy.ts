@@ -24,6 +24,11 @@ export interface Copy {
   shotPob2Alt: string;
   featuresTitle: string;
   features: string[];
+  perfTitle: string;
+  perfIntro: string;
+  perfHead: [string, string, string];
+  perfRows: [string, string, string][];
+  perfNote: string;
   installTitle: string;
   installIntro: string;
   steps: [string, string][];
@@ -69,7 +74,23 @@ export const copy: Record<Language, Copy> = {
         "Your Path of Building files are never modified",
         "Ctrl+Shift+T switches to English and back",
         "Updates itself when a new version is out",
+        "Starts faster and idles at a fifth of the CPU of Path of Building's own program",
     ],
+    perfTitle: "In place of Path of Building's own program",
+    perfIntro:
+      "POBT runs Path of Building's own code with its own program in place of Path of Building.exe and its graphics runtime. On the same PC, with the same build open on the passive tree:",
+    perfHead: ["", "POBT 0.2.0", "Path of Building 2.68.1"],
+    perfRows: [
+      ["Start to the build on screen", "2.71 s", "3.33 s"],
+      ["Start to the build list", "1.65 s", "2.06 s"],
+      ["CPU while idle", "8.8% of a core", "47.3% of a core"],
+      ["Private memory", "895 MB", "1,022 MB"],
+      ["Peak private memory while loading", "1,016 MB", "1,510 MB"],
+      ["Working set", "724 MB", "514 MB"],
+      ["Program size", "48 MB (19 MB zipped)", "20 MB of native files"],
+    ],
+    perfNote:
+      "Medians of warm runs on an i7-13700KF, 32 GB, RTX 3060 Ti, Windows 11, both windows 1600×1000 in front, POBT showing Chinese. Path of Building uses less working set and less disk; POBT starts faster, uses less private memory and a fifth of the CPU at idle.",
     installTitle: "Install in a minute",
     installIntro: "No setup program and no scripts: unpack the zip and run it.",
     steps: [
@@ -137,7 +158,29 @@ export const copy: Record<Language, Copy> = {
     shotPobAlt: "翻译后的 Path of Building 计算页",
     shotPob2Alt: "翻译后的流放之路 2 Path of Building",
     featuresTitle: "功能",
-    features: ["翻译流放之路 1 与 2 的 Path of Building", "新增简体中文、繁體中文与한국어", "绝不修改你的 Path of Building 文件", "Ctrl+Shift+T 随时切换英文", "有新版本时自动更新"],
+    features: [
+      "翻译流放之路 1 与 2 的 Path of Building",
+      "新增简体中文、繁體中文与한국어",
+      "绝不修改你的 Path of Building 文件",
+      "Ctrl+Shift+T 随时切换英文",
+      "有新版本时自动更新",
+      "比 Path of Building 自带的程序启动更快，空闲时 CPU 只用五分之一",
+    ],
+    perfTitle: "可以代替 Path of Building 自带的程序",
+    perfIntro:
+      "POBT 运行的是 Path of Building 自己的代码，只是用 POBT 自己的程序代替了 Path of Building.exe 和它的图形运行时。在同一台电脑上，打开同一个 BD、停在天赋树页：",
+    perfHead: ["", "POBT 0.2.0", "Path of Building 2.68.1"],
+    perfRows: [
+      ["启动到看到 BD", "2.71 秒", "3.33 秒"],
+      ["启动到看到 BD 列表", "1.65 秒", "2.06 秒"],
+      ["空闲时 CPU", "单核的 8.8%", "单核的 47.3%"],
+      ["私有内存", "895 MB", "1,022 MB"],
+      ["加载 BD 时的私有内存峰值", "1,016 MB", "1,510 MB"],
+      ["工作集内存", "724 MB", "514 MB"],
+      ["程序体积", "48 MB（压缩包 19 MB）", "原生程序文件 20 MB"],
+    ],
+    perfNote:
+      "数据为多次热启动的中位数；测试机为 i7-13700KF、32 GB 内存、RTX 3060 Ti、Windows 11，两个窗口都是 1600×1000 且在前台，POBT 显示中文。Path of Building 的工作集内存和磁盘占用更少；POBT 启动更快、私有内存更少，空闲 CPU 只有五分之一。",
     installTitle: "一分钟装好",
     installIntro: "不用安装程序，也不用敲命令：解压就能用。",
     steps: [

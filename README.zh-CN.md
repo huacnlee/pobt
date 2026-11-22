@@ -23,6 +23,33 @@ POBT 直接运行你电脑上已有的 [Path of Building Community](https://path
 - 翻译是 `POBT.exe` 旁边 `trs` 文件夹里的 CSV 文件，可以自己修改或补充（POBT 更新时会覆盖这个文件夹，改过的内容请自己备份）。
 - 有新版本时自动更新。
 
+## 性能
+
+POBT 可以代替 Path of Building 自带的程序使用：它运行的是 Path of Building 自己的代码，只是用 POBT 自己的程序代替了
+`Path of Building.exe` 和它的图形运行时。在同一台电脑上，打开同一个 BD、停在天赋树页实测：
+
+| | POBT 0.2.0 | Path of Building 2.68.1 |
+| --- | ---: | ---: |
+| 启动到看到 BD | **2.71 秒** | 3.33 秒 |
+| 启动到看到 BD 列表 | **1.65 秒** | 2.06 秒 |
+| 空闲时 CPU | **单核的 8.8%** | 单核的 47.3% |
+| 私有内存 | **895 MB** | 1,022 MB |
+| 加载 BD 时的私有内存峰值 | **1,016 MB** | 1,510 MB |
+| 工作集内存 | 724 MB | **514 MB** |
+| 程序体积 | 48 MB（压缩包 19 MB） | 原生程序文件 **20 MB** |
+
+测量方法：
+
+- **次数**：多次热启动取中位数（每项 3 到 4 次）。
+- **测试机**：i7-13700KF、32 GB 内存、RTX 3060 Ti、Windows 11。
+- **窗口**：两个窗口都是 1600×1000，且都在前台。
+- **POBT**：显示中文。
+- **启动时间**：以屏幕上出现 Path of Building 界面为终点。POBT 的时间等于打开启动器的时间，加上点击「启动」到出现
+  Path of Building 界面的时间。
+- **CPU 和内存**：在 BD 打开、加载平稳后测 30 秒，CPU 取这 30 秒的平均占用。
+- **程序体积**：POBT 解压后的程序（不含翻译文件），对比它所替代的 Path of Building 原生程序文件：
+  `Path of Building.exe`、`SimpleGraphic.dll` 及其依赖的 DLL。
+
 ## 下载
 
 **[下载 POBT Windows 版（zip）](https://github.com/huacnlee/pobt/releases/latest/download/pobt-windows-x86_64.zip)**

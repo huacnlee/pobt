@@ -84,6 +84,32 @@ const otherName = other === 'en' ? 'English' : '简体中文';
         </ul>
       </section>
 
+      <section class="shell section" id="performance">
+        <div class="section-heading">
+          <h2>{t.perfTitle}</h2>
+          <p>{t.perfIntro}</p>
+        </div>
+        <div class="perf card">
+          <table>
+            <thead>
+              <tr>{t.perfHead.map((h) => <th scope="col">{h}</th>)}</tr>
+            </thead>
+            <tbody>
+              {
+                t.perfRows.map(([metric, pobt, pob]) => (
+                  <tr>
+                    <th scope="row">{metric}</th>
+                    <td>{pobt}</td>
+                    <td>{pob}</td>
+                  </tr>
+                ))
+              }
+            </tbody>
+          </table>
+        </div>
+        <p class="perf-note">{t.perfNote}</p>
+      </section>
+
       <section class="shell section" id="install">
         <div class="section-heading">
           <h2>{t.installTitle}</h2>
