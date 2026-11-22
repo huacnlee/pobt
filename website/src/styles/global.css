@@ -41,8 +41,19 @@ h2, h3 { color: var(--gold); font-weight: 700; letter-spacing: .05em; line-heigh
 /* Header: the launcher's top left, and links as its footer's. */
 header { position: sticky; top: 0; z-index: 100; background: linear-gradient(#07080af2, #07080acc 70%, #07080a00); }
 .nav-row { min-height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
-.brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--gold); font-size: 15px; font-weight: 600; letter-spacing: .3em; }
-.brand img { border-radius: 50%; box-shadow: 0 0 0 1px #000, 0 2px 6px #000; }
+.brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+.brand img { filter: drop-shadow(0 2px 6px #000); transition: filter .15s; }
+/* POBT as the title is set: gold, light at the top and dark through the middle, edged in black. */
+.brand span {
+  font-size: 24px; font-weight: 700; letter-spacing: .16em; line-height: 1;
+  background: linear-gradient(#fbf0c8 10%, #e3c98a 42%, #a7853f 56%, #7a5c28 66%, #c9a560 95%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  -webkit-text-stroke: .6px #1a1206;
+  filter: drop-shadow(0 1px 0 #000) drop-shadow(0 3px 6px rgba(0, 0, 0, .8));
+}
+.brand:hover img { filter: drop-shadow(0 2px 6px #000) brightness(1.2); }
+.brand:hover span { filter: drop-shadow(0 1px 0 #000) drop-shadow(0 0 10px rgba(240, 220, 170, .55)); }
+.nav-row { min-height: 72px; }
 nav { display: flex; align-items: center; gap: 14px; font-size: 12px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
 nav a { text-decoration: none; color: var(--gold); padding-block: 6px; transition: color .15s, text-shadow .15s; }
 nav a:hover { color: #fff3d0; text-shadow: 0 0 10px rgba(240, 220, 170, .8); }
