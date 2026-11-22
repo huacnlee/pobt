@@ -10,8 +10,9 @@
 <p align="center"><img src="docs/screenshot.png" alt="POBT 启动界面" width="800"></p>
 
 <p align="center">
-  <img src="docs/screenshot-tree.png" alt="翻译后的天赋树" width="49%">
-  <img src="docs/screenshot-pob.png" alt="翻译后的配置页" width="49%">
+  <img src="docs/screenshot-tree.png" alt="翻译后的天赋树" width="32%">
+  <img src="docs/screenshot-pob.png" alt="翻译后的配置页" width="32%">
+  <img src="docs/screenshot-pob2.png" alt="翻译后的流放之路 2 Path of Building" width="32%">
 </p>
 
 POBT 直接运行你电脑上已有的 [Path of Building Community](https://pathofbuilding.community/)（流放之路 1 和 2），
