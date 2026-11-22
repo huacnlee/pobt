@@ -134,6 +134,14 @@ impl Dictionary {
         while i < b.len() {
             let start = i;
             let mut j = i;
+            // A value range, "(1-2)" or "+(-10-10)": one number to the template.
+            let sign = usize::from(signed && b[j] == b'+');
+            if let Some(n) = range_len(&b[j + sign..]) {
+                nums.push(&s[start..j + sign + n]);
+                key.push(HOLE);
+                i = j + sign + n;
+                continue;
+            }
             if signed && (b[j] == b'+' || b[j] == b'-') && j + 1 < b.len() && b[j + 1].is_ascii_digit() {
                 j += 1;
             }
@@ -212,6 +220,8 @@ impl Dictionary {
             })
             .or_else(|| self.folded.get(&t.to_lowercase()).cloned())
             .or_else(|| self.named(t))
+            .or_else(|| self.supported(t))
+            .or_else(|| self.phrase(t))
             .or_else(|| self.wrapped(t))
             .or_else(|| self.labelled(t))
             .or_else(|| self.joined(t))
@@ -303,6 +313,56 @@ impl Dictionary {
         Some(fill(&join.text, &[&self.inner(a)?, &self.inner(b)?]))
     }
 
+    /// "Socketed Gems are Supported by Level 12 Fortify Support": the
+    /// dictionary's line for that gem, which leaves out "Support", or else the
+    /// gem's own name put in `... Level {0} {1} Support`.
+    fn supported(&self, t: &str) -> Option<String> {
+        const LINE: &str = "Socketed Gems are Supported by Level {0} {1} Support";
+        let name = t.strip_suffix(" Support")?;
+        let (level, gem) = name.strip_prefix("Socketed Gems are Supported by Level ")?.split_once(' ')?;
+        if !(level.bytes().all(|c| c.is_ascii_digit()) || range_len(level.as_bytes()) == Some(level.len())) {
+            return None;
+        }
+        if let Some(known) = self.lookup_template(name, false) {
+            return Some(known);
+        }
+        let gem = self
+            .exact
+            .get(gem)
+            .or_else(|| self.exact.get(&format!("{gem} Support")))
+            .or_else(|| self.folded.get(&gem.to_lowercase()))?;
+        let gem = ["（辅）", "(辅)", "（辅助）", "(辅助)", "辅助"].iter().fold(gem.trim(), |g, s| g.strip_suffix(s).unwrap_or(g)).trim();
+        Some(fill(self.exact.get(LINE)?, &[level, gem]))
+    }
+
+    /// "Drops from Aul, the Crystal King" and "Current (4 variants)": text POB
+    /// builds around names, by the dictionary's line for each shape here, the
+    /// names translated when known.
+    fn phrase(&self, t: &str) -> Option<String> {
+        const PHRASES: &[&str] = &["{0} ({1} variants)", "Drops from {0} in {1}", "Drops from {0}", "Drops in {0}"];
+        'shapes: for shape in PHRASES {
+            let shape_lits = shape.replace("{1}", "{0}");
+            let lits: Vec<&str> = shape_lits.split("{0}").collect();
+            let Some(mut rest) = t.strip_prefix(lits[0]).and_then(|r| r.strip_suffix(lits[lits.len() - 1])) else {
+                continue;
+            };
+            let mut names = Vec::new();
+            for lit in &lits[1..lits.len() - 1] {
+                let Some((name, after)) = rest.split_once(lit) else { continue 'shapes };
+                names.push(name);
+                rest = after;
+            }
+            names.push(rest);
+            if names.iter().any(|n| n.trim().is_empty()) {
+                continue;
+            }
+            let Some(line) = self.exact.get(*shape) else { continue };
+            let names: Vec<String> = names.iter().map(|n| self.inner(n).unwrap_or_else(|| n.to_string())).collect();
+            return Some(fill(line, &names.iter().map(String::as_str).collect::<Vec<_>>()));
+        }
+        None
+    }
+
     /// `s` translated as one, its colour escapes left out, when it has some
     /// inside it: the translation keeps the colour `s` starts with.
     fn whole(&self, s: &str) -> Option<String> {
@@ -373,6 +433,34 @@ impl Dictionary {
         flush(&mut out, &s[seg_start..]);
         changed.then_some(out)
     }
+}
+
+/// The length of the value range `b` starts with, as POB's unique items
+/// write them: "(1-2)", "(0.4-0.5)", "(-10-10)".
+fn range_len(b: &[u8]) -> Option<usize> {
+    fn number(b: &[u8], mut i: usize) -> Option<usize> {
+        if b.get(i) == Some(&b'-') {
+            i += 1;
+        }
+        let digits = b[i.min(b.len())..].iter().take_while(|c| c.is_ascii_digit()).count();
+        if digits == 0 {
+            return None;
+        }
+        i += digits;
+        if b.get(i) == Some(&b'.') && b.get(i + 1).is_some_and(u8::is_ascii_digit) {
+            i += 1 + b[i + 1..].iter().take_while(|c| c.is_ascii_digit()).count();
+        }
+        Some(i)
+    }
+    if b.first() != Some(&b'(') {
+        return None;
+    }
+    let i = number(b, 1)?;
+    if b.get(i) != Some(&b'-') {
+        return None;
+    }
+    let i = number(b, i + 1)?;
+    (b.get(i) == Some(&b')')).then_some(i + 1)
 }
 
 /// The translation with its `{N}` (or `#`, in order) replaced by `nums`.
@@ -614,6 +702,34 @@ mod tests {
         assert_eq!(d.translate("Life has no base cooldown").as_deref(), Some("生命没有基础冷却时间"));
         assert_eq!(d.translate("Foo Bar has no base cooldown").as_deref(), Some("Foo Bar没有基础冷却时间"));
         assert_eq!(d.translate(" has no base cooldown"), None);
+    }
+
+    /// The Items tab's tooltips: unique mods with value ranges, supports
+    /// granted by items, and the lines POB writes around an item.
+    #[test]
+    fn item_tooltips() {
+        let d = Dictionary::load("zh-rCN");
+        let t = |s: &str| d.translate(s);
+        assert_eq!(t("Adds (1-2) to (3-4) Fire Damage to Spells and Attacks").as_deref(), Some("攻击和法术附加 (1-2) - (3-4) 基础火焰伤害"));
+        assert_eq!(t("Adds 1 to 3 Fire Damage to Spells and Attacks").as_deref(), Some("攻击和法术附加 1 - 3 基础火焰伤害"));
+        assert_eq!(t("(100-120)% increased Physical Damage").as_deref(), Some("物理伤害提高 (100-120)%"));
+        assert_eq!(t("+(30-50) to maximum Life").as_deref(), Some("+(30-50) 最大生命"));
+        assert_eq!(t("+(20-30)% to Fire Resistance").as_deref(), Some("火焰抗性 +(20-30)%"));
+        assert_eq!(t("Reflects (71-90) Physical Damage to Melee Attackers").as_deref(), Some("反射 (71-90) 物理伤害给近战攻击者"));
+        assert_eq!(t("(-10-10)% increased Attack Speed").as_deref(), Some("攻击速度提高 (-10-10)%"));
+        assert_eq!(t("(0.4-0.5)% of Physical Attack Damage Leeched as Life").as_deref(), Some("物理攻击伤害的 (0.4-0.5)% 会转化为生命偷取"));
+        assert_eq!(t("Socketed Gems are Supported by Level 12 Fortify Support").as_deref(), Some("插入的宝石被 12 级的护体辅助"));
+        assert_eq!(t("Socketed Gems are Supported by Level (10-15) Blind Support").as_deref(), Some("此物品上的技能石受到 (10-15) 级的 盲目 辅助"));
+        assert_eq!(t("Socketed Gems are Supported by Level 12 Nonsense Support"), None);
+        assert_eq!(t("^xFFFF30Variant: Current (4 variants)").as_deref(), Some("^xFFFF30变种: 当前 (共 4 个变种)"));
+        assert_eq!(t("^x8888FFSource: Drops from ^xAF6025Aul, the Crystal King^x8888FF").as_deref(), Some("^x8888FF来源: 由 Aul, the Crystal King 掉落"));
+        assert_eq!(t("(replacing ").as_deref(), Some("(替换 "));
+        assert_eq!(t("^x7F7F7FWeapon Range: ^x33FF771.1 ^x7F7F7Fmetres").as_deref(), Some("^x7F7F7F武器范围: 1.1 米"));
+        assert_eq!(t("^x7F7F7FLimited to: ^71 Historic").as_deref(), Some("^x7F7F7F仅限: 1 史实"));
+        assert_eq!(t("My Quiver, Primal Arrow Quiver").as_deref(), Some("My Quiver, 原始箭袋"));
+        // A range only in brackets of its own, and only in a known line.
+        assert_eq!(t("We met (1-2) people"), None);
+        assert_eq!(t("Drops from"), None);
     }
 }
 
