@@ -1,7 +1,7 @@
 # Packages POBT for Windows. A tag `vX.Y.Z` publishes it as a GitHub release; running it by hand only builds it
-# (a workflow artifact). `pobt-windows-x86_64.zip` carries no version, so
-# `releases/latest/download/pobt-windows-x86_64.zip`, which the website and install.ps1 link, always resolves. The
-# versioned archive and `latest.json` beside it are what the app's updater (`nsh.json` "updater") fetches.
+# (a workflow artifact). One archive, `pobt-windows-x86_64.zip`, carries no version, so
+# `releases/latest/download/pobt-windows-x86_64.zip`, which the website and install.ps1 link, always resolves; the
+# app's updater (`nsh.json` "updater") fetches `latest.json` beside it, which names that same archive.
 name: Release
 on:
   push:
@@ -72,7 +72,7 @@ jobs:
           test -f "$LOCALAPPDATA/Programs/POBT/POBT.exe"
           rm dist/sha256sums
 
-      # The app fetches `releases/latest/download/latest.json` and the versioned archive it names (nsh/updater).
+      # The app fetches `releases/latest/download/latest.json` and the archive it names (nsh/updater).
       - name: Write the update manifest
         if: github.ref_type == 'tag'
         run: |
@@ -80,6 +80,12 @@ jobs:
           jq --arg version "$version" '.version = $version' nsh.json > "$RUNNER_TEMP/nsh.json"
           mv "$RUNNER_TEMP/nsh.json" nsh.json
           nsh update-manifest dist/pobt-"$version"-*.zip --out dist
+          # The manifest names the versioned archive `nsh package` made; it is the same file as $ASSET, so the release
+          # carries that one only.
+          jq --arg url "$ASSET" '.platforms[].url = $url' dist/latest.json > "$RUNNER_TEMP/latest.json"
+          mv "$RUNNER_TEMP/latest.json" dist/latest.json
+          rm dist/pobt-"$version"-*.zip
+          cat dist/latest.json
 
       - uses: actions/upload-artifact@v4
         with:
