@@ -11,6 +11,7 @@ pub mod lua;
 pub mod settings;
 pub mod text;
 pub mod translate;
+pub mod trs;
 
 use std::{
     path::PathBuf,
@@ -66,7 +67,7 @@ impl Pob {
 
     /// The translations available, as JSON `[{ name, value }]`.
     pub fn languages() -> String {
-        let list: Vec<_> = settings::languages()
+        let list: Vec<_> = trs::languages()
             .into_iter()
             .map(|l| serde_json::json!({ "name": l.name, "value": l.value }))
             .collect();
@@ -125,14 +126,8 @@ fn load_dictionary(language: Option<String>) {
         return;
     };
     std::thread::spawn(move || {
-        let Some(root) = settings::translate_root() else {
-            log::warn!("no translation data found");
-            return;
-        };
-        match translate::Dictionary::load_dir(&root.join(&language)) {
-            Ok(dict) => *translate::DICT.write().unwrap() = Some(Arc::new(dict)),
-            Err(e) => log::error!("loading {language}: {e}"),
-        }
+        let dict = translate::Dictionary::load(&language);
+        *translate::DICT.write().unwrap() = Some(Arc::new(dict));
     });
 }
 

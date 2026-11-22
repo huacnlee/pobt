@@ -3,7 +3,7 @@
 
 use std::{
     collections::HashMap,
-    path::Path,
+
     sync::{Arc, RwLock},
 };
 
@@ -59,20 +59,14 @@ fn template_key(en: &str) -> Option<String> {
 }
 
 impl Dictionary {
-    pub fn load_dir(dir: &Path) -> std::io::Result<Self> {
+    /// The dictionary of `language`: the CSV files of `trs/<language>`.
+    pub fn load(language: &str) -> Self {
         let mut dict = Dictionary::default();
-        let mut files: Vec<_> = std::fs::read_dir(dir)?
-            .filter_map(|e| e.ok())
-            .map(|e| e.path())
-            .filter(|p| p.extension().is_some_and(|e| e.eq_ignore_ascii_case("csv")))
-            .collect();
-        files.sort();
-        for file in files {
-            let Ok(data) = std::fs::read(&file) else { continue };
+        for (_, data) in crate::trs::files(language) {
             let mut reader = csv::ReaderBuilder::new()
                 .has_headers(false)
                 .flexible(true)
-                .from_reader(data.as_slice());
+                .from_reader(data.as_ref());
             for record in reader.byte_records().flatten() {
                 if record.len() < 2 {
                     continue;
@@ -82,8 +76,8 @@ impl Dictionary {
                 dict.insert(en, zh);
             }
         }
-        log::info!("dictionary: {} entries, {} templates", dict.exact.len(), dict.templates.len());
-        Ok(dict)
+        log::info!("dictionary {language}: {} entries, {} templates", dict.exact.len(), dict.templates.len());
+        dict
     }
 
     fn insert(&mut self, en: String, zh: String) {
