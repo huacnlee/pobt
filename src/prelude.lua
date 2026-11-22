@@ -331,6 +331,7 @@ end
 
 function LoadModule(name, ...)
 	local file = moduleFile(name)
+	sg.Step()
 	local chunk, err = loadfile(file)
 	if not chunk then
 		error("LoadModule() error loading '" .. file .. "':\n" .. tostring(err), 2)
@@ -340,6 +341,7 @@ end
 
 function PLoadModule(name, ...)
 	local file = moduleFile(name)
+	sg.Step()
 	local chunk, err = loadfile(file)
 	if not chunk then
 		return err

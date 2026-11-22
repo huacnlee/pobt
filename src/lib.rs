@@ -8,6 +8,7 @@ pub mod frame;
 pub mod host;
 pub mod images;
 pub mod install;
+pub mod loading;
 pub mod lua;
 pub mod settings;
 pub mod text;
@@ -42,6 +43,9 @@ fn native(registry: &mut Registry) {
 
 /// The running POB, and its thread.
 static SESSION: Mutex<Option<(Arc<Shared>, std::thread::JoinHandle<()>)>> = Mutex::new(None);
+
+/// The steps the running POB took to load last time, if it has loaded before.
+static EXPECTED_STEPS: Mutex<Option<u32>> = Mutex::new(None);
 
 fn session() -> Option<Arc<Shared>> {
     SESSION.lock().unwrap().as_ref().map(|(s, _)| s.clone())
@@ -124,6 +128,7 @@ impl Pob {
             relaunch();
         }
         load_dictionary((!language.is_empty()).then_some(language));
+        *EXPECTED_STEPS.lock().unwrap() = loading::expected(std::path::Path::new(&dir));
         let shared = Shared::new();
         match host::start(PathBuf::from(dir), shared.clone()) {
             Ok(thread) => {
@@ -179,6 +184,26 @@ impl Pob {
             s.save();
         }
         serde_json::to_string(&p).unwrap_or_default()
+    }
+
+    /// How far the POB that `start` started has loaded, as JSON: `{ loaded,
+    /// steps, expected, message }`; `expected` is null the first time a POB
+    /// loads, and `message` what it last said, translated.
+    pub fn load_progress() -> String {
+        let Some(s) = session() else {
+            return r#"{"loaded":true,"steps":0,"expected":null,"message":""}"#.into();
+        };
+        let l = s.loading.lock().unwrap().clone();
+        let message = translate::current()
+            .and_then(|d| d.translate(&l.message))
+            .unwrap_or(l.message);
+        serde_json::json!({
+            "loaded": s.loaded.load(Ordering::SeqCst),
+            "steps": l.steps,
+            "expected": *EXPECTED_STEPS.lock().unwrap(),
+            "message": message,
+        })
+        .to_string()
     }
 
     /// Asks POB to quit, back to the launcher: it does once its `CanExit`

@@ -33,6 +33,13 @@ pub enum Input {
 }
 
 /// State shared between the UI thread and the Lua thread.
+/// POB loading: the modules it has loaded so far, and the last thing it said.
+#[derive(Debug, Clone, Default)]
+pub struct Loading {
+    pub steps: u32,
+    pub message: String,
+}
+
 pub struct Shared {
     pub frame: Mutex<Arc<Frame>>,
     pub generation: AtomicU64,
@@ -52,6 +59,9 @@ pub struct Shared {
     pub to_launcher: AtomicBool,
     /// POB asked its `Update.exe` to replace its runtime: POBT does instead.
     pub runtime_update: AtomicBool,
+    /// How far POB has loaded, until it has (`loaded`).
+    pub loading: Mutex<Loading>,
+    pub loaded: AtomicBool,
     /// Set by the UI to have the Lua thread repaint and process input now.
     pub poke: AtomicBool,
     pub last_input: Mutex<Instant>,
@@ -73,6 +83,8 @@ impl Shared {
             quit: AtomicBool::new(false),
             to_launcher: AtomicBool::new(false),
             runtime_update: AtomicBool::new(false),
+            loading: Mutex::new(Loading::default()),
+            loaded: AtomicBool::new(false),
             poke: AtomicBool::new(false),
             last_input: Mutex::new(Instant::now()),
         })
@@ -248,6 +260,10 @@ fn run_once(pob_dir: &Path, shared: &Arc<Shared>, rx: mpsc::Receiver<Input>) -> 
     if let Err(e) = callback(l, "OnInit", &[]) {
         report(shared, "Error in OnInit", e);
     }
+    if !shared.loaded.load(Ordering::SeqCst) {
+        let steps = shared.loading.lock().unwrap().steps;
+        crate::loading::remember(pob_dir, steps);
+    }
 
     let mut frames = 0u64;
     loop {
@@ -294,6 +310,8 @@ fn run_once(pob_dir: &Path, shared: &Arc<Shared>, rx: mpsc::Receiver<Input>) -> 
             report(shared, "Error in OnFrame", e);
         }
         publish(shared);
+        // Loaded once its first frame is out: the launcher's loading screen gives way to it.
+        shared.loaded.store(true, Ordering::SeqCst);
         frames += 1;
         if frames % 120 == 0 {
             translate::dump_misses();
@@ -558,6 +576,7 @@ fn register(l: Lua) {
         ("Exit", n_exit),
         ("Restart", n_restart),
         ("Log", n_log),
+        ("Step", n_step),
         ("ImgLoad", n_img_load),
         ("ArtLoad", n_art_load),
         ("ArtRect", n_art_rect),
@@ -1067,8 +1086,16 @@ native!(n_restart, |_l| {
     0
 });
 
+native!(n_step, |_l| {
+    shared().loading.lock().unwrap().steps += 1;
+    0
+});
+
 native!(n_log, |l| {
     let s = l.string(1).unwrap_or_default();
+    if !shared().loaded.load(Ordering::SeqCst) && !s.trim().is_empty() {
+        shared().loading.lock().unwrap().message = s.trim().to_string();
+    }
     log::info!(target: "pob", "{}", s.trim_end());
     0
 });

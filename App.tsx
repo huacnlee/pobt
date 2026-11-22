@@ -52,6 +52,7 @@ interface Strings {
   installFailed: string;
   start: string;
   back: string;
+  loading: string;
   needDir: string;
   notPobDir: (dir: string, game: string) => string;
   downloading: (version: string, percent: number) => string;
@@ -76,6 +77,7 @@ const UI: Record<string, Strings> = {
     installFailed: "Install failed",
     start: "Start",
     back: "Launcher",
+    loading: "Loading Path of Building…",
     needDir: "Choose the folder of Path of Building first",
     notPobDir: (dir, game) => `${dir} is not a Path of Building folder for ${game}`,
     downloading: (v, p) => `Downloading v${v} · ${p}%`,
@@ -97,6 +99,7 @@ const UI: Record<string, Strings> = {
     installFailed: "安装失败",
     start: "启动",
     back: "返回主界面",
+    loading: "正在加载 Path of Building…",
     needDir: "请先选择 Path of Building 的安装目录",
     notPobDir: (dir, game) => `${dir} 不是${game}的 Path of Building 目录`,
     downloading: (v, p) => `下载中 v${v} · ${p}%`,
@@ -118,6 +121,7 @@ const UI: Record<string, Strings> = {
     installFailed: "安裝失敗",
     start: "啟動",
     back: "返回主介面",
+    loading: "正在載入 Path of Building…",
     needDir: "請先選擇 Path of Building 的安裝目錄",
     notPobDir: (dir, game) => `${dir} 不是${game}的 Path of Building 目錄`,
     downloading: (v, p) => `下載中 v${v} · ${p}%`,
@@ -139,6 +143,7 @@ const UI: Record<string, Strings> = {
     installFailed: "설치 실패",
     start: "시작",
     back: "처음 화면",
+    loading: "Path of Building 불러오는 중…",
     needDir: "먼저 Path of Building 폴더를 선택하세요",
     notPobDir: (dir, game) => `${dir}은(는) ${game}의 Path of Building 폴더가 아닙니다`,
     downloading: (v, p) => `다운로드 중 v${v} · ${p}%`,
@@ -727,10 +732,75 @@ function Launcher(props: { onStart: () => void }) {
   );
 }
 
+// How far POB has loaded (`Pob.loadProgress`).
+interface LoadProgress {
+  loaded: boolean;
+  steps: number;
+  expected: number | null;
+  message: string;
+}
+
+/** Over Path of Building until it has loaded: the doorway, the title, a bar filling as POB loads its modules (as far
+ * as it took last time; the first time, an estimate) and what it says it is doing. */
+function Loading(props: { t: () => Strings; progress: () => LoadProgress }) {
+  const fraction = () => {
+    const p = props.progress();
+    return p.expected ? Math.min(p.steps / p.expected, 0.99) : 1 - Math.exp(-p.steps / 160);
+  };
+  const BAR = 480;
+  return (
+    <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: C.bg, alignItems: "center", justifyContent: "center", gap: 18 }}>
+      <Shader source={GATE} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
+      <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.35)" }} />
+      <Image src={title} style={{ width: 560, height: 77 }} />
+      <Rule width={420} />
+      <Text style={{ fontFamily: BODY, fontSize: 15, color: C.text, textShadow: "0 0 3px #000, 0 0 8px #000, 0 1px 2px #000" }}>{props.t().loading}</Text>
+      {/* The bar: a gold-trimmed groove, filled red as the start button is */}
+      <View
+        style={{
+          width: BAR,
+          height: 14,
+          borderWidth: 1,
+          borderColor: C.trimHi,
+          backgroundColor: "rgba(0,0,0,0.75)",
+          boxShadow: "inset 0 0 0 2px rgba(0,0,0,0.8), 0 0 0 1px #000, 0 6px 16px rgba(0,0,0,0.7)",
+          padding: 2,
+        }}
+      >
+        <View
+          style={{
+            width: (BAR - 6) * fraction(),
+            height: 8,
+            backgroundImage: "linear-gradient(180deg, #c0473a, #8e2218 45%, #5e1209)",
+            boxShadow: "0 0 8px rgba(224,96,74,0.55)",
+          }}
+        />
+      </View>
+      <Text style={{ fontFamily: BODY, fontSize: 12, color: C.muted, height: 18, textShadow: "0 1px 2px #000", numberOfLines: 1 }}>
+        {props.progress().expected ? `${Math.round(fraction() * 100)}%  ·  ` : ""}
+        {props.progress().message}
+      </Text>
+    </View>
+  );
+}
+
 function App() {
   // No system title bar: the app draws its own (TitleBar).
   currentWindow().set({ titleBar: { style: "hidden", height: TITLE_BAR } });
   const running = signal(false);
+  // POB loading, polled from its start until it has loaded.
+  const progress = signal<LoadProgress>({ loaded: false, steps: 0, expected: null, message: "" });
+  const watchLoading = () => {
+    const p: LoadProgress = JSON.parse(Pob.loadProgress());
+    progress.set(p);
+    if (!p.loaded && running()) setTimeout(watchLoading, 80);
+  };
+  const start = () => {
+    progress.set({ loaded: false, steps: 0, expected: null, message: "" });
+    running.set(true);
+    watchLoading();
+  };
+  const t = () => strings((JSON.parse(Pob.settings()) as Settings).language);
   // Back to the launcher: POB quits as it would on closing (asking about unsaved changes first: it may stay, or quit
   // once the user answers), then the launcher shows.
   const back = () => {
@@ -743,10 +813,15 @@ function App() {
     poll();
   };
   return (
-    <If when={running()} else={<Launcher onStart={() => running.set(true)} />}>
+    <If when={running()} else={<Launcher onStart={start} />}>
       <View style={{ flex: 1 }}>
-        <TitleBar t={() => strings((JSON.parse(Pob.settings()) as Settings).language)} solid onBack={back} />
-        <PobCanvas style={{ flex: 1 }} />
+        <TitleBar t={t} solid onBack={back} />
+        <View style={{ flex: 1 }}>
+          <PobCanvas style={{ flex: 1 }} />
+          <If when={!progress().loaded}>
+            <Loading t={t} progress={progress} />
+          </If>
+        </View>
       </View>
     </If>
   );
