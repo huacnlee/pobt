@@ -11,7 +11,7 @@
 
 <p align="center">
   <img src="docs/screenshot-tree.png" alt="The passive tree, translated" width="32%">
-  <img src="docs/screenshot-pob.png" alt="The configuration, translated" width="32%">
+  <img src="docs/screenshot-pob.png" alt="The calculations, translated" width="32%">
   <img src="docs/screenshot-pob2.png" alt="Path of Building for Path of Exile 2, translated" width="32%">
 </p>
 

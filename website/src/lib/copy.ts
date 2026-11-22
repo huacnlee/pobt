@@ -60,7 +60,7 @@ export const copy: Record<Language, Copy> = {
     scriptLink: "or install with PowerShell",
     shotAlt: "The POBT launcher: pick Path of Exile or Path of Exile 2 and a language, then Start.",
     shotTreeAlt: "The passive tree in Path of Building, translated",
-    shotPobAlt: "Path of Building's configuration, translated",
+    shotPobAlt: "Path of Building's calculations, translated",
     shotPob2Alt: "Path of Building for Path of Exile 2, translated",
     featuresTitle: "What it does",
     features: [
@@ -134,7 +134,7 @@ export const copy: Record<Language, Copy> = {
     scriptLink: "或用 PowerShell 安装",
     shotAlt: "POBT 启动界面：选择流放之路或流放之路 2 和语言，然后启动。",
     shotTreeAlt: "翻译后的 Path of Building 天赋树",
-    shotPobAlt: "翻译后的 Path of Building 配置页",
+    shotPobAlt: "翻译后的 Path of Building 计算页",
     shotPob2Alt: "翻译后的流放之路 2 Path of Building",
     featuresTitle: "功能",
     features: ["翻译流放之路 1 与 2 的 Path of Building", "新增简体中文、繁體中文与한국어", "绝不修改你的 Path of Building 文件", "Ctrl+Shift+T 随时切换英文", "有新版本时自动更新"],
