@@ -170,8 +170,16 @@ impl Dictionary {
         }
         let lead = &seg[..seg.len() - seg.trim_start().len()];
         let trail = &seg[seg.trim_end().len()..];
-        let found = self
-            .exact
+        self.inner(t).map(|f| format!("{lead}{f}{trail}"))
+    }
+
+    /// The translation of trimmed text: the dictionary's rules, then text POB
+    /// builds around them.
+    fn inner(&self, t: &str) -> Option<String> {
+        if t.is_empty() || !t.bytes().any(|c| c.is_ascii_alphabetic()) {
+            return None;
+        }
+        self.exact
             .get(t)
             .cloned()
             .or_else(|| self.lookup_template(t, true))
@@ -186,8 +194,41 @@ impl Dictionary {
                 let known = self.exact.get(&format!("{t}:"))?;
                 Some(known.trim_end_matches([':', '：']).trim_end().to_string())
             })
-            .or_else(|| self.folded.get(&t.to_lowercase()).cloned());
-        found.map(|f| format!("{lead}{f}{trail}"))
+            .or_else(|| self.folded.get(&t.to_lowercase()).cloned())
+            .or_else(|| self.wrapped(t))
+            .or_else(|| self.labelled(t))
+            .or_else(|| self.joined(t))
+    }
+
+    /// "(Guard)" and "[3.27] Default": a known word in brackets, or after them.
+    fn wrapped(&self, t: &str) -> Option<String> {
+        if let Some(word) = t.strip_prefix('(').and_then(|w| w.strip_suffix(')')) {
+            return Some(format!("({})", self.inner(word)?));
+        }
+        let (tag, rest) = t.strip_prefix('[')?.split_once("] ")?;
+        Some(format!("[{tag}] {}", self.inner(rest)?))
+    }
+
+    /// "Current build:  Name" and "Version: 2.68.1": a known label and the
+    /// value POB put after it, which is translated when known.
+    fn labelled(&self, t: &str) -> Option<String> {
+        let (label, value) = t.split_once(':')?;
+        let gap = &value[..value.len() - value.trim_start().len()];
+        let value = value.trim_start();
+        if gap.is_empty() || value.is_empty() {
+            return None;
+        }
+        let label = self.inner(&format!("{}:", label.trim_end()))?;
+        let value = self.inner(value).unwrap_or_else(|| value.to_string());
+        Some(format!("{label}{gap}{value}"))
+    }
+
+    /// "1 Mirage Archers using Tornado Shot": both sides known, joined by the
+    /// dictionary's `{0} using {1}`.
+    fn joined(&self, t: &str) -> Option<String> {
+        let (a, b) = t.split_once(" using ")?;
+        let join = self.templates.get(&format!("{HOLE} using {HOLE}"))?;
+        Some(fill(&join.text, &[&self.inner(a)?, &self.inner(b)?]))
     }
 
     /// `s` translated as one, its colour escapes left out, when it has some
@@ -342,6 +383,31 @@ mod tests {
         assert_eq!(d.translate("^7# of Gale Force:").as_deref(), Some("^7【飓风之力】个数"));
         assert_eq!(d.translate("Are you always on Full ^xE05030Life?").as_deref(), Some("^xFFFFFF是否处于满^xE05030血^7状态?"));
         assert_eq!(d.translate("Current build:").as_deref(), Some("当前 BD:"));
+    }
+
+    /// Text POB builds around known words, as the screens show it.
+    #[test]
+    fn built_text() {
+        let d = Dictionary::load("zh-rCN");
+        assert_eq!(d.translate("Current build:  My Build").as_deref(), Some("当前 BD:  My Build"));
+        assert_eq!(d.translate("^7Version: 2.68.1").as_deref(), Some("^7版本: 2.68.1"));
+        assert_eq!(d.translate("[3.27] Default").as_deref(), Some("[3.27] 默认"));
+        assert_eq!(d.translate("1 Mirage Archers using Tornado Shot").as_deref(), Some("1 个幻影射手使用龙卷射击"));
+        assert_eq!(d.translate("Convert all trees to 3.30").as_deref(), Some("全部转换为 3.30"));
+        assert_eq!(d.translate("Level:").as_deref(), Some("等级:"));
+    }
+
+    #[test]
+    fn wrapped_labelled_joined() {
+        let mut d = dict();
+        d.insert("Guard".into(), "护卫".into());
+        d.insert("{0} using {1}".into(), "{0}使用{1}".into());
+        assert_eq!(d.translate(" (Guard)").as_deref(), Some(" (护卫)"));
+        assert_eq!(d.translate("Life:  Guard").as_deref(), Some("生命:  护卫"));
+        assert_eq!(d.translate("Life:  Someone").as_deref(), Some("生命:  Someone"));
+        assert_eq!(d.translate("Life using Guard").as_deref(), Some("生命使用护卫"));
+        assert_eq!(d.translate("Life using Mana"), None);
+        assert_eq!(d.translate("Mana:  Guard"), None);
     }
 
     /// How much of POB's mod text the dictionary translates, and the shapes it
