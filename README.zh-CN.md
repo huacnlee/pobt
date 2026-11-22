@@ -23,6 +23,37 @@ POBT 直接运行你电脑上已有的 [Path of Building Community](https://path
 - 翻译是 `POBT.exe` 旁边 `trs` 文件夹里的 CSV 文件，可以自己修改或补充（POBT 更新时会覆盖这个文件夹，改过的内容请自己备份）。
 - 有新版本时自动更新。
 
+## 性能
+
+POBT 可以代替 Path of Building 自带的程序使用：它运行的是 Path of Building 自己的代码，只是用 POBT 自己的程序代替了
+`Path of Building.exe` 和它的图形运行时。在同一台电脑上，打开同一个 BD、停在天赋树页实测：
+
+| | POBT 0.2.0 | Path of Building 2.68.1 |
+| --- | ---: | ---: |
+| 启动到看到 BD | **2.70 秒** | 3.38 秒 |
+| 启动到看到 BD 列表 | **1.51 秒** | 1.87 秒 |
+| 空闲时 CPU | **单核的 8.0%** | 单核的 46.4% |
+| 私有内存 | **893 MB** | 1,011 MB |
+| 加载 BD 时的私有内存峰值 | **1,007 MB** | 1,507 MB |
+| 工作集内存 | 725 MB | **517 MB** |
+| 运行需要的原生文件 | 50 MB（压缩后 20 MB） | **28 MB**（压缩后 11 MB） |
+
+测量方法：
+
+- **版本**：官方发布的 POBT 0.2.0 安装包。
+- **次数**：每项 5 次热启动取中位数。
+- **测试机**：i7-13700KF、32 GB 内存、RTX 3060 Ti、Windows 11。
+- **窗口**：两个窗口都是 1600×1000，且都在前台。
+- **POBT**：显示中文。
+- **启动时间**：以屏幕上出现 Path of Building 界面为终点。POBT 的时间等于打开启动器的时间，加上点击「启动」到出现
+  Path of Building 界面的时间。
+- **CPU 和内存**：在 BD 打开、加载平稳后测 30 秒，CPU 取这 30 秒的平均占用。
+- **原生文件**：各自运行需要的全部原生文件。Path of Building：exe、全部 DLL（图形、C++ 运行库、Lua 及其模块）和
+  `SimpleGraphic` 及字体。POBT：自己的程序，加上它加载的 5 个 Path of Building 的 Lua DLL。两者共用的 Lua 代码和数据、
+  POBT 的翻译文件都不计入。
+- **工作集内存**：POBT 把天赋树的贴图放在内存里，Path of Building 放在显存里（POBT 只用一半显存）；翻译词典约占
+  45 MB。其中大部分处于闲置状态：清空工作集后，两者都只用回约 70 MB。
+
 ## 下载
 
 **[下载 POBT Windows 版（zip）](https://github.com/huacnlee/pobt/releases/latest/download/pobt-windows-x86_64.zip)**

@@ -24,6 +24,40 @@ Chinese, Traditional Chinese and Korean are included.
 - The translations are plain CSV files in the `trs` folder beside `POBT.exe`: edit them to fix one or add your own (an update of POBT replaces the folder, so keep a copy of your changes).
 - POBT updates itself when a new version is out.
 
+## Performance
+
+POBT can stand in for Path of Building's own program: it runs Path of Building's code with its own program in place
+of `Path of Building.exe` and its graphics runtime. Measured on the same PC with the same build open on the passive
+tree:
+
+| | POBT 0.2.0 | Path of Building 2.68.1 |
+| --- | ---: | ---: |
+| Start to the build on screen | **2.70 s** | 3.38 s |
+| Start to the build list | **1.51 s** | 1.87 s |
+| CPU while idle | **8.0% of a core** | 46.4% of a core |
+| Private memory | **893 MB** | 1,011 MB |
+| Peak private memory while loading | **1,007 MB** | 1,507 MB |
+| Working set | 725 MB | **517 MB** |
+| Native files to run it | 50 MB (20 MB zipped) | **28 MB** (11 MB zipped) |
+
+How it was measured:
+
+- **Version**: the official POBT 0.2.0 release download.
+- **Runs**: medians of 5 warm runs.
+- **Machine**: i7-13700KF, 32 GB of memory, RTX 3060 Ti, Windows 11.
+- **Windows**: both windows were 1600×1000 and in front.
+- **POBT**: showing Chinese.
+- **Startup**: ends when the screen shows Path of Building. For POBT it adds the time to its launcher and the time
+  from **Start** to Path of Building on screen.
+- **CPU and memory**: taken over 30 s once the build was open and loading had settled. CPU is the process's average
+  over those 30 s.
+- **Native files**: everything native each needs to run. For Path of Building: its exe, all its DLLs (graphics,
+  C++ runtime, Lua and its modules) and `SimpleGraphic` with its fonts. For POBT: its program and the 5 Lua DLLs of
+  Path of Building it loads. The Lua code and data both use, and POBT's translations, are not counted.
+- **Working set**: POBT keeps the passive tree's images in memory where Path of Building keeps them in video memory
+  (POBT uses half the video memory), and the translations take about 45 MB. Most of it is idle: trimmed, both take
+  back about 70 MB.
+
 ## Download
 
 **[Download POBT for Windows (.zip)](https://github.com/huacnlee/pobt/releases/latest/download/pobt-windows-x86_64.zip)**
