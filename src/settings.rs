@@ -47,7 +47,7 @@ impl Settings {
         let mut s: Settings = file()
             .and_then(|f| std::fs::read(f).ok())
             .and_then(|b| serde_json::from_slice(&b).ok())
-            .unwrap_or_else(|| Settings { language: Some("zh-rCN".into()), ..Default::default() });
+            .unwrap_or_default();
         if s.poe1_dir.as_deref().is_none_or(|d| !is_pob_dir(d, Game::Poe1)) {
             s.poe1_dir = detect(Game::Poe1);
         }

@@ -1,42 +1,53 @@
-# POBT
+<p align="center"><img src="icon.png" width="128" height="128" alt="POBT"></p>
 
-English | [简体中文](README.zh-CN.md)
+<h1 align="center">POBT</h1>
 
-[Path of Building](https://github.com/PathOfBuildingCommunity/PathOfBuilding) (Path of Exile 1 and 2) with a
-translated interface, built with [Native Shell (NSH)](https://nsh.dev) as a successor to PoeCharm2. Simplified Chinese,
-Traditional Chinese and Korean are included.
+<p align="center">
+  <b>Path of Building, in your language.</b><br>
+  English | <a href="README.zh-CN.md">简体中文</a> · <a href="https://huacnlee.github.io/pobt/">Website</a>
+</p>
 
-## How it works
+POBT runs the [Path of Building Community](https://pathofbuilding.community/) you already have — for Path of Exile
+and Path of Exile 2 — with its whole interface translated: skills, items, passives and calculations. Simplified
+Chinese, Traditional Chinese and Korean are included.
 
-POBT changes no file of Path of Building. It runs POB's Lua on the LuaJIT POB ships (`lua51.dll`) and implements the
-SimpleGraphic API POB is written against:
+- Your Path of Building files are never modified; your builds stay where they are.
+- Press **Ctrl+Shift+T** at any time to switch to English and back.
+- POBT updates itself when a new version is out.
 
-- `src/host.rs`: runs POB on its own thread and provides `DrawImage`, `DrawString`, sub scripts (`LaunchSubScript`)
-  and the rest; every frame's draw commands go to the UI thread.
-- `src/translate.rs`: replaces the English that reaches `DrawString` / `DrawStringWidth` with the translation, with
-  number templates (`{0}`, `#`) and colour escapes (`^7`, `^xRRGGBB`) kept; text in edit boxes is left as typed.
-- `src/text.rs`: lays text out with the widths of Microsoft YaHei and Consolas, so POB's layout follows the translated
-  text.
-- `src/images.rs`, `src/dds.rs`: images, tinted copies, and POB2's BC7 `.dds.zst` textures.
-- `src/lib.rs`: the `PobCanvas` component (drawing on an NSH canvas, forwarding the mouse and keys) and the `Pob`
-  module.
-- `App.tsx`: the launcher (game, POB folder, language) and the update check.
+## Download
 
-Press **Ctrl+Shift+T** while POB runs to switch between the translation and English.
+**[Download POBT for Windows (.zip)](https://github.com/huacnlee/pobt/releases/latest/download/pobt-windows-x86_64.zip)**
 
-## Running
+1. Unpack the zip anywhere (right-click → Extract All).
+2. Run `POBT.exe`. Windows may warn about a new program: choose **More info**, then **Run anyway**.
+3. POBT finds Path of Building on its own; if it does not, choose its folder.
+4. Pick the game and the language, then **Start**.
 
-You need Path of Building Community installed (PoE1 and/or PoE2) and [nsh](https://nsh.dev/docs/installation).
+Or install it with PowerShell, which adds Start menu and desktop shortcuts and updates POBT when run again:
 
-```sh
-nsh run
-nsh package --target windows
+```powershell
+irm https://huacnlee.github.io/pobt/install.ps1 | iex
 ```
 
-POBT updates itself from this repository's GitHub Releases.
+## Requirements
 
-## Translations
+- 64-bit Windows 10 or 11
+- [Path of Building Community](https://pathofbuilding.community/) for Path of Exile 1, 2 or both
 
-The translations in `trs/` come from [PoeCharm2](https://github.com/Chuanhsing/PoeCharm2) and remain the work of its
-authors and contributors; see [`trs/SOURCE.md`](trs/SOURCE.md). Each file is a two-column CSV, `English,translation`,
-where `{0}`, `{1}` or `#` stand for numbers.
+## Questions
+
+**Path of Building updated — does POBT keep up?** Yes: POBT runs the Path of Building you have installed, so update
+Path of Building as usual.
+
+**A translation is wrong or missing.** Translations are CSV files in [`trs/`](trs); issues and pull requests are
+welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Credits
+
+- [Path of Building Community](https://github.com/PathOfBuildingCommunity/PathOfBuilding), the planner POBT runs.
+- [PoeCharm2](https://github.com/Chuanhsing/PoeCharm2), whose contributors wrote the translations ([`trs/SOURCE.md`](trs/SOURCE.md)).
+- [Native Shell](https://nsh.dev), the framework POBT is built with.
+
+Path of Exile is a trademark of Grinding Gear Games. POBT is not affiliated with Grinding Gear Games or the Path of
+Building Community. POBT is licensed under the [Apache License 2.0](LICENSE).
