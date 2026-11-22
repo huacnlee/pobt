@@ -44,7 +44,7 @@ jobs:
           Add-Content $env:GITHUB_PATH (Join-Path $env:LOCALAPPDATA 'nsh\bin')
 
       - name: Check
-        run: nsh check
+        run: nsh check -v
 
   test:
     runs-on: windows-latest
