@@ -420,13 +420,22 @@ function __pobt_hookClasses()
 		if gem then
 			self.buf = sg.Translate(buf)
 		end
-		-- The focused box: where text typed with an input method goes.
+		sg.SetRawText(true)
+		-- The focused box from its caret on: where text typed with an input method goes, and its candidates show.
 		if self.hasFocus and self.GetPos and self.GetSize then
 			local x, y = self:GetPos()
 			local w, h = self:GetSize()
-			sg.SetTextInput(x, y, w, h)
+			local textHeight = self.lineHeight or (h - 4)
+			local caretX = x + 2
+			if self.prompt then
+				caretX = caretX + DrawStringWidth(textHeight, self.font, self.prompt) + textHeight / 2
+			end
+			local pre = type(self.buf) == "string" and self.buf:sub(1, (self.caret or 1) - 1):match("[^
+]*$") or ""
+			local scroll = self.controls and self.controls.scrollBarH and self.controls.scrollBarH.offset or 0
+			caretX = math.min(math.max(caretX + DrawStringWidth(textHeight, self.font, pre) - scroll, x), x + w - 1)
+			sg.SetTextInput(caretX, y, x + w - caretX, h)
 		end
-		sg.SetRawText(true)
 		local r = pack(pcall(draw, self, ...))
 		sg.SetRawText(false)
 		self.prompt, self.placeholder = prompt, placeholder
@@ -437,6 +446,32 @@ function __pobt_hookClasses()
 			error(r[2], 0)
 		end
 		return unpack(r, 2, r.n)
+	end
+	-- POB deletes a byte at a time: Backspace and Delete take the whole of a character UTF-8 writes in several.
+	local keyDown = edit.OnKeyDown
+	edit.OnKeyDown = function(self, key, ...)
+		local buf, caret = self.buf, self.caret
+		if (key == "BACK" or key == "DELETE") and type(buf) == "string" and caret
+			and not (self.sel and self.sel ~= caret) and not IsKeyDown("CTRL") then
+			if key == "BACK" and caret > 1 then
+				local start = caret - 1
+				while start > 1 and buf:byte(start) >= 0x80 and buf:byte(start) < 0xC0 do
+					start = start - 1
+				end
+				if start < caret - 1 then
+					self.sel = start
+				end
+			elseif key == "DELETE" and caret <= #buf then
+				local stop = caret + 1
+				while stop <= #buf and buf:byte(stop) >= 0x80 and buf:byte(stop) < 0xC0 do
+					stop = stop + 1
+				end
+				if stop > caret + 1 then
+					self.sel = stop
+				end
+			end
+		end
+		return keyDown(self, key, ...)
 	end
 	edit.__pobt = true
 end

@@ -572,7 +572,9 @@ fn pob_view(shared: Arc<Shared>) -> impl IntoElement {
     let sink_ref = element_ref();
     let composing = signal(String::new());
     let s = shared.clone();
-    let sink = move |rect: [f32; 4]| {
+    // Where the sink goes: POB's focused box, from its caret on.
+    let at = move |i: usize| frame.with(|f| f.text_input.map_or(0.0, |r| r[i]));
+    let sink = move || {
         // A focused native input gets no key events: its keys reach POB through bindings, which fire before the
         // input, and not while an input method composes (it keeps its keys).
         for &(keystroke, key, ctrl, shift) in SINK_KEYS {
@@ -614,10 +616,10 @@ fn pob_view(shared: Arc<Shared>) -> impl IntoElement {
         input()
             .element_ref(&sink_ref)
             .absolute()
-            .left(px(rect[0]))
-            .top(px(rect[1]))
-            .w(px(rect[2]))
-            .h(px(rect[3]))
+            .left(move || Length::from(px(at(0))))
+            .top(move || Length::from(px(at(1))))
+            .w(move || Length::from(px(at(2))))
+            .h(move || Length::from(px(at(3))))
             .p_0()
             .border(px(0.0))
             .opacity(0.02)
@@ -647,12 +649,16 @@ fn pob_view(shared: Arc<Shared>) -> impl IntoElement {
             })
     };
     // Back to the canvas once no box has the focus; back to the sink after a click while one has.
-    let editing = std::cell::Cell::new(false);
+    // Whether a box has the focus, changed only when it does: the sink lives while it has.
+    let editing = signal(false);
     effect(move || {
         let now = frame.with(|f| f.text_input.is_some());
-        if editing.replace(now) && !now {
-            composing.set(String::new());
-            canvas_ref.focus();
+        if editing.get_untracked() != now {
+            editing.set(now);
+            if !now {
+                composing.set(String::new());
+                canvas_ref.focus();
+            }
         }
     });
     let on_mouse_up = {
@@ -686,8 +692,7 @@ fn pob_view(shared: Arc<Shared>) -> impl IntoElement {
                 .on_key_down(on_key_down)
                 .on_key_up(on_key_up),
         )
-        // Keyed by the box, so the sink stays while it keeps the focus.
-        .child(dynamic(move || frame.with(|f| f.text_input.map(|r| r.map(f32::to_bits))).map(|r| sink(r.map(f32::from_bits)))))
+        .child(dynamic(move || editing.get().then(|| sink())))
         // What the input method composes, at the end of the box, as POB cannot show it.
         .child(dynamic(move || {
             let text_ = composing.get();
