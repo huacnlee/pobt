@@ -120,8 +120,9 @@ fn shade(uv: vec2f) -> vec4f {
   let cx = 0.5 * aspect;
   // Dusk: a pale light, faintly warm, outside; inside, grey-black stone in shadow.
   let dusk = vec3f(0.95, 0.92, 0.86);
-  // We stand inside, looking out: the light is beyond the door, high on the right, and comes in through it.
-  let toSun = normalize(vec2f(0.5, -1.0));
+  // We stand inside, looking out: the light is beyond the door, high up and a little to the right (at two o'clock),
+  // and falls in through it almost straight down.
+  let toSun = normalize(vec2f(0.27, -1.0));
   let dd = doorway(p, cx);
   let open = step(dd, 0.0);
 
@@ -179,7 +180,7 @@ fn shade(uv: vec2f) -> vec4f {
   // Outside: bright haze, brightest high on the right where the sun is, mist drifting across.
   if (open > 0.5) {
     let haze = fbm(p * vec2f(2.5, 1.8) + vec2f(-t * 0.02, t * 0.008));
-    let sun = smoothstep(1.1, -0.1, distance(p, vec2f(cx + 0.35, DOOR_SPRING - DOOR_RISE - 0.05)));
+    let sun = smoothstep(1.1, -0.1, distance(p, vec2f(cx + 0.16, DOOR_SPRING - DOOR_RISE - 0.08)));
     // White at the sun, cold blue away from it.
     let sky = mix(vec3f(0.36, 0.46, 0.62), vec3f(1.03, 1.04, 1.06), clamp(sun * (0.6 + 0.5 * haze), 0.0, 1.0));
     // The land outside below the horizon: grey, darker near, a lit path running off into the haze.
