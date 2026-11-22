@@ -55,7 +55,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: ext/pobt-native
-          key: ci-test
+          key: ci-test-deps-o0
 
       # The tests that run POB's Lua (its LuaJIT, its edit boxes) need a Path of Building: its latest portable
       # release, as POBT installs it, without the art and data they do not read, kept until a new one comes out.
@@ -82,4 +82,6 @@ jobs:
         run: |
           # Without a Path of Building the tests of POB's Lua would pass skipped.
           test -f "$POB_DIR/lua51.dll" && test -f "$POB_DIR/Classes/EditControl.lua"
-          cargo test --lib --manifest-path ext/pobt-native/Cargo.toml
+          # The dependencies unoptimized (Cargo.toml's -O2 is for running the app): they build in a fraction of the
+          # time, and the tests take a second either way.
+          cargo test --lib --manifest-path ext/pobt-native/Cargo.toml --config 'profile.dev.package."*".opt-level=0'
