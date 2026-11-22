@@ -1,7 +1,12 @@
-# Packages POBT for Windows. A tag `vX.Y.Z` publishes it as a GitHub release; running it by hand only builds it
-# (a workflow artifact). One archive, `pobt-windows-x86_64.zip`, carries no version, so
-# `releases/latest/download/pobt-windows-x86_64.zip`, which the website and install.ps1 link, always resolves; the
-# app's updater (`nsh.json` "updater") fetches `latest.json` beside it, which names that same archive.
+# Packages POBT for Windows, macOS and Linux. A tag `vX.Y.Z` publishes them as one GitHub release; running it by hand
+# only builds them (workflow artifacts). Each platform's archive carries no version, so
+# `releases/latest/download/<archive>`, which the website, README and install.ps1 link, always resolves:
+#
+# - `pobt-windows-x86_64.zip`
+# - `pobt-macos-universal.tar.gz` (Apple silicon and Intel)
+# - `pobt-linux-x86_64.tar.gz`
+#
+# The app's updater (`nsh.json` "updater") fetches `latest.json` beside them, which names those same archives.
 name: Release
 on:
   push:
@@ -9,7 +14,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: release-${{ github.ref }}
@@ -19,55 +24,108 @@ env:
   CARGO_TERM_COLOR: always
   # The NSH CLI of the crates Cargo.toml takes from crates.io.
   NSH_VERSION: v0.6.1
-  ASSET: pobt-windows-x86_64.zip
 
 defaults:
   run:
     shell: bash
 
 jobs:
-  windows:
-    runs-on: windows-latest
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+            asset: pobt-windows-x86_64.zip
+          - os: macos-latest
+            platform: macos
+            asset: pobt-macos-universal.tar.gz
+          - os: ubuntu-24.04
+            platform: linux
+            asset: pobt-linux-x86_64.tar.gz
+    runs-on: ${{ matrix.os }}
+    env:
+      ASSET: ${{ matrix.asset }}
     steps:
       - uses: actions/checkout@v4
 
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          # The universal macOS package builds for Intel too.
+          targets: ${{ matrix.platform == 'macos' && 'x86_64-apple-darwin' || '' }}
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: ext/pobt-native
-          key: release-windows
+          key: release-${{ matrix.platform }}
+
+      - name: Install Linux system libraries
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang libclang-dev libgtk-4-dev libwebkitgtk-6.0-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
 
       - name: Install the NSH CLI
+        if: matrix.platform == 'windows'
         shell: pwsh
         run: |
           irm https://nsh.dev/install.ps1 | iex
           Add-Content $env:GITHUB_PATH (Join-Path $env:LOCALAPPDATA 'nsh\bin')
+      - name: Install the NSH CLI
+        if: matrix.platform != 'windows'
+        run: |
+          curl -fsSL https://nsh.dev/install.sh | sh
+          echo "$HOME/.nsh/bin" >> "$GITHUB_PATH"
 
       - name: Test
         run: cargo test --lib --manifest-path ext/pobt-native/Cargo.toml
 
+      # `nsh package` writes the app and `POBT-<version>-<os>-<arch>.<ext>`, the archive the updater takes. The
+      # translations go into both, not into the program, so anyone can edit them: beside POBT.exe and the Linux
+      # program, in the macOS bundle's Contents/Resources. Each versioned archive is then copied as $ASSET: the two
+      # must be the same bytes, as the updater checks $ASSET against the hash the manifest takes of the versioned one.
       - name: Package
         run: |
           args=(--build "$GITHUB_RUN_NUMBER")
           [ "$GITHUB_REF_TYPE" != tag ] || args+=(--app-version "${GITHUB_REF_NAME#v}")
           out="$RUNNER_TEMP/out"
-          nsh package --target windows -o "$out" "${args[@]}"
-          # The translations go beside POBT.exe, not into it, so anyone can edit them.
-          cp -r trs "$out/POBT/trs"
-          # Into the versioned archive only, then copied as $ASSET: the two must be the same bytes, as the
-          # updater checks $ASSET against the hash the manifest takes of the versioned one.
-          (cd "$out" && 7z a -tzip POBT-*.zip POBT/trs > /dev/null)
+          case "${{ matrix.platform }}" in
+            windows)
+              nsh package --target windows -o "$out" "${args[@]}"
+              cp -r trs "$out/POBT/trs"
+              (cd "$out" && 7z a -tzip POBT-*.zip POBT/trs > /dev/null)
+              ;;
+            macos)
+              nsh package --target macos --arch universal -o "$out" "${args[@]}"
+              cp -r trs "$out/POBT.app/Contents/Resources/trs"
+              # Adding files breaks the bundle's ad hoc signature: sign it again.
+              codesign --force --sign - --timestamp=none "$out/POBT.app"
+              lipo -archs "$out/POBT.app/Contents/MacOS/"*
+              for f in "$out"/POBT-*.tar.gz; do
+                COPYFILE_DISABLE=1 tar -czf "$f" -C "$out" POBT.app
+              done
+              ;;
+            linux)
+              nsh package --target linux -o "$out" "${args[@]}"
+              cp -r trs "$out/POBT/trs"
+              for f in "$out"/POBT-*.tar.gz; do
+                tar -czf "$f" -C "$out" POBT
+              done
+              ;;
+          esac
           ls -l "$out"
           mkdir -p dist
-          for f in "$out"/POBT-*.zip; do
-            versioned="dist/$(basename "$f" | tr '[:upper:]' '[:lower:]')"
-            mv "$f" "$versioned"
-            cp "$versioned" "dist/$ASSET"
+          for f in "$out"/POBT-*.zip "$out"/POBT-*.tar.gz; do
+            [ -e "$f" ] || continue
+            mv "$f" "dist/$(basename "$f" | tr '[:upper:]' '[:lower:]')"
           done
+          # A universal macOS package has one archive per architecture, the same bytes.
+          cp "$(ls dist/pobt-* | head -n1)" "dist/$ASSET"
           ls -l dist
 
       # The installer, run against this package served locally.
       - name: Try the installer
+        if: matrix.platform == 'windows'
         run: |
           (cd dist && sha256sum "$ASSET" > sha256sums)
           (cd dist && exec python -m http.server 8765 > /dev/null 2>&1) &
@@ -79,31 +137,58 @@ jobs:
           test -f "$LOCALAPPDATA/Programs/POBT/trs/languages.json"
           rm dist/sha256sums
 
-      # The app fetches `releases/latest/download/latest.json` and the archive it names (nsh/updater).
+      - name: Check the archive
+        if: matrix.platform != 'windows'
+        run: |
+          tar -tzf "dist/$ASSET" > "$RUNNER_TEMP/listing"
+          grep -q '/trs/languages.json$' "$RUNNER_TEMP/listing"
+          grep -qx "${{ matrix.platform == 'macos' && 'POBT.app/Contents/MacOS/POBT' || 'POBT/POBT' }}" "$RUNNER_TEMP/listing"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pobt-${{ matrix.platform }}
+          path: dist/
+          if-no-files-found: error
+
+  # The app fetches `releases/latest/download/latest.json` and the archive it names for its platform (nsh/updater).
+  publish:
+    if: github.ref_type == 'tag'
+    needs: package
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Install the NSH CLI
+        run: |
+          curl -fsSL https://nsh.dev/install.sh | sh
+          echo "$HOME/.nsh/bin" >> "$GITHUB_PATH"
+
       - name: Write the update manifest
-        if: github.ref_type == 'tag'
         run: |
           version="${GITHUB_REF_NAME#v}"
           jq --arg version "$version" '.version = $version' nsh.json > "$RUNNER_TEMP/nsh.json"
           mv "$RUNNER_TEMP/nsh.json" nsh.json
-          nsh update-manifest dist/pobt-"$version"-*.zip --out dist
-          # The manifest names the versioned archive `nsh package` made; it is the same file as $ASSET, so the release
-          # carries that one only.
-          jq --arg url "$ASSET" '.platforms[].url = $url' dist/latest.json > "$RUNNER_TEMP/latest.json"
+          nsh update-manifest dist/pobt-"$version"-* --out dist
+          # The manifest names the versioned archives `nsh package` made; each is the same file as its platform's
+          # unversioned archive, so the release carries those only.
+          jq '.platforms |= with_entries(.value.url = (
+                if (.key | startswith("windows-")) then "pobt-windows-x86_64.zip"
+                elif (.key | startswith("macos-")) then "pobt-macos-universal.tar.gz"
+                elif (.key | startswith("linux-")) then "pobt-linux-x86_64.tar.gz"
+                else error("unexpected platform \(.key)") end))' dist/latest.json > "$RUNNER_TEMP/latest.json"
           mv "$RUNNER_TEMP/latest.json" dist/latest.json
-          rm dist/pobt-"$version"-*.zip
-          # The manifest must describe the archive the release carries.
-          test "$(jq -r '.platforms[].sha256' dist/latest.json)" = "$(sha256sum "dist/$ASSET" | cut -d' ' -f1)"
+          rm dist/pobt-"$version"-*
+          # The manifest must describe the archives the release carries.
+          jq -r '.platforms[] | "\(.sha256)  dist/\(.url)"' dist/latest.json | sha256sum -c
           cat dist/latest.json
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: pobt-windows
-          path: dist/
-          if-no-files-found: error
-
       - name: Publish the release
-        if: github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
