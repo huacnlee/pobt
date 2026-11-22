@@ -1,6 +1,7 @@
 import { createAnimatedValue, Easing, Image, Shader, signal, Text, View, type ViewStyle } from "nsh";
 import { currentWindow } from "nsh/desktop";
 import { checkForUpdate, downloadUpdate, installAndRestart, installOnQuit, shellInfo, type AppUpdate } from "nsh/updater";
+import { Menu, MenuItem, MenuSeparator } from "nsh/base";
 import { Pob, PobCanvas } from "pobt/native";
 import Cinzel from "../assets/fonts/Cinzel-Bold.woff2";
 import "../assets/fonts/Cinzel-SemiBold.woff2";
@@ -9,6 +10,7 @@ import title from "../assets/ui/title.png";
 import { GATE, GATE_MOTION } from "./gate";
 // The icon at the size the launcher shows it (icon.png is the app's, 1024 square).
 import icon from "../assets/ui/icon-64.png";
+import more from "../assets/ui/more.svg";
 type Game = "Poe1" | "Poe2";
 
 interface Settings {
@@ -47,6 +49,8 @@ interface Strings {
   notFound: string;
   pick: string;
   install: string;
+  openFolder: string;
+  more: string;
   reset: string;
   installing: (done: number, total: number) => string;
   unpacking: (percent: number) => string;
@@ -77,6 +81,8 @@ const UI: Record<string, Strings> = {
     notFound: "Path of Building not found: choose its folder",
     pick: "Choose folder…",
     install: "Install",
+    openFolder: "Open folder",
+    more: "More",
     reset: "Reset",
     installing: (d, t) => `Downloading ${d} / ${t} MB`,
     unpacking: (p) => `Unpacking ${p}%`,
@@ -104,6 +110,8 @@ const UI: Record<string, Strings> = {
     notFound: "未找到 Path of Building，请选择它的安装目录",
     pick: "选择目录…",
     install: "安装",
+    openFolder: "打开目录",
+    more: "更多",
     reset: "重置",
     installing: (d, t) => `下载中 ${d} / ${t} MB`,
     unpacking: (p) => `解压中 ${p}%`,
@@ -131,6 +139,8 @@ const UI: Record<string, Strings> = {
     notFound: "找不到 Path of Building，請選擇它的安裝目錄",
     pick: "選擇目錄…",
     install: "安裝",
+    openFolder: "打開目錄",
+    more: "更多",
     reset: "重置",
     installing: (d, t) => `下載中 ${d} / ${t} MB`,
     unpacking: (p) => `解壓中 ${p}%`,
@@ -158,6 +168,8 @@ const UI: Record<string, Strings> = {
     notFound: "Path of Building을 찾을 수 없습니다. 폴더를 선택하세요",
     pick: "폴더 선택…",
     install: "설치",
+    openFolder: "폴더 열기",
+    more: "더 보기",
     reset: "초기화",
     installing: (d, t) => `다운로드 중 ${d} / ${t} MB`,
     unpacking: (p) => `압축 해제 중 ${p}%`,
@@ -479,6 +491,15 @@ interface InstallProgress {
   message: string;
 }
 
+function CardMenuItem(props: { label: string; color?: string; onSelect: () => void }) {
+  const active = { backgroundColor: "rgba(177,141,78,0.18)" };
+  return (
+    <MenuItem onSelect={props.onSelect} style={{ paddingHorizontal: 12, paddingVertical: 6 }} hoverStyle={active} focusStyle={active}>
+      <Text style={{ fontFamily: BODY, fontSize: 13, color: props.color ?? C.text }}>{props.label}</Text>
+    </MenuItem>
+  );
+}
+
 function GameCard(props: {
   game: Game;
   settings: () => Settings;
@@ -504,8 +525,17 @@ function GameCard(props: {
     return t.installing(mb(p.done), mb(p.total));
   };
   const busy = () => install()?.phase === "downloading" || install()?.phase === "unpacking";
+  const cardHover = signal(false);
+  const moreHover = signal(false);
+  const menuOpen = signal(false);
+  const hasMenu = () => !install() && !!dir();
   return (
-    <View onPress={props.onSelect} style={{ flex: 1, paddingTop: 22 }}>
+    <View
+      onPress={props.onSelect}
+      onMouseEnter={() => cardHover.set(true)}
+      onMouseLeave={() => cardHover.set(false)}
+      style={{ flex: 1, paddingTop: 22 }}
+    >
       {/* The panel, framed by a double trim line */}
       <View
         style={{
@@ -549,11 +579,50 @@ function GameCard(props: {
             <Button label={props.t().install} onPress={() => !busy() && props.onInstall()} />
           </If>
           <Button label={props.t().pick} onPress={() => !busy() && props.onPick()} />
-          {/* Back to no folder, as on a first run */}
-          <If when={dir()}>
-            <Button label={props.t().reset} onPress={() => !busy() && props.onReset()} />
-          </If>
         </View>
+        {/* Its menu, in the top right corner: open the folder, or forget it (Reset), kept out of the way. A ghost
+            button, shown while the card is hovered or the menu open */}
+        <If when={hasMenu()}>
+          <View style={{ position: "absolute", top: 8, right: 8 }}>
+            <Menu
+              offset={4}
+              align="end"
+              open={menuOpen()}
+              onOpenChange={(e) => menuOpen.set(e.open)}
+              popupStyle={{
+                minWidth: 140,
+                padding: 4,
+                backgroundColor: C.panel,
+                borderWidth: 1,
+                borderColor: C.trim,
+                boxShadow: "0 8px 24px rgba(0,0,0,0.7)",
+              }}
+              trigger={
+                <View
+                  role="button"
+                  accessibilityLabel={props.t().more}
+                  onMouseEnter={() => moreHover.set(true)}
+                  onMouseLeave={() => moreHover.set(false)}
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: 4,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    opacity: cardHover() || menuOpen() ? 1 : 0,
+                    backgroundColor: moreHover() || menuOpen() ? "rgba(177,141,78,0.18)" : "transparent",
+                  }}
+                >
+                  <Image src={more} style={{ width: 16, height: 16, tintColor: moreHover() || menuOpen() ? C.goldHi : C.gold }} />
+                </View>
+              }
+            >
+              <CardMenuItem label={props.t().openFolder} onSelect={() => Pob.openDir(dir()!)} />
+              <MenuSeparator style={{ height: 1, marginVertical: 4, backgroundColor: C.trim }} />
+              <CardMenuItem label={props.t().reset} color={C.red} onSelect={props.onReset} />
+            </Menu>
+          </View>
+        </If>
       </View>
       {/* Its title plaque, set over the top edge */}
       <View style={{ position: "absolute", top: 0, left: 0, right: 0, alignItems: "center" }}>
