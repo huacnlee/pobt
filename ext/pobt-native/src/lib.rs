@@ -39,6 +39,8 @@ use crate::{
 
 #[native_module("pobt/native")]
 fn native(registry: &mut Registry) {
+    // Before the launcher checks for an update, which removes what an earlier update moved aside.
+    install::rescue_beside_program();
     registry.register::<PobCanvas>().module::<Pob>();
 }
 

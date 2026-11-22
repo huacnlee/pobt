@@ -1,5 +1,5 @@
 //! Path of Building where there is none: its portable release from GitHub,
-//! downloaded and unpacked beside POBT.exe; and the part of POB's
+//! downloaded and unpacked where its own installer puts it; and the part of POB's
 //! updates that replaces its runtime (its DLLs), which POB leaves to its
 //! `Update.exe` and POBT applies before it loads them.
 
@@ -14,14 +14,62 @@ use serde::Serialize;
 
 use crate::settings::Game;
 
-/// Where POBT installs a game's Path of Building: beside its program.
+/// Where POBT installs a game's Path of Building: where Path of Building's
+/// own installer puts it (`%APPDATA%Path of Building Community`, and
+/// `... (PoE2)`), so the two share it. Not beside POBT.exe: an update of
+/// POBT replaces everything in its program's folder.
 pub fn install_dir(game: Game) -> Option<PathBuf> {
-    let exe = std::env::current_exe().ok()?;
-    let base = exe.parent()?;
-    Some(base.join(match game {
-        Game::Poe1 => "PathOfBuildingCommunity",
-        Game::Poe2 => "PathOfBuildingCommunity-PoE2",
-    }))
+    Some(install_root()?.join(folder(game)))
+}
+
+fn install_root() -> Option<PathBuf> {
+    dirs::data_dir()
+}
+
+fn folder(game: Game) -> &'static str {
+    match game {
+        Game::Poe1 => "Path of Building Community",
+        Game::Poe2 => "Path of Building Community (PoE2)",
+    }
+}
+
+/// Moves the Path of Building an earlier POBT installed beside its
+/// program to where Path of Building installs (unless one is there), before an update of POBT (or its install
+/// script) removes it. An update moves the old entries of the program's
+/// folder aside as `.nsh-updater-old-<pid>-<name>` and removes them at the
+/// next update check: one found there is moved too.
+pub fn rescue_beside_program() {
+    let (Some(program), Some(data)) = (
+        std::env::current_exe().ok().and_then(|e| e.parent().map(Path::to_path_buf)),
+        install_root(),
+    ) else {
+        return;
+    };
+    for game in [Game::Poe1, Game::Poe2] {
+        if let Err(e) = rescue(&program, &data, game) {
+            log::warn!("moving Path of Building out of {}: {e}", program.display());
+        }
+    }
+}
+
+fn rescue(program: &Path, data: &Path, game: Game) -> io::Result<Option<PathBuf>> {
+    let to = data.join(folder(game));
+    if to.exists() {
+        return Ok(None);
+    }
+    // Any of the game's Path of Building there, whatever its folder's name; one an update moved aside last.
+    let mut found: Vec<PathBuf> = fs::read_dir(program)?
+        .flatten()
+        .map(|e| e.path())
+        .filter(|p| crate::settings::is_pob_dir(p, game))
+        .collect();
+    let aside = |p: &PathBuf| p.file_name().is_some_and(|n| n.to_string_lossy().starts_with(".nsh-updater-old-"));
+    found.sort_by_key(aside);
+    let Some(from) = found.into_iter().next() else { return Ok(None) };
+    fs::create_dir_all(data)?;
+    fs::rename(&from, &to)?;
+    log::info!("moved {} to {}", from.display(), to.display());
+    Ok(Some(to))
 }
 
 fn release_url(game: Game) -> &'static str {
@@ -209,6 +257,35 @@ mod tests {
         let _ = fs::remove_dir_all(&dir);
         fs::create_dir_all(&dir).unwrap();
         dir
+    }
+
+    /// A Path of Building folder: what `is_pob_dir` looks for.
+    fn pob(dir: &Path, game: Game) {
+        fs::create_dir_all(dir).unwrap();
+        for f in ["Launch.lua", "lua51.dll", game.exe()] {
+            fs::write(dir.join(f), b"").unwrap();
+        }
+    }
+
+    #[test]
+    fn moves_path_of_building_out_of_the_program_folder() {
+        let root = temp("rescue");
+        let (program, data) = (root.join("POBT"), root.join("data"));
+        pob(&program.join("Path of Building Community"), Game::Poe1);
+        pob(&program.join(".nsh-updater-old-42-PathOfBuildingCommunity-PoE2"), Game::Poe2);
+        fs::create_dir_all(program.join("nsh")).unwrap();
+
+        assert_eq!(rescue(&program, &data, Game::Poe1).unwrap(), Some(data.join("Path of Building Community")));
+        assert!(crate::settings::is_pob_dir(&data.join("Path of Building Community"), Game::Poe1));
+        assert!(!program.join("Path of Building Community").exists());
+        // One an update moved aside, before it is removed.
+        assert_eq!(rescue(&program, &data, Game::Poe2).unwrap(), Some(data.join("Path of Building Community (PoE2)")));
+        assert!(program.join("nsh").exists());
+        // Nothing more to move, and one already in the data folder stays.
+        pob(&program.join("PathOfBuildingCommunity"), Game::Poe1);
+        assert_eq!(rescue(&program, &data, Game::Poe1).unwrap(), None);
+        assert!(program.join("PathOfBuildingCommunity").exists());
+        let _ = fs::remove_dir_all(&root);
     }
 
     #[test]
