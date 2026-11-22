@@ -636,9 +636,9 @@ motionTime.timing(86400, { duration: 86400 * 1000, easing: Easing.linear, frameR
 
 const TITLE_BAR = 44;
 
-/** The window's title bar, drawn by the app: POBT at the left (a link to the site), the version and a newer one when
- * there is; the system draws the window's buttons at its right end. Dragging it moves the window. Over the launcher's backdrop it is clear;
- * over Path of Building, `solid`, with a way back to the launcher (`onBack`). */
+/** The window's title bar, drawn by the app: POBT at the left (a link to the site); the system draws the window's
+ * buttons at its right end. Dragging it moves the window. Over the launcher's backdrop it is clear, with the version
+ * and the update check; over Path of Building, `solid`, with only a way back to the launcher (`onBack`). */
 function TitleBar(props: { t: () => Strings; solid?: boolean; onBack?: () => void }) {
   const brandHover = signal(false);
   const backHover = signal(false);
@@ -705,10 +705,12 @@ function TitleBar(props: { t: () => Strings; solid?: boolean; onBack?: () => voi
         )}
       </If>
       <View style={{ flex: 1 }} />
-      <UpdateBadge t={props.t} />
-      {/* The packaged version; a development run has none to show. */}
-      <If when={shellInfo().version}>
-        {(v) => <Text style={{ fontFamily: BODY, fontSize: 11, color: C.dim }}>v{v()}</Text>}
+      {/* The update and the packaged version, on the launcher only; a development run has no version to show. */}
+      <If when={!props.solid}>
+        <UpdateBadge t={props.t} />
+        <If when={shellInfo().version}>
+          {(v) => <Text style={{ fontFamily: BODY, fontSize: 11, color: C.dim }}>v{v()}</Text>}
+        </If>
       </If>
     </View>
   );
