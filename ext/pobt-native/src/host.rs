@@ -138,6 +138,8 @@ struct Host {
     clear: Color,
     screen: (f32, f32),
     raw_text: bool,
+    /// The focused edit box this frame drew (`SetTextInput`).
+    text_input: Option<[f32; 4]>,
     tr: translate::Cache,
     subs: HashMap<u32, Sub>,
     next_sub: u32,
@@ -209,45 +211,12 @@ fn run_once(pob_dir: &Path, shared: &Arc<Shared>, rx: mpsc::Receiver<Input>) -> 
         report(shared, "Lua", "cannot create a Lua state".into());
         return false;
     };
-    HOST.with(|h| {
-        *h.borrow_mut() = Some(Host {
-            shared: shared.clone(),
-            pob_dir: pob_dir.to_path_buf(),
-            user_dir: dirs::document_dir(),
-            start: Instant::now(),
-            items: Vec::new(),
-            seq: 0,
-            layer: (0, 0),
-            viewport: [0.0, 0.0, 0.0, 0.0],
-            color: [1.0; 4],
-            clear: [0.0, 0.0, 0.0, 1.0],
-            screen: *shared.screen.lock().unwrap(),
-            raw_text: false,
-            tr: translate::Cache::new(),
-            subs: HashMap::new(),
-            next_sub: 1,
-            restart: false,
-            introduced: HashSet::new(),
-            introduced_order: Vec::new(),
-            images: Arc::from(Vec::<Arc<str>>::new()),
-        })
-    });
-    register(l);
-
+    enter(l, pob_dir, shared);
     let boot = l.load(PRELUDE.as_bytes(), "pobt/prelude.lua").and_then(|_| l.pcall(0, 0));
-    let script = std::fs::read(pob_dir.join("Launch.lua"));
-    let boot = boot.and_then(|_| script.map_err(|e| format!("Launch.lua: {e}")));
-    let boot = boot.and_then(|code| {
-        let code = code.strip_prefix(b"#@".as_slice()).map(|c| {
-            // SimpleGraphic's "#@ SimpleGraphic" first line is not Lua.
-            let nl = c.iter().position(|&b| b == b'\n').unwrap_or(c.len());
-            let mut v = b"--".to_vec();
-            v.extend_from_slice(&c[nl..]);
-            v
-        });
-        let code = code.unwrap_or_else(|| std::fs::read(pob_dir.join("Launch.lua")).unwrap_or_default());
-        l.load(&code, "Launch.lua")?;
-        l.pcall(0, 0)
+    let boot = boot.and_then(|_| match demo() {
+        // The demo of edit boxes in place of POB, in a development run.
+        true => l.load(DEMO.as_bytes(), "pobt/demo.lua").and_then(|_| l.pcall(0, 0)),
+        false => launch(l, pob_dir),
     });
     if let Err(e) = boot {
         report(shared, "Error loading Launch.lua", e);
@@ -260,7 +229,7 @@ fn run_once(pob_dir: &Path, shared: &Arc<Shared>, rx: mpsc::Receiver<Input>) -> 
     if let Err(e) = callback(l, "OnInit", &[]) {
         report(shared, "Error in OnInit", e);
     }
-    if !shared.loaded.load(Ordering::SeqCst) {
+    if !shared.loaded.load(Ordering::SeqCst) && !demo() {
         let steps = shared.loading.lock().unwrap().steps;
         crate::loading::remember(pob_dir, steps);
     }
@@ -270,14 +239,7 @@ fn run_once(pob_dir: &Path, shared: &Arc<Shared>, rx: mpsc::Receiver<Input>) -> 
         let begin = Instant::now();
         // Input.
         while let Ok(input) = rx.try_recv() {
-            let (name, args): (&str, Vec<Value>) = match &input {
-                Input::KeyDown(k, dbl) => ("OnKeyDown", vec![Value::Str(k.clone().into_bytes()), Value::Bool(*dbl)]),
-                Input::KeyUp(k) => ("OnKeyUp", vec![Value::Str(k.clone().into_bytes()), Value::Bool(false)]),
-                Input::Char(c) => ("OnChar", vec![Value::Str(c.clone().into_bytes()), Value::Bool(false)]),
-            };
-            if let Err(e) = callback(l, name, &args) {
-                report(shared, &format!("Error in {name}"), e);
-            }
+            dispatch(l, shared, &input);
         }
         if shared.quit.load(Ordering::SeqCst) {
             // POB says no while there are unsaved changes, and asks about them itself.
@@ -293,23 +255,7 @@ fn run_once(pob_dir: &Path, shared: &Arc<Shared>, rx: mpsc::Receiver<Input>) -> 
 
         run_subscripts(l);
 
-        // The frame.
-        let screen = *shared.screen.lock().unwrap();
-        with_host(|h| {
-            h.items.clear();
-            h.seq = 0;
-            h.layer = (0, 0);
-            h.screen = screen;
-            h.viewport = [0.0, 0.0, screen.0, screen.1];
-            h.color = [1.0; 4];
-        });
-        l.get_global("__pobt_hookClasses");
-        let _ = l.pcall(0, 0);
-        let result = callback(l, "OnFrame", &[]);
-        if let Err(e) = result {
-            report(shared, "Error in OnFrame", e);
-        }
-        publish(shared);
+        frame(l, shared);
         // Loaded once its first frame is out: the launcher's loading screen gives way to it.
         shared.loaded.store(true, Ordering::SeqCst);
         frames += 1;
@@ -341,6 +287,94 @@ fn run_once(pob_dir: &Path, shared: &Arc<Shared>, rx: mpsc::Receiver<Input>) -> 
     HOST.with(|h| *h.borrow_mut() = None);
     l.close();
     restart
+}
+
+/// Makes this thread the host of the Lua state `l`, with its natives in `__sg`.
+fn enter(l: Lua, pob_dir: &Path, shared: &Arc<Shared>) {
+    HOST.with(|h| {
+        *h.borrow_mut() = Some(Host {
+            shared: shared.clone(),
+            pob_dir: pob_dir.to_path_buf(),
+            user_dir: dirs::document_dir(),
+            start: Instant::now(),
+            items: Vec::new(),
+            seq: 0,
+            layer: (0, 0),
+            viewport: [0.0, 0.0, 0.0, 0.0],
+            color: [1.0; 4],
+            clear: [0.0, 0.0, 0.0, 1.0],
+            screen: *shared.screen.lock().unwrap(),
+            raw_text: false,
+            text_input: None,
+            tr: translate::Cache::new(),
+            subs: HashMap::new(),
+            next_sub: 1,
+            restart: false,
+            introduced: HashSet::new(),
+            introduced_order: Vec::new(),
+            images: Arc::from(Vec::<Arc<str>>::new()),
+        })
+    });
+    register(l);
+}
+
+/// Runs POB's `Launch.lua`.
+fn launch(l: Lua, pob_dir: &Path) -> Result<(), String> {
+    let code = std::fs::read(pob_dir.join("Launch.lua")).map_err(|e| format!("Launch.lua: {e}"))?;
+    let code = match code.strip_prefix(b"#@".as_slice()) {
+        // SimpleGraphic's "#@ SimpleGraphic" first line is not Lua.
+        Some(c) => {
+            let nl = c.iter().position(|&b| b == b'\n').unwrap_or(c.len());
+            let mut v = b"--".to_vec();
+            v.extend_from_slice(&c[nl..]);
+            v
+        }
+        None => code,
+    };
+    l.load(&code, "Launch.lua")?;
+    l.pcall(0, 0)
+}
+
+/// A few of POB's edit boxes on their own, to try typing in them by hand
+/// (`POBT_DEMO=1 nsh run`, then play) and for the tests below.
+const DEMO: &str = include_str!("demo.lua");
+
+/// Whether to run the demo in place of POB: `POBT_DEMO` set in a development
+/// build.
+fn demo() -> bool {
+    cfg!(debug_assertions) && std::env::var_os("POBT_DEMO").is_some()
+}
+
+/// Passes `input` to POB's callbacks.
+fn dispatch(l: Lua, shared: &Shared, input: &Input) {
+    let (name, args): (&str, Vec<Value>) = match input {
+        Input::KeyDown(k, dbl) => ("OnKeyDown", vec![Value::Str(k.clone().into_bytes()), Value::Bool(*dbl)]),
+        Input::KeyUp(k) => ("OnKeyUp", vec![Value::Str(k.clone().into_bytes()), Value::Bool(false)]),
+        Input::Char(c) => ("OnChar", vec![Value::Str(c.clone().into_bytes()), Value::Bool(false)]),
+    };
+    if let Err(e) = callback(l, name, &args) {
+        report(shared, &format!("Error in {name}"), e);
+    }
+}
+
+/// Has POB draw a frame, and publishes it.
+fn frame(l: Lua, shared: &Shared) {
+    let screen = *shared.screen.lock().unwrap();
+    with_host(|h| {
+        h.items.clear();
+        h.text_input = None;
+        h.seq = 0;
+        h.layer = (0, 0);
+        h.screen = screen;
+        h.viewport = [0.0, 0.0, screen.0, screen.1];
+        h.color = [1.0; 4];
+    });
+    l.get_global("__pobt_hookClasses");
+    let _ = l.pcall(0, 0);
+    if let Err(e) = callback(l, "OnFrame", &[]) {
+        report(shared, "Error in OnFrame", e);
+    }
+    publish(shared);
 }
 
 fn idle_until_input(shared: &Shared, rx: &mpsc::Receiver<Input>) {
@@ -396,7 +430,14 @@ fn publish(shared: &Shared) {
         if fresh > 0 || h.images.len() != h.introduced_order.len() {
             h.images = Arc::from(h.introduced_order.as_slice());
         }
-        Frame { width: h.screen.0, height: h.screen.1, clear: h.clear, items, images: h.images.clone() }
+        Frame {
+            width: h.screen.0,
+            height: h.screen.1,
+            clear: h.clear,
+            items,
+            images: h.images.clone(),
+            text_input: h.text_input,
+        }
     });
     let Some(frame) = frame else { return };
     let mut current = shared.frame.lock().unwrap();
@@ -559,6 +600,7 @@ fn register(l: Lua) {
         ("DrawStringCursorIndex", n_draw_string_cursor_index),
         ("StripEscapes", n_strip_escapes),
         ("SetRawText", n_set_raw_text),
+        ("SetTextInput", n_set_text_input),
         ("Translate", n_translate),
         ("GetScreenSize", n_get_screen_size),
         ("GetCursorPos", n_get_cursor_pos),
@@ -907,6 +949,13 @@ native!(n_translate, |l| {
     1
 });
 
+// The focused edit box, in the current viewport: where input methods put their text.
+native!(n_set_text_input, |l| {
+    let r = [l.num(1) as f32, l.num(2) as f32, l.num(3) as f32, l.num(4) as f32];
+    with_host(|h| h.text_input = Some([h.viewport[0] + r[0], h.viewport[1] + r[1], r[2], r[3]]));
+    0
+});
+
 native!(n_get_screen_size, |l| {
     let (w, h) = with_host(|h| h.screen).unwrap_or((1280.0, 800.0));
     l.push_int(w as i64);
@@ -1247,4 +1296,326 @@ native!(n_is_subscript_running, |l| {
 #[allow(dead_code)]
 fn is_table(l: Lua, idx: i32) -> bool {
     l.kind(idx) == LUA_TTABLE
+}
+
+#[cfg(test)]
+mod tests {
+    /// The prelude loads in POB's LuaJIT: a syntax error in it would stop
+    /// POB before its first frame. Needs a Path of Building for its
+    /// `lua51.dll`: `POB_DIR=<folder> cargo test --lib prelude_loads`.
+    #[test]
+    fn prelude_loads() {
+        let Some(dir) = std::env::var_os("POB_DIR") else {
+            eprintln!("POB_DIR not set: skipped");
+            return;
+        };
+        crate::lua::init(std::path::Path::new(&dir)).unwrap();
+        let l = crate::lua::Lua::new().unwrap();
+        let loaded = l.load(super::PRELUDE.as_bytes(), "prelude.lua");
+        let broken = l.load(b"local s = \"a
+b\"", "broken.lua");
+        l.close();
+        loaded.unwrap();
+        assert!(broken.is_err(), "a string cut by a newline must not load");
+    }
+
+    use std::{path::PathBuf, sync::Arc};
+
+    use super::{Input, Shared};
+    use crate::{
+        frame::Cmd,
+        lua::{Lua, Value},
+    };
+
+    /// The demo (`demo.lua`: POB's own edit boxes, from `POB_DIR`) run as
+    /// POB runs, with no window: input goes to its callbacks as the canvas
+    /// sends it, and each frame is drawn and published.
+    struct Demo {
+        l: Lua,
+        shared: Arc<Shared>,
+    }
+
+    impl Demo {
+        /// The demo, translating to Simplified Chinese; none without `POB_DIR`.
+        fn start() -> Option<Self> {
+            let Some(dir) = std::env::var_os("POB_DIR").map(PathBuf::from) else {
+                eprintln!("POB_DIR not set: skipped");
+                return None;
+            };
+            static DICT: std::sync::Once = std::sync::Once::new();
+            DICT.call_once(|| {
+                let dict = crate::translate::Dictionary::load("zh-rCN");
+                *crate::translate::DICT.write().unwrap() = Some(Arc::new(dict));
+            });
+            crate::lua::init(&dir).unwrap();
+            super::set_dll_directory(&dir);
+            // POB loads its modules from its folder (the tests that need one all use it).
+            std::env::set_current_dir(&dir).unwrap();
+            let shared = Shared::new();
+            let l = Lua::new().unwrap();
+            super::enter(l, &dir, &shared);
+            let boot = l.load(super::PRELUDE.as_bytes(), "pobt/prelude.lua").and_then(|_| l.pcall(0, 0));
+            let boot = boot.and_then(|_| l.load(super::DEMO.as_bytes(), "pobt/demo.lua")).and_then(|_| l.pcall(0, 0));
+            let demo = Demo { l, shared };
+            boot.unwrap();
+            super::callback(l, "OnInit", &[]).unwrap();
+            demo.frame();
+            Some(demo)
+        }
+
+        fn frame(&self) {
+            super::frame(self.l, &self.shared);
+            if let Some(e) = self.shared.error.lock().unwrap().take() {
+                panic!("{e}");
+            }
+        }
+
+        fn send(&self, input: Input) {
+            match &input {
+                Input::KeyDown(k, _) => self.shared.set_key(k, true),
+                Input::KeyUp(k) => self.shared.set_key(k, false),
+                Input::Char(_) => {}
+            }
+            super::dispatch(self.l, &self.shared, &input);
+        }
+
+        /// Types `text` a character at a time, as the input method's sink does, then draws.
+        fn type_text(&self, text: &str) {
+            for c in text.chars() {
+                self.send(Input::Char(c.to_string()));
+            }
+            self.frame();
+        }
+
+        /// Presses and releases `key` (POB's name for it), then draws.
+        fn press(&self, key: &str) {
+            self.send(Input::KeyDown(key.into(), false));
+            self.send(Input::KeyUp(key.into()));
+            self.frame();
+        }
+
+        /// Focuses the box `name`, then draws.
+        fn focus(&self, name: &str) {
+            self.eval(&format!("demo:Focus('{name}')"));
+            self.frame();
+        }
+
+        /// The results of the Lua chunk `code`.
+        fn eval(&self, code: &str) -> Vec<Value> {
+            let base = self.l.top();
+            self.l.load(code.as_bytes(), "test").and_then(|_| self.l.pcall(0, crate::lua::LUA_MULTRET)).unwrap();
+            let out = self.l.values_from(base + 1);
+            self.l.set_top(base);
+            out
+        }
+
+        fn string(&self, expr: &str) -> String {
+            match self.eval(&format!("return {expr}")).first() {
+                Some(Value::Str(s)) => String::from_utf8(s.clone()).unwrap(),
+                other => panic!("{expr}: {other:?}"),
+            }
+        }
+
+        fn number(&self, expr: &str) -> f64 {
+            match self.eval(&format!("return {expr}")).first() {
+                Some(Value::Num(n)) => *n,
+                other => panic!("{expr}: {other:?}"),
+            }
+        }
+
+        /// The box `name`'s text, and its caret (a byte index from 1, as POB keeps it).
+        fn edit(&self, name: &str) -> (String, usize) {
+            (self.string(&format!("demo.controls.{name}.buf")), self.number(&format!("demo.controls.{name}.caret")) as usize)
+        }
+
+        /// The text the last frame drew.
+        fn texts(&self) -> Vec<String> {
+            let frame = self.shared.frame.lock().unwrap().clone();
+            frame
+                .items
+                .iter()
+                .filter_map(|i| match &i.cmd {
+                    Cmd::Text { text, .. } => Some(text.to_string()),
+                    _ => None,
+                })
+                .collect()
+        }
+
+        fn drew(&self, s: &str) -> bool {
+            self.texts().iter().any(|t| t.contains(s))
+        }
+
+        /// Where the last frame put the input method (`SetTextInput`).
+        fn text_input(&self) -> Option<[f32; 4]> {
+            self.shared.frame.lock().unwrap().text_input
+        }
+    }
+
+    impl Drop for Demo {
+        fn drop(&mut self) {
+            super::HOST.with(|h| *h.borrow_mut() = None);
+            self.l.close();
+        }
+    }
+
+    /// Typing Chinese and Korean into a box that takes any text, and deleting it
+    /// a character at a time: POB deletes a byte at a time, which would leave
+    /// half a character.
+    #[test]
+    fn edit_box_types_and_deletes_whole_characters() {
+        let Some(d) = Demo::start() else { return };
+        d.type_text("ab中文한");
+        assert_eq!(d.edit("plain"), ("ab中文한".into(), 1 + 2 + 3 * 3));
+        d.press("BACK");
+        assert_eq!(d.edit("plain"), ("ab中文".into(), 1 + 2 + 3 * 2));
+        d.press("BACK");
+        assert_eq!(d.edit("plain"), ("ab中".into(), 1 + 2 + 3));
+        d.press("HOME");
+        d.press("RIGHT");
+        d.press("RIGHT");
+        d.press("DELETE");
+        assert_eq!(d.edit("plain"), ("ab".into(), 3));
+        d.press("BACK");
+        assert_eq!(d.edit("plain"), ("a".into(), 2));
+    }
+
+    /// Left and Right step over a whole character, and typing in the middle
+    /// of text inserts there.
+    #[test]
+    fn caret_moves_over_whole_characters() {
+        let Some(d) = Demo::start() else { return };
+        d.type_text("中文");
+        d.press("LEFT");
+        assert_eq!(d.edit("plain").1, 4);
+        d.type_text("x");
+        assert_eq!(d.edit("plain"), ("中x文".into(), 5));
+        d.press("RIGHT");
+        assert_eq!(d.edit("plain").1, 8);
+        d.press("LEFT");
+        d.press("LEFT");
+        d.press("BACK");
+        assert_eq!(d.edit("plain"), ("x文".into(), 1));
+    }
+
+    /// Several lines: Backspace at a line's start joins it to the one above,
+    /// and over a character of several bytes takes it whole.
+    #[test]
+    fn multiline_box_deletes_whole_characters() {
+        let Some(d) = Demo::start() else { return };
+        d.focus("multi");
+        assert_eq!(d.edit("multi").0, "中文 한국어 English\n第二行 둘째 줄");
+        d.press("BACK");
+        d.press("BACK");
+        assert_eq!(d.edit("multi").0, "中文 한국어 English\n第二行 둘째");
+        d.press("HOME");
+        d.press("BACK");
+        assert_eq!(d.edit("multi").0, "中文 한국어 English第二行 둘째");
+        d.press("BACK");
+        assert_eq!(d.edit("multi").0, "中文 한국어 Englis第二行 둘째");
+    }
+
+    /// The box with the focus says where its caret is, inside the box, and
+    /// further right once text is typed; none once no box has the focus.
+    #[test]
+    fn focused_box_reports_its_caret() {
+        let Some(d) = Demo::start() else { return };
+        let empty = d.text_input().expect("the focused box's caret");
+        // The plain box: x 160, y 60, 360 by 20.
+        assert!(empty[0] >= 160.0 && empty[0] < 170.0, "{empty:?}");
+        assert_eq!((empty[1], empty[3]), (60.0, 20.0));
+        assert!((empty[0] + empty[2] - 520.0).abs() < 0.5, "{empty:?}");
+        d.type_text("中文");
+        let typed = d.text_input().unwrap();
+        assert!(typed[0] > empty[0] + 10.0 && typed[0] < 520.0, "{typed:?}");
+        d.press("HOME");
+        assert_eq!(d.text_input().unwrap()[0], empty[0]);
+        // The search box's caret is past its prompt.
+        d.focus("search");
+        assert!(d.text_input().unwrap()[0] > 180.0);
+        d.eval("demo:SelectControl()");
+        d.frame();
+        assert_eq!(d.text_input(), None);
+    }
+
+    /// POB's words around a box are translated: its prompt, its placeholder and
+    /// labels; what is typed in it is not.
+    #[test]
+    fn prompts_and_labels_are_translated() {
+        let Some(d) = Demo::start() else { return };
+        assert!(d.drew("搜索:"), "{:?}", d.texts());
+        assert!(d.drew("名称"), "the placeholder: {:?}", d.texts());
+        assert!(d.drew("技能宝石"), "a label: {:?}", d.texts());
+        assert!(d.drew("备注"), "a label: {:?}", d.texts());
+        d.type_text("Search");
+        assert_eq!(d.edit("plain").0, "Search");
+        assert!(d.texts().iter().any(|t| t == "Search"), "typed text drawn as typed: {:?}", d.texts());
+        assert_eq!(d.string("__sg.Translate('Fireball')"), "火球");
+    }
+
+    /// A gem is found by its translated name, and kept by its English one, which
+    /// shows translated once the box loses the focus.
+    #[test]
+    fn gem_box_finds_gems_by_translated_name() {
+        let Some(d) = Demo::start() else { return };
+        d.focus("gem");
+        d.type_text("火");
+        assert_eq!(d.edit("gem").0, "火");
+        assert_eq!(d.string("demo.controls.gem.list[1]"), "Default:Fireball");
+        d.type_text("球");
+        assert_eq!(d.string("demo.controls.gem.list[1]"), "Default:Fireball");
+        assert_eq!(d.string("demo.gemId"), "Fireball");
+        d.press("RETURN");
+        assert_eq!(d.edit("gem").0, "Fireball");
+        assert_eq!(d.string("demo.controls.gem.gems['Default:Fireball'].name"), "Fireball");
+        assert!(d.drew("火球"), "{:?}", d.texts());
+        // English still finds it.
+        d.focus("gem");
+        d.eval("demo.controls.gem:SetText('')");
+        d.type_text("frost");
+        assert_eq!(d.string("demo.controls.gem.list[1]"), "Default:Frostbolt");
+    }
+
+    /// A click focuses the box under the mouse and puts the caret there; the
+    /// boxes draw with the mouse over them (tooltips, the gem list).
+    #[test]
+    fn click_focuses_and_hover_draws() {
+        let Some(d) = Demo::start() else { return };
+        *d.shared.cursor.lock().unwrap() = (300.0, 270.0);
+        d.press("LEFTBUTTON");
+        assert_eq!(d.number("demo.selControl == demo.controls.gem and 1 or 0"), 1.0);
+        let rect = d.text_input().unwrap();
+        assert_eq!((rect[1], rect[3]), (260.0, 20.0));
+        // Over the open gem list for a few frames.
+        *d.shared.cursor.lock().unwrap() = (300.0, 290.0);
+        for _ in 0..4 {
+            d.frame();
+        }
+        *d.shared.cursor.lock().unwrap() = (300.0, 160.0);
+        d.press("LEFTBUTTON");
+        d.frame();
+        assert_eq!(d.number("demo.selControl == demo.controls.multi and 1 or 0"), 1.0);
+        assert!(d.edit("gem").0.is_empty());
+    }
+
+    /// A box with POB's default filter (its rename boxes, an item's name): POB
+    /// takes letters, digits and punctuation only unless it runs with a global
+    /// `utf8` table (`main.unicode`); POBT lets it take other scripts too.
+    #[test]
+    fn default_filter_takes_other_scripts() {
+        let Some(d) = Demo::start() else { return };
+        d.focus("default");
+        d.type_text("a中b");
+        assert_eq!(d.edit("default").0, "a中b");
+    }
+
+    /// Backspace in a gem box takes a whole character too, and the search follows.
+    #[test]
+    fn gem_box_deletes_whole_characters() {
+        let Some(d) = Demo::start() else { return };
+        d.focus("gem");
+        d.type_text("寒冰");
+        d.press("BACK");
+        assert_eq!(d.edit("gem"), ("寒".into(), 4));
+        assert_eq!(d.string("demo.controls.gem.list[1]"), "Default:Frostbolt");
+    }
 }

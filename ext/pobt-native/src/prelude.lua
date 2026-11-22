@@ -401,7 +401,15 @@ end
 -- placeholders are POB's: translated before the box draws.
 function __pobt_hookClasses()
 	local classes = common and common.classes
-	if not classes or not classes.EditControl or classes.EditControl.__pobt or type(classes.EditControl.Draw) ~= "function" then
+	if not classes then
+		return
+	end
+	__pobt_hookEdit(classes)
+	__pobt_hookGemSelect(classes)
+end
+
+function __pobt_hookEdit(classes)
+	if not classes.EditControl or rawget(classes.EditControl, "__pobt") or type(classes.EditControl.Draw) ~= "function" then
 		return
 	end
 	local edit = classes.EditControl
@@ -421,6 +429,20 @@ function __pobt_hookClasses()
 			self.buf = sg.Translate(buf)
 		end
 		sg.SetRawText(true)
+		-- The focused box from its caret on: where text typed with an input method goes, and its candidates show.
+		if self.hasFocus and self.GetPos and self.GetSize then
+			local x, y = self:GetPos()
+			local w, h = self:GetSize()
+			local textHeight = self.lineHeight or (h - 4)
+			local caretX = x + 2
+			if self.prompt then
+				caretX = caretX + DrawStringWidth(textHeight, self.font, self.prompt) + textHeight / 2
+			end
+			local pre = type(self.buf) == "string" and self.buf:sub(1, (self.caret or 1) - 1):match("[^\n]*$") or ""
+			local scroll = self.controls and self.controls.scrollBarH and self.controls.scrollBarH.offset or 0
+			caretX = math.min(math.max(caretX + DrawStringWidth(textHeight, self.font, pre) - scroll, x), x + w - 1)
+			sg.SetTextInput(caretX, y, x + w - caretX, h)
+		end
 		local r = pack(pcall(draw, self, ...))
 		sg.SetRawText(false)
 		self.prompt, self.placeholder = prompt, placeholder
@@ -432,7 +454,86 @@ function __pobt_hookClasses()
 		end
 		return unpack(r, 2, r.n)
 	end
+	-- POB deletes a byte at a time: Backspace and Delete take the whole of a character UTF-8 writes in several.
+	local keyDown = edit.OnKeyDown
+	edit.OnKeyDown = function(self, key, ...)
+		local buf, caret = self.buf, self.caret
+		if (key == "BACK" or key == "DELETE") and type(buf) == "string" and caret
+			and not (self.sel and self.sel ~= caret) and not IsKeyDown("CTRL") then
+			if key == "BACK" and caret > 1 then
+				local start = caret - 1
+				while start > 1 and buf:byte(start) >= 0x80 and buf:byte(start) < 0xC0 do
+					start = start - 1
+				end
+				if start < caret - 1 then
+					self.sel = start
+				end
+			elseif key == "DELETE" and caret <= #buf then
+				local stop = caret + 1
+				while stop <= #buf and buf:byte(stop) >= 0x80 and buf:byte(stop) < 0xC0 do
+					stop = stop + 1
+				end
+				if stop > caret + 1 then
+					self.sel = stop
+				end
+			end
+		end
+		return keyDown(self, key, ...)
+	end
+	-- A box that takes letters takes only English ones (POB's default filter, a gem box's): it takes the
+	-- characters of other scripts too, to name things and search gems by their translated names. Boxes for
+	-- numbers keep their filters.
+	local function lettersAndScripts(self, f, ...)
+		local filter = self.filterPattern
+		if type(filter) == "string" and filter:sub(1, 2) == "[^" and (filter:find("%%a") or filter:find("%%w")) then
+			self.filterPattern = "[^\128-\255" .. filter:sub(3)
+		end
+		local r = pack(pcall(f, self, ...))
+		self.filterPattern = filter
+		if not r[1] then
+			error(r[2], 0)
+		end
+		return unpack(r, 2, r.n)
+	end
+	local insert, replaceSel = edit.Insert, edit.ReplaceSel
+	edit.Insert = function(self, ...)
+		return lettersAndScripts(self, insert, ...)
+	end
+	edit.ReplaceSel = function(self, ...)
+		return lettersAndScripts(self, replaceSel, ...)
+	end
 	edit.__pobt = true
+end
+
+function __pobt_hookGemSelect(classes)
+	-- A search in another script matches the gems' translated names: they stand in for the English while POB
+	-- builds its list.
+	local gemSelect = classes.GemSelectControl
+	-- A class reads what its parents have (POB's newClass copies it in): the edit box's mark is not the gem box's.
+	if gemSelect and type(gemSelect.BuildList) == "function" and not rawget(gemSelect, "__pobt") then
+		local buildList = gemSelect.BuildList
+		gemSelect.BuildList = function(self, buf, ...)
+			if type(buf) ~= "string" or not buf:find("[\128-\255]") or type(self.gems) ~= "table" then
+				return buildList(self, buf, ...)
+			end
+			local names = { }
+			for _, gem in pairs(self.gems) do
+				if type(gem) == "table" and type(gem.name) == "string" and names[gem] == nil then
+					names[gem] = gem.name
+					gem.name = sg.Translate(gem.name)
+				end
+			end
+			local r = pack(pcall(buildList, self, buf, ...))
+			for gem, name in pairs(names) do
+				gem.name = name
+			end
+			if not r[1] then
+				error(r[2], 0)
+			end
+			return unpack(r, 2, r.n)
+		end
+		gemSelect.__pobt = true
+	end
 end
 
 -- POB's error popups also go to the log.
