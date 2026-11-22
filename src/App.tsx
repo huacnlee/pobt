@@ -525,8 +525,7 @@ function GameCard(props: {
     return t.installing(mb(p.done), mb(p.total));
   };
   const busy = () => install()?.phase === "downloading" || install()?.phase === "unpacking";
-  // Hovering the folder shows a menu button after it: open the folder, or forget it (Reset), kept out of the way.
-  const dirHover = signal(false);
+  const moreHover = signal(false);
   const menuOpen = signal(false);
   const hasMenu = () => !install() && !!dir();
   return (
@@ -557,30 +556,30 @@ function GameCard(props: {
         </Text>
         </If>
         <Rule width={260} dim={!selected()} />
-        <View
-          onMouseEnter={() => dirHover.set(true)}
-          onMouseLeave={() => dirHover.set(false)}
-          style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+        <Text
+          style={{
+            fontFamily: BODY,
+            fontSize: 12,
+            color: install() ? (install()!.phase === "failed" ? C.red : C.gold) : dir() ? C.muted : C.red,
+            textAlign: "center",
+            numberOfLines: 2,
+          }}
         >
-          {/* As wide as the menu button, so the text stays centred */}
-          <If when={hasMenu()}>
-            <View style={{ width: 20 }} />
+          {install() ? status(install()!) : (dir() ?? props.t().notFound)}
+        </Text>
+        {/* No Path of Building yet: install it from its release, or choose where it is */}
+        <View style={{ flexDirection: "row", gap: 12, opacity: busy() ? 0.5 : 1 }}>
+          <If when={!dir()}>
+            <Button label={props.t().install} onPress={() => !busy() && props.onInstall()} />
           </If>
-          <Text
-            style={{
-              flexShrink: 1,
-              fontFamily: BODY,
-              fontSize: 12,
-              color: install() ? (install()!.phase === "failed" ? C.red : C.gold) : dir() ? C.muted : C.red,
-              textAlign: "center",
-              numberOfLines: 2,
-            }}
-          >
-            {install() ? status(install()!) : (dir() ?? props.t().notFound)}
-          </Text>
-          <If when={hasMenu()}>
+          <Button label={props.t().pick} onPress={() => !busy() && props.onPick()} />
+        </View>
+        {/* Its menu, in the top right corner: open the folder, or forget it (Reset), kept out of the way */}
+        <If when={hasMenu()}>
+          <View style={{ position: "absolute", top: 8, right: 8 }}>
             <Menu
               offset={4}
+              align="end"
               open={menuOpen()}
               onOpenChange={(e) => menuOpen.set(e.open)}
               popupStyle={{
@@ -595,9 +594,11 @@ function GameCard(props: {
                 <View
                   role="button"
                   accessibilityLabel={props.t().more}
-                  style={{ width: 20, height: 20, alignItems: "center", justifyContent: "center", opacity: dirHover() || menuOpen() ? 1 : 0 }}
+                  onMouseEnter={() => moreHover.set(true)}
+                  onMouseLeave={() => moreHover.set(false)}
+                  style={{ width: 24, height: 24, alignItems: "center", justifyContent: "center" }}
                 >
-                  <Image src={more} style={{ width: 16, height: 16, tintColor: menuOpen() ? C.goldHi : C.gold }} />
+                  <Image src={more} style={{ width: 16, height: 16, tintColor: moreHover() || menuOpen() ? C.goldHi : C.dim }} />
                 </View>
               }
             >
@@ -605,15 +606,8 @@ function GameCard(props: {
               <MenuSeparator style={{ height: 1, marginVertical: 4, backgroundColor: C.trim }} />
               <CardMenuItem label={props.t().reset} color={C.red} onSelect={props.onReset} />
             </Menu>
-          </If>
-        </View>
-        {/* No Path of Building yet: install it from its release, or choose where it is */}
-        <View style={{ flexDirection: "row", gap: 12, opacity: busy() ? 0.5 : 1 }}>
-          <If when={!dir()}>
-            <Button label={props.t().install} onPress={() => !busy() && props.onInstall()} />
-          </If>
-          <Button label={props.t().pick} onPress={() => !busy() && props.onPick()} />
-        </View>
+          </View>
+        </If>
       </View>
       {/* Its title plaque, set over the top edge */}
       <View style={{ position: "absolute", top: 0, left: 0, right: 0, alignItems: "center" }}>
