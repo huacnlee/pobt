@@ -12,7 +12,7 @@ export interface Copy {
   title: string;
   description: string;
   skip: string;
-  nav: { download: string; install: string; faq: string; github: string; sponsor: string; language: string };
+  nav: { download: string; install: string; github: string; sponsor: string; language: string };
   subtitle: string;
   intro: string;
   download: string;
@@ -50,7 +50,7 @@ export const copy: Record<Language, Copy> = {
     description:
       "POBT runs Path of Building Community with its interface translated to Simplified Chinese, Traditional Chinese or Korean. Free, open source, for Windows.",
     skip: "Skip to content",
-    nav: { download: "Download", install: "Install", faq: "FAQ", github: "GitHub", sponsor: "Sponsor", language: "Language" },
+    nav: { download: "Download", install: "Install", github: "GitHub", sponsor: "Sponsor", language: "Language" },
     subtitle: "Your Path of Building, in your language",
     intro:
       "POBT runs the Path of Building Community you already have, with its whole interface translated: skills, items, passives, calculations. Simplified Chinese, Traditional Chinese and Korean, switchable any time.",
@@ -123,7 +123,7 @@ export const copy: Record<Language, Copy> = {
     title: "POBT — 中文版 Path of Building",
     description: "POBT 让 Path of Building Community 显示简体中文、繁體中文或한국어界面。免费、开源，适用于 Windows。",
     skip: "跳到正文",
-    nav: { download: "下载", install: "安装", faq: "常见问题", github: "GitHub", sponsor: "赞助", language: "语言" },
+    nav: { download: "下载", install: "安装", github: "GitHub", sponsor: "赞助", language: "语言" },
     subtitle: "POB 构筑的多语言翻译",
     intro:
       "POBT 直接运行你电脑上已有的 Path of Building Community，并把整个界面翻译成中文：技能、物品、天赋、计算结果，一应俱全。支持简体中文、繁體中文和한국어，随时切换。",

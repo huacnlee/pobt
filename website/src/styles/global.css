@@ -201,3 +201,6 @@ footer { margin-top: 96px; padding: 24px 0 40px; background: linear-gradient(#07
 .shots { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 24px; }
 .shots img { width: 100%; height: auto; }
 @media (max-width: 620px) { .shots { grid-template-columns: 1fr; } }
+/* Sponsor, in the red of the start button. */
+nav a.sponsor-link { color: #e0604a; }
+nav a.sponsor-link:hover { color: #ff9a7e; text-shadow: 0 0 10px rgba(224, 96, 74, .85); }
