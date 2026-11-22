@@ -28,14 +28,20 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: dtolnay/rust-toolchain@stable
-      # The crate's `cargo check`, and the workspace nsh generates in `.nsh/rust` to build the program that describes
-      # the crate to the type check (absent until `nsh check` writes it).
+        id: toolchain
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: |
-            ext/pobt-native
-            .nsh/rust
+          workspaces: ext/pobt-native
           key: ci-check
+      # The workspace nsh generates in `.nsh/rust` to build the program that describes the crate to the type check:
+      # not rust-cache's, which cannot read a workspace that does not exist yet, and so keeps none of its build.
+      - uses: actions/cache@v4
+        with:
+          path: |
+            .nsh/rust/target
+            .nsh/rust/Cargo.lock
+          key: nsh-rust-${{ env.NSH_VERSION }}-${{ steps.toolchain.outputs.cachekey }}-${{ hashFiles('ext/pobt-native/Cargo.lock') }}
+          restore-keys: nsh-rust-${{ env.NSH_VERSION }}-${{ steps.toolchain.outputs.cachekey }}-
 
       - name: Install the NSH CLI
         shell: pwsh
