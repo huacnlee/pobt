@@ -12,6 +12,8 @@ use crate::text::escape_len;
 #[derive(Default)]
 pub struct Dictionary {
     exact: HashMap<String, String>,
+    /// `exact` by its English in lower case, for text whose case differs.
+    folded: HashMap<String, String>,
     /// Key: the English with each placeholder as `\u{1}`; value: the
     /// translation and, per placeholder in the English, its number index.
     templates: HashMap<String, Template>,
@@ -19,6 +21,26 @@ pub struct Dictionary {
 
 struct Template {
     text: String,
+}
+
+/// With `POBT_MISSES` set to a file: the text no rule translated, and how often
+/// each was drawn, written to that file now and then (`dump_misses`).
+static MISSES: std::sync::Mutex<Option<HashMap<String, u32>>> = std::sync::Mutex::new(None);
+
+fn misses_on() -> bool {
+    static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *ON.get_or_init(|| std::env::var_os("POBT_MISSES").is_some())
+}
+
+/// Writes the misses so far, most drawn first, when `POBT_MISSES` is set.
+pub fn dump_misses() {
+    let Some(path) = std::env::var_os("POBT_MISSES") else { return };
+    let Some(misses) = MISSES.lock().unwrap().clone() else { return };
+    let mut list: Vec<_> = misses.into_iter().collect();
+    list.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+    let text: String = list.iter().map(|(s, n)| format!("{n}	{s}
+")).collect();
+    let _ = std::fs::write(path, text);
 }
 
 /// The dictionary in use; empty until one loads.
@@ -87,9 +109,10 @@ impl Dictionary {
         }
         if let Some(key) = template_key(en_t) {
             self.templates.entry(key).or_insert(Template { text: zh.trim().to_string() });
-        } else {
-            self.exact.entry(en_t.to_string()).or_insert_with(|| zh.trim().to_string());
         }
+        // Exact too: a `#` may be the text's own ("# of Power Charges:"), not a number's.
+        self.exact.entry(en_t.to_string()).or_insert_with(|| zh.trim().to_string());
+        self.folded.entry(en_t.to_lowercase()).or_insert_with(|| zh.trim().to_string());
     }
 
     fn lookup_template(&self, s: &str, signed: bool) -> Option<String> {
@@ -131,6 +154,16 @@ impl Dictionary {
 
     /// The translation of one plain segment (no escapes), whitespace kept.
     fn segment(&self, seg: &str) -> Option<String> {
+        let found = self.lookup(seg);
+        let t = seg.trim();
+        if found.is_none() && misses_on() && t.bytes().any(|c| c.is_ascii_alphabetic()) {
+            *MISSES.lock().unwrap().get_or_insert_default().entry(t.to_string()).or_default() += 1;
+        }
+        found
+    }
+
+    /// `segment`'s lookup, which notes no miss.
+    fn lookup(&self, seg: &str) -> Option<String> {
         let t = seg.trim();
         if t.is_empty() || !t.bytes().any(|c| c.is_ascii_alphabetic()) {
             return None;
@@ -147,12 +180,53 @@ impl Dictionary {
                 // "Label:" when only "Label" is known.
                 let base = t.strip_suffix(':')?;
                 Some(format!("{}:", self.exact.get(base.trim_end())?))
-            });
+            })
+            .or_else(|| {
+                // "Label" when only "Label:" is known (POB adds the colon as it draws some).
+                let known = self.exact.get(&format!("{t}:"))?;
+                Some(known.trim_end_matches([':', '：']).trim_end().to_string())
+            })
+            .or_else(|| self.folded.get(&t.to_lowercase()).cloned());
         found.map(|f| format!("{lead}{f}{trail}"))
+    }
+
+    /// `s` translated as one, its colour escapes left out, when it has some
+    /// inside it: the translation keeps the colour `s` starts with.
+    fn whole(&self, s: &str) -> Option<String> {
+        let b = s.as_bytes();
+        let mut plain = String::with_capacity(s.len());
+        let mut lead = "";
+        let mut inner = false;
+        let mut i = 0;
+        while i < b.len() {
+            let e = escape_len(&b[i..]);
+            if e > 0 {
+                if plain.trim().is_empty() {
+                    lead = &s[i..i + e];
+                } else {
+                    inner = true;
+                }
+                i += e;
+            } else {
+                let ch = s[i..].chars().next().unwrap();
+                plain.push(ch);
+                i += ch.len_utf8();
+            }
+        }
+        if !inner || plain.contains('\n') {
+            return None;
+        }
+        let t = self.lookup(&plain)?;
+        Some(if t.trim_start().starts_with('^') { t } else { format!("{lead}{t}") })
     }
 
     /// Translates `s`, keeping its colour escapes; `None` if nothing changed.
     pub fn translate(&self, s: &str) -> Option<String> {
+        // A sentence coloured in parts ("Are you always on Full ^xE05030Life?") is known whole, without its
+        // colours: its translation brings its own.
+        if let Some(whole) = self.whole(s) {
+            return Some(whole);
+        }
         let b = s.as_bytes();
         let mut out = String::with_capacity(s.len());
         let mut changed = false;
@@ -259,6 +333,69 @@ fn same(a: &Option<Arc<Dictionary>>, b: &Option<Arc<Dictionary>>) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The real dictionary on POB's own labels.
+    #[test]
+    fn labels_with_colours_and_hashes() {
+        let d = Dictionary::load("zh-rCN");
+        assert_eq!(d.translate("# of Power Charges (if not maximum):").as_deref(), Some("【暴击球】数量 (如果不是最大值):"));
+        assert_eq!(d.translate("^7# of Gale Force:").as_deref(), Some("^7【飓风之力】个数"));
+        assert_eq!(d.translate("Are you always on Full ^xE05030Life?").as_deref(), Some("^xFFFFFF是否处于满^xE05030血^7状态?"));
+        assert_eq!(d.translate("Current build:").as_deref(), Some("当前 BD:"));
+    }
+
+    /// How much of POB's mod text the dictionary translates, and the shapes it
+    /// misses most: `POB_DIR=<folder> cargo test --lib coverage -- --ignored --nocapture`.
+    #[test]
+    #[ignore]
+    fn coverage() {
+        let pob = std::path::PathBuf::from(std::env::var("POB_DIR").expect("POB_DIR"));
+        let d = Dictionary::load(&std::env::var("POB_LANG").unwrap_or("zh-rCN".into()));
+        let cache = std::fs::read_to_string(pob.join("Data/ModCache.lua")).unwrap();
+        let lines: Vec<String> = cache
+            .lines()
+            .filter_map(|l| l.strip_prefix("c[\"")?.split_once("\"]=").map(|(k, _)| k.replace("\n", "
+")))
+            .filter(|k| !k.trim().is_empty())
+            .collect();
+        let mut missed: HashMap<String, (u32, String)> = HashMap::new();
+        let mut hit = 0;
+        for l in &lines {
+            if d.translate(l).is_some() {
+                hit += 1;
+            } else {
+                let shape: String = l.chars().map(|c| if c.is_ascii_digit() { '#' } else { c }).collect();
+                let e = missed.entry(shape).or_insert((0, l.clone()));
+                e.0 += 1;
+            }
+        }
+        println!("mods: {} of {} translated ({:.1}%)", hit, lines.len(), hit as f64 * 100.0 / lines.len() as f64);
+
+        // The labels of POB's controls and options.
+        let mut labels: Vec<String> = Vec::new();
+        for dir in ["Classes", "Modules"] {
+            for e in std::fs::read_dir(pob.join(dir)).unwrap().flatten() {
+                let src = std::fs::read_to_string(e.path()).unwrap_or_default();
+                for part in src.split("label = \"").skip(1) {
+                    if let Some((l, _)) = part.split_once('"') {
+                        labels.push(l.to_string());
+                    }
+                }
+            }
+        }
+        labels.sort();
+        labels.dedup();
+        let missed_labels: Vec<_> = labels.iter().filter(|l| l.bytes().any(|c| c.is_ascii_alphabetic()) && d.translate(l).is_none()).collect();
+        println!("labels: {} of {} missed", missed_labels.len(), labels.len());
+        for l in missed_labels.iter().take(80) {
+            println!("   {l}");
+        }
+        let mut list: Vec<_> = missed.into_iter().collect();
+        list.sort_by(|a, b| b.1.0.cmp(&a.1.0));
+        for (shape, (n, example)) in list.iter().take(60) {
+            println!("{n:5}  {shape}    e.g. {example}");
+        }
+    }
 
     fn dict() -> Dictionary {
         let mut d = Dictionary::default();

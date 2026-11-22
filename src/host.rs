@@ -295,6 +295,9 @@ fn run_once(pob_dir: &Path, shared: &Arc<Shared>, rx: mpsc::Receiver<Input>) -> 
         }
         publish(shared);
         frames += 1;
+        if frames % 120 == 0 {
+            translate::dump_misses();
+        }
         if frames % 600 == 0 {
             l.get_global("collectgarbage");
             l.push_str("step");
