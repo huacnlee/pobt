@@ -592,6 +592,9 @@ fn pob_view(shared: Arc<Shared>) -> impl IntoElement {
         let held = std::rc::Rc::new(std::cell::RefCell::new(String::new()));
         let pending = std::rc::Rc::new(std::cell::RefCell::new(None::<String>));
         let is_composing = std::rc::Rc::new(std::cell::Cell::new(false));
+        // The sink's value, emptied after each change so its caret, which the input method's candidates follow,
+        // stays at the start of POB's box. It follows what the platform reports, so emptying it is a change.
+        let value = signal(String::new());
         let take = {
             let held = held.clone();
             move |text: &str| {
@@ -601,6 +604,10 @@ fn pob_view(shared: Arc<Shared>) -> impl IntoElement {
                 }
                 *held = text.to_owned();
                 typed.poke.store(true, Ordering::SeqCst);
+                value.set(text.to_owned());
+                if !text.is_empty() {
+                    set_timeout(Duration::ZERO, move || value.set(String::new()));
+                }
             }
         };
         let (take_now, pending_now, composing_now) = (take.clone(), pending.clone(), is_composing.clone());
@@ -609,15 +616,14 @@ fn pob_view(shared: Arc<Shared>) -> impl IntoElement {
             .absolute()
             .left(px(rect[0]))
             .top(px(rect[1]))
-            .w(px(1.0))
+            .w(px(rect[2]))
             .h(px(rect[3]))
             .p_0()
             .border(px(0.0))
             .opacity(0.02)
             .pointer_events(PointerEvents::None)
             .caret(false)
-            // Return is POB's, never a submit that would take the focus away.
-            .multiline(true)
+            .value(move || value.get())
             .auto_focus(true)
             .auto_correct(false)
             .auto_capitalize(AutoCapitalize::None)
@@ -682,7 +688,7 @@ fn pob_view(shared: Arc<Shared>) -> impl IntoElement {
         )
         // Keyed by the box, so the sink stays while it keeps the focus.
         .child(dynamic(move || frame.with(|f| f.text_input.map(|r| r.map(f32::to_bits))).map(|r| sink(r.map(f32::from_bits)))))
-        // What the input method composes, under the box, as POB cannot show it.
+        // What the input method composes, at the end of the box, as POB cannot show it.
         .child(dynamic(move || {
             let text_ = composing.get();
             let rect = frame.with_untracked(|f| f.text_input)?;
@@ -690,13 +696,22 @@ fn pob_view(shared: Arc<Shared>) -> impl IntoElement {
                 view()
                     .absolute()
                     .left(px(rect[0]))
-                    .top(px(rect[1] + rect[3] + 2.0))
-                    .px_2()
-                    .py_1()
-                    .bg(rgb(0x000000))
-                    .border(px(1.0))
-                    .border_color(rgb(0xb18d4e))
-                    .child(text(text_).text_size(px(14.0)).text_color(rgb(0xffffff)))
+                    .top(px(rect[1]))
+                    .w(px(rect[2]))
+                    .h(px(rect[3]))
+                    .flex_row()
+                    .justify_end()
+                    .pointer_events(PointerEvents::None)
+                    .child(
+                        view()
+                            .h_full()
+                            .px_2()
+                            .justify_center()
+                            .bg(rgb(0x000000))
+                            .border(px(1.0))
+                            .border_color(rgb(0xb18d4e))
+                            .child(text(text_).text_size(px(14.0)).text_color(rgb(0xffffff))),
+                    )
             })
         }))
         .child(dynamic(move || {
