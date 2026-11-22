@@ -461,7 +461,7 @@ function TitleBar(props: { t: () => Strings; solid?: boolean; onBack?: () => voi
         paddingRight: win.titleBar().right + 12,
         backgroundColor: props.solid ? "#07080a" : "transparent",
         borderBottomWidth: props.solid ? 1 : 0,
-        borderColor: "rgba(177,141,78,0.45)",
+        borderColor: "rgba(177,141,78,0.18)",
       }}
     >
       <View

@@ -18,6 +18,54 @@ const RIM = R + 42; // the rim's middle: it is 64 wide
 const AT = R + 104; // where the points stand
 
 // A jewelled point, as the plaques end in, pointing up from (0, 0).
+// The face's age, drawn from a fixed seed: scratches, chips at its rim and a crack running in from it.
+let seed = 11;
+const rand = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+const scratches = Array.from({ length: 34 }, () => {
+  const a = rand() * Math.PI * 2;
+  const d = rand() * R * 0.9;
+  const x = C + Math.cos(a) * d;
+  const y = C + Math.sin(a) * d;
+  const len = 30 + rand() * 120;
+  const t = rand() * Math.PI;
+  const bend = (rand() - 0.5) * 30;
+  const [dx, dy] = [Math.cos(t) * len, Math.sin(t) * len];
+  const path = `M${x - dx / 2} ${y - dy / 2} q${dx / 2 - dy / len * bend} ${dy / 2 + dx / len * bend} ${dx} ${dy}`;
+  const w = 1 + rand() * 2;
+  return `<path d="${path}" fill="none" stroke="#120202" stroke-width="${w + 1}" opacity=".55"/>
+    <path d="${path}" fill="none" stroke="#ffb3a0" stroke-width="${w * 0.6}" opacity=".22" transform="translate(-1 -1.5)"/>`;
+}).join("");
+const chips = Array.from({ length: 7 }, () => {
+  const a = rand() * Math.PI * 2;
+  const d = R - 6 - rand() * 30;
+  const x = C + Math.cos(a) * d;
+  const y = C + Math.sin(a) * d;
+  const pts = Array.from({ length: 13 }, (_, i) => {
+    const b = (i / 13) * Math.PI * 2 + rand() * 0.3;
+    const r = (5 + rand() * 9) * (i % 2 ? 0.55 + rand() * 0.3 : 1);
+    return `${x + Math.cos(b) * r},${y + Math.sin(b) * r}`;
+  }).join(" ");
+  return `<polygon points="${pts}" fill="#1a0303" opacity=".85"/>
+    <polygon points="${pts}" fill="none" stroke="#e0806a" stroke-width="2" opacity=".35" transform="translate(1.5 2)"/>`;
+}).join("");
+let cx = C + R * 0.72;
+let cy = C - R * 0.55;
+const crackPts = [`${cx},${cy}`];
+for (let i = 0; i < 9; i++) {
+  cx -= 14 + rand() * 18;
+  cy += 8 + rand() * 20;
+  crackPts.push(`${cx},${cy}`);
+}
+const crack = crackPts.join(" ");
+const aged = `
+    <rect width="100%" height="100%" filter="url(#tarnish)"/>
+    <rect width="100%" height="100%" filter="url(#pits)"/>
+    ${scratches}
+    ${chips}
+    <polyline points="${crack}" fill="none" stroke="#0e0101" stroke-width="5" stroke-linejoin="bevel" opacity=".9"/>
+    <polyline points="${crack}" fill="none" stroke="#f0a08a" stroke-width="1.5" stroke-linejoin="bevel" opacity=".35" transform="translate(1.5 2.5)"/>
+    <circle cx="${C}" cy="${C}" r="${R - 10}" fill="none" stroke="#ff9c86" stroke-width="22" opacity=".08" filter="url(#soft)"/>`;
+
 const point = `
   <path d="M0 -96 L44 0 L0 30 L-44 0 Z" fill="#000" opacity=".85" transform="translate(0 6)"/>
   <path d="M0 -92 L40 0 L0 26 L-40 0 Z" fill="url(#gold)" stroke="#0c0803" stroke-width="7"/>
@@ -56,6 +104,16 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}">
     <filter id="grime" x="0" y="0" width="100%" height="100%">
       <feTurbulence type="fractalNoise" baseFrequency=".02 .03" numOctaves="4" seed="3"/>
       <feColorMatrix type="matrix" values="0 0 0 0 .04  0 0 0 0 .03  0 0 0 0 .01  0 0 0 1.4 -.6"/>
+    </filter>
+    <!-- Tarnish on the crimson: dark, uneven blotches -->
+    <filter id="tarnish" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency=".012" numOctaves="4" seed="21"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 .06  0 0 0 0 .01  0 0 0 0 .01  0 0 0 2.4 -1.15"/>
+    </filter>
+    <!-- Pits: fine dark specks -->
+    <filter id="pits" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency=".6" numOctaves="1" seed="33"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 .05  0 0 0 0 0  0 0 0 0 0  0 0 0 7 -5"/>
     </filter>
     <filter id="rub" x="0" y="0" width="100%" height="100%">
       <feTurbulence type="fractalNoise" baseFrequency=".12" numOctaves="2" seed="9"/>
@@ -136,6 +194,7 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}">
     <circle cx="${C}" cy="${C}" r="${R}" fill="url(#crimson)" filter="url(#dome)"/>
     <rect width="100%" height="100%" filter="url(#brushed)"/>
     <rect width="100%" height="100%" filter="url(#grime)" opacity=".5"/>
+    ${aged}
     <circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="#000" stroke-width="60" opacity=".55" filter="url(#soft)"/>
     <!-- Sunk into the rim: a shadow under its upper edge, a lit lower lip -->
     <circle cx="${C}" cy="${C + 10}" r="${R + 4}" fill="none" stroke="#000" stroke-width="26" opacity=".8" filter="url(#soft)"/>
