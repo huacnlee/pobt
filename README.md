@@ -21,6 +21,7 @@ Chinese, Traditional Chinese and Korean are included.
 
 - Your Path of Building files are never modified; your builds stay where they are.
 - Press **Ctrl+Shift+T** at any time to switch to English and back.
+- The translations are plain CSV files in the `trs` folder beside `POBT.exe`: edit them to fix one or add your own (an update of POBT replaces the folder, so keep a copy of your changes).
 - POBT updates itself when a new version is out.
 
 ## Download

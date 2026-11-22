@@ -51,6 +51,9 @@ jobs:
           [ "$GITHUB_REF_TYPE" != tag ] || args+=(--app-version "${GITHUB_REF_NAME#v}")
           out="$RUNNER_TEMP/out"
           nsh package --target windows -o "$out" "${args[@]}"
+          # The translations go beside POBT.exe, not into it, so anyone can edit them.
+          cp -r trs "$out/POBT/trs"
+          (cd "$out" && for z in POBT.zip POBT-*.zip; do 7z a -tzip "$z" POBT/trs > /dev/null; done)
           ls -l "$out"
           mkdir -p dist
           # The installers' archive, and the versioned one for the updater.
@@ -70,6 +73,7 @@ jobs:
           sleep 2
           POBT_BASE_URL=http://127.0.0.1:8765 powershell -NoProfile -ExecutionPolicy Bypass -File website/public/install.ps1
           test -f "$LOCALAPPDATA/Programs/POBT/POBT.exe"
+          test -f "$LOCALAPPDATA/Programs/POBT/trs/languages.json"
           rm dist/sha256sums
 
       # The app fetches `releases/latest/download/latest.json` and the archive it names (nsh/updater).

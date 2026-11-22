@@ -20,6 +20,7 @@ POBT 直接运行你电脑上已有的 [Path of Building Community](https://path
 
 - 不修改任何 Path of Building 文件，你的 BD 仍在原来的位置。
 - 随时按 **Ctrl+Shift+T** 切换中文 / 英文。
+- 翻译是 `POBT.exe` 旁边 `trs` 文件夹里的 CSV 文件，可以自己修改或补充（POBT 更新时会覆盖这个文件夹，改过的内容请自己备份）。
 - 有新版本时自动更新。
 
 ## 下载

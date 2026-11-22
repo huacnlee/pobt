@@ -6,9 +6,8 @@ Translations live in `trs/<language>/` as two-column CSV files, `English,transla
 for the numbers of the text: `"+{0} to maximum Life",+{0} 最大生命`. The English must match what Path of Building
 draws, without its colour codes (`^7`, `^xRRGGBB`). Press **Ctrl+Shift+T** in POBT to see the English of a screen.
 
-The files are built into the app: after adding or removing a file, run `scripts/gen-trs.sh` (a test checks the
-list). A `trs` folder beside `POBT.exe` takes precedence over the built-in data, so you can try changes without
-building.
+They are not built into the app: the release puts the `trs` folder beside `POBT.exe`, where anyone can edit them
+(an update of POBT replaces it). A development run reads the one in the source tree.
 
 ## How it works
 

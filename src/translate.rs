@@ -88,7 +88,7 @@ impl Dictionary {
             let mut reader = csv::ReaderBuilder::new()
                 .has_headers(false)
                 .flexible(true)
-                .from_reader(data.as_ref());
+                .from_reader(data.as_slice());
             for record in reader.byte_records().flatten() {
                 if record.len() < 2 {
                     continue;
