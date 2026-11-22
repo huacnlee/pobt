@@ -480,10 +480,12 @@ function __pobt_hookEdit(classes)
 		end
 		return keyDown(self, key, ...)
 	end
-	-- A gem box takes letters only: it takes the characters of other scripts too, to search by translated names.
+	-- A box that takes letters takes only English ones (POB's default filter, a gem box's): it takes the
+	-- characters of other scripts too, to name things and search gems by their translated names. Boxes for
+	-- numbers keep their filters.
 	local function lettersAndScripts(self, f, ...)
 		local filter = self.filterPattern
-		if self._className == "GemSelectControl" and type(filter) == "string" and filter:sub(1, 2) == "[^" then
+		if type(filter) == "string" and filter:sub(1, 2) == "[^" and (filter:find("%%a") or filter:find("%%w")) then
 			self.filterPattern = "[^\128-\255" .. filter:sub(3)
 		end
 		local r = pack(pcall(f, self, ...))
