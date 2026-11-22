@@ -54,13 +54,15 @@ jobs:
           nsh package --target windows -o "$out" "${args[@]}"
           # The translations go beside POBT.exe, not into it, so anyone can edit them.
           cp -r trs "$out/POBT/trs"
-          (cd "$out" && for z in POBT.zip POBT-*.zip; do 7z a -tzip "$z" POBT/trs > /dev/null; done)
+          # Into the versioned archive only, then copied as $ASSET: the two must be the same bytes, as the
+          # updater checks $ASSET against the hash the manifest takes of the versioned one.
+          (cd "$out" && 7z a -tzip POBT-*.zip POBT/trs > /dev/null)
           ls -l "$out"
           mkdir -p dist
-          # The installers' archive, and the versioned one for the updater.
-          mv "$out/POBT.zip" "dist/$ASSET"
           for f in "$out"/POBT-*.zip; do
-            mv "$f" "dist/$(basename "$f" | tr '[:upper:]' '[:lower:]')"
+            versioned="dist/$(basename "$f" | tr '[:upper:]' '[:lower:]')"
+            mv "$f" "$versioned"
+            cp "$versioned" "dist/$ASSET"
           done
           ls -l dist
 
@@ -90,6 +92,8 @@ jobs:
           jq --arg url "$ASSET" '.platforms[].url = $url' dist/latest.json > "$RUNNER_TEMP/latest.json"
           mv "$RUNNER_TEMP/latest.json" dist/latest.json
           rm dist/pobt-"$version"-*.zip
+          # The manifest must describe the archive the release carries.
+          test "$(jq -r '.platforms[].sha256' dist/latest.json)" = "$(sha256sum "dist/$ASSET" | cut -d' ' -f1)"
           cat dist/latest.json
 
       - uses: actions/upload-artifact@v4

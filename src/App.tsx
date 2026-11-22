@@ -60,6 +60,10 @@ interface Strings {
   released: (version: string) => string;
   failed: (error: string) => string;
   restart: string;
+  check: string;
+  checking: string;
+  upToDate: string;
+  manual: string;
   download: string;
 }
 
@@ -85,6 +89,10 @@ const UI: Record<string, Strings> = {
     released: (v) => `New v${v}`,
     failed: () => "Update failed",
     restart: "Update",
+    check: "Check for updates",
+    checking: "Checking…",
+    upToDate: "Up to date",
+    manual: "Download it",
     download: "Download",
   },
   "zh-rCN": {
@@ -107,6 +115,10 @@ const UI: Record<string, Strings> = {
     released: (v) => `新版本 v${v}`,
     failed: () => "更新失败",
     restart: "更新",
+    check: "检查更新",
+    checking: "检查中…",
+    upToDate: "已是最新版本",
+    manual: "手动下载",
     download: "下载",
   },
   "zh-rTW": {
@@ -129,6 +141,10 @@ const UI: Record<string, Strings> = {
     released: (v) => `新版本 v${v}`,
     failed: () => "更新失敗",
     restart: "更新",
+    check: "檢查更新",
+    checking: "檢查中…",
+    upToDate: "已是最新版本",
+    manual: "手動下載",
     download: "下載",
   },
   "ko-KR": {
@@ -151,6 +167,10 @@ const UI: Record<string, Strings> = {
     released: (v) => `새 버전 v${v}`,
     failed: () => "업데이트 실패",
     restart: "업데이트",
+    check: "업데이트 확인",
+    checking: "확인 중…",
+    upToDate: "최신 버전입니다",
+    manual: "직접 다운로드",
     download: "다운로드",
   },
 };
@@ -343,69 +363,104 @@ function Dot() {
   return <View style={{ width: 5, height: 5, backgroundColor: C.trimHi, transform: [{ rotate: "45deg" }] }} />;
 }
 
-// Checks for a newer POBT at start. A newer version downloads on its own and replaces the app when it quits; the
-// badge beside the title offers to restart into it now.
-function UpdateBadge(props: { t: () => Strings }) {
-  const update = signal<AppUpdate | null>(null);
-  const state = signal<"found" | "downloading" | "ready" | "failed">("found");
-  const progress = signal(0);
-  const failure = signal("");
+// POBT's own updates, one state for the whole app: checked at start, and again when the user asks. A newer version
+// downloads on its own and replaces the app when it quits; the badge offers to restart into it now.
+const update = signal<AppUpdate | null>(null);
+const updateState = signal<"idle" | "checking" | "latest" | "downloading" | "ready" | "failed">("idle");
+const updateProgress = signal(0);
+let latestTimer: ReturnType<typeof setTimeout> | undefined;
 
+function checkUpdates() {
+  const s = updateState();
+  if (s === "checking" || s === "downloading" || s === "ready") return;
+  clearTimeout(latestTimer);
+  updateState.set("checking");
   checkForUpdate()
     .then(async (u) => {
       update.set(u);
-      if (!u?.canInstall) return;
-      state.set("downloading");
-      await downloadUpdate(({ received, total }) => progress.set(total ? received / total : 0));
+      if (!u) {
+        // Up to date: said for a moment, then the button again.
+        updateState.set("latest");
+        latestTimer = setTimeout(() => updateState() === "latest" && updateState.set("idle"), 3000);
+        return;
+      }
+      if (!u.canInstall) {
+        updateState.set("idle");
+        return;
+      }
+      updateState.set("downloading");
+      await downloadUpdate(({ received, total }) => updateProgress.set(total ? received / total : 0));
       await installOnQuit();
-      state.set("ready");
+      updateState.set("ready");
     })
     .catch((e) => {
-      if (update()) {
-        failure.set(String(e));
-        state.set("failed");
-      }
+      console.error("updating POBT:", e);
+      updateState.set("failed");
     });
+}
 
-  const message = (u: AppUpdate) => {
+/** The update in the title bar: a newer version as it downloads and once ready (press to restart into it), and
+ * otherwise Check for updates, which says so when POBT is up to date. Not in a development run, which has no
+ * version to update. */
+function UpdateBadge(props: { t: () => Strings }) {
+  const hover = signal(false);
+  const text = () => {
     const t = props.t();
-    switch (state()) {
-      case "downloading":
-        return t.downloading(u.version, Math.round(progress() * 100));
-      case "ready":
-        return t.ready(u.version);
+    const u = update();
+    switch (updateState()) {
+      case "checking":
+        return t.checking;
+      case "latest":
+        return t.upToDate;
       case "failed":
-        return t.failed(failure());
+        return t.failed("");
+      case "downloading":
+        return u ? t.downloading(u.version, Math.round(updateProgress() * 100)) : t.checking;
+      case "ready":
+        return u ? t.ready(u.version) : "";
       default:
-        return t.released(u.version);
+        return u ? t.released(u.version) : t.check;
     }
   };
-
+  const press = () => {
+    const u = update();
+    if (updateState() === "ready") installAndRestart().catch(() => updateState.set("failed"));
+    // It failed: the release page, to download it by hand.
+    else if (updateState() === "failed") Pob.openUrl(`${REPO}/releases/latest`);
+    else if (u && !u.canInstall) Pob.openUrl(u.url);
+    else checkUpdates();
+  };
+  // A newer version stands out in a framed badge; the button is a plain link, as the footer's.
+  const found = () => (update() !== null && updateState() !== "latest") || updateState() === "failed";
   return (
-    <If when={update()}>
-      {(u) => (
-        <View
-          role="button"
-          onPress={() => (state() === "ready" ? installAndRestart() : !u().canInstall ? Pob.openUrl(u().url) : undefined)}
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 8,
-            paddingHorizontal: 10,
-            paddingVertical: 3,
-            borderWidth: 1,
-            borderColor: C.trim,
-            backgroundColor: "rgba(0,0,0,0.6)",
-          }}
-          hoverStyle={{ borderColor: C.trimHi }}
-        >
+    <If when={shellInfo().version}>
+      <View
+        role="button"
+        onPress={press}
+        onMouseEnter={() => hover.set(true)}
+        onMouseLeave={() => hover.set(false)}
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 8,
+          paddingHorizontal: found() ? 10 : 4,
+          paddingVertical: 3,
+          borderWidth: found() ? 1 : 0,
+          borderColor: hover() ? C.trimHi : C.trim,
+          backgroundColor: found() ? "rgba(0,0,0,0.6)" : "transparent",
+        }}
+      >
+        <If when={found()}>
           <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: C.unique }} />
-          <Text style={{ fontFamily: BODY, fontSize: 12, color: C.text }}>{message(u())}</Text>
-          <If when={state() === "ready"}>
-            <Text style={{ fontFamily: BODY, fontSize: 12, color: C.unique }}>{props.t().restart} ›</Text>
-          </If>
-        </View>
-      )}
+        </If>
+        <Text style={{ fontFamily: BODY, fontSize: 12, color: found() ? C.text : hover() ? "#fff3d0" : C.gold }}>{text()}</Text>
+        <If when={updateState() === "ready"}>
+          <Text style={{ fontFamily: BODY, fontSize: 12, color: C.unique }}>{props.t().restart} ›</Text>
+        </If>
+        <If when={updateState() === "failed"}>
+          <Text style={{ fontFamily: BODY, fontSize: 12, color: C.unique }}>{props.t().manual} ›</Text>
+        </If>
+      </View>
     </If>
   );
 }
@@ -785,6 +840,7 @@ function Loading(props: { t: () => Strings; progress: () => LoadProgress }) {
 }
 
 export function App() {
+  checkUpdates();
   // No system title bar: the app draws its own (TitleBar).
   currentWindow().set({ titleBar: { style: "hidden", height: TITLE_BAR } });
   const running = signal(false);
