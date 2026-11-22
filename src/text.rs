@@ -2,9 +2,10 @@
 //! measuring and the runs the canvas draws.
 //!
 //! POB lays out with `DrawStringWidth`, so the widths measured here must match
-//! what the canvas draws: both use the same font files (Microsoft YaHei for
-//! proportional text and CJK, Consolas for `FIXED`), measured with ab_glyph
-//! and drawn by the platform under the same family names.
+//! what the canvas draws: both use the same font files, measured with ab_glyph
+//! and drawn by the platform under the same family names. Proportional text is
+//! Segoe UI, falling back to Microsoft YaHei UI for what it lacks (CJK);
+//! `FIXED` is Consolas, falling back the same way.
 
 use std::{
     cell::RefCell,
@@ -38,9 +39,9 @@ impl FontKind {
     pub fn css(self, size: f32) -> String {
         let fonts = fonts();
         match self {
-            FontKind::Fixed => format!("{size:.2}px \"{}\", \"{}\"", fonts.mono_family, fonts.var_family),
-            FontKind::Var => format!("{size:.2}px \"{}\"", fonts.var_family),
-            FontKind::VarBold => format!("bold {size:.2}px \"{}\"", fonts.var_family),
+            FontKind::Fixed => format!("{size:.2}px \"{}\", \"{}\"", fonts.mono_family, fonts.cjk_family),
+            FontKind::Var => format!("{size:.2}px \"{}\", \"{}\"", fonts.latin_family, fonts.cjk_family),
+            FontKind::VarBold => format!("bold {size:.2}px \"{}\", \"{}\"", fonts.latin_family, fonts.cjk_family),
         }
     }
 }
@@ -53,15 +54,10 @@ struct LoadedFont {
 }
 
 impl LoadedFont {
-    fn load(path: &Path) -> Option<Self> {
+    /// The font in `path`; in a collection (`.ttc`), its face `index`.
+    fn load(path: &Path, index: u32) -> Option<Self> {
         let data = std::fs::read(path).ok()?;
-        let font = FontArc::try_from_vec(data.clone())
-            .ok()
-            .or_else(|| {
-                // .ttc collections: the first face.
-                let face = ab_glyph::FontVec::try_from_vec_and_index(data, 0).ok()?;
-                Some(FontArc::new(face))
-            })?;
+        let font = FontArc::new(ab_glyph::FontVec::try_from_vec_and_index(data, index).ok()?);
         let upm = font.units_per_em().unwrap_or(1000.0);
         let ascent = font.ascent_unscaled() / upm;
         Some(Self { font, unit: 1.0 / upm, ascent })
@@ -73,10 +69,15 @@ impl LoadedFont {
 }
 
 pub struct Fonts {
-    var: Option<LoadedFont>,
-    bold: Option<LoadedFont>,
+    latin: Option<LoadedFont>,
+    latin_bold: Option<LoadedFont>,
+    cjk: Option<LoadedFont>,
+    cjk_bold: Option<LoadedFont>,
     mono: Option<LoadedFont>,
-    pub var_family: String,
+    /// Microsoft YaHei's ascent per em: the baseline all text sits on.
+    ascent: f32,
+    pub latin_family: String,
+    pub cjk_family: String,
     pub mono_family: String,
 }
 
@@ -90,12 +91,17 @@ fn fonts_dir() -> PathBuf {
 pub fn fonts() -> &'static Fonts {
     FONTS.get_or_init(|| {
         let dir = fonts_dir();
-        let pick = |names: &[&str]| names.iter().find_map(|n| LoadedFont::load(&dir.join(n)));
+        let pick = |names: &[(&str, u32)]| names.iter().find_map(|(n, i)| LoadedFont::load(&dir.join(n), *i));
+        // msyh.ttc's second face is Microsoft YaHei UI, YaHei with a UI's tighter lines.
         Fonts {
-            var: pick(&["msyh.ttc", "simhei.ttf", "segoeui.ttf"]),
-            bold: pick(&["msyhbd.ttc", "msyh.ttc", "segoeuib.ttf"]),
-            mono: pick(&["consola.ttf", "cour.ttf"]),
-            var_family: "Microsoft YaHei".into(),
+            latin: pick(&[("segoeui.ttf", 0)]),
+            latin_bold: pick(&[("segoeuib.ttf", 0)]),
+            cjk: pick(&[("msyh.ttc", 1), ("msyh.ttc", 0), ("simhei.ttf", 0)]),
+            cjk_bold: pick(&[("msyhbd.ttc", 1), ("msyh.ttc", 1)]),
+            mono: pick(&[("consola.ttf", 0), ("cour.ttf", 0)]),
+            ascent: pick(&[("msyh.ttc", 0)]).map(|f| f.ascent).unwrap_or(1.06),
+            latin_family: "Segoe UI".into(),
+            cjk_family: "Microsoft YaHei UI".into(),
             mono_family: "Consolas".into(),
         }
     })
@@ -112,13 +118,14 @@ fn char_advance(kind: FontKind, ch: char) -> f32 {
             return *w;
         }
         let f = fonts();
-        let primary = match kind {
-            FontKind::Fixed => f.mono.as_ref(),
-            FontKind::Var => f.var.as_ref(),
-            FontKind::VarBold => f.bold.as_ref(),
+        // As the platform picks: the first family that has the character.
+        let (primary, fallback) = match kind {
+            FontKind::Fixed => (f.mono.as_ref(), f.cjk.as_ref()),
+            FontKind::Var => (f.latin.as_ref(), f.cjk.as_ref()),
+            FontKind::VarBold => (f.latin_bold.as_ref(), f.cjk_bold.as_ref()),
         };
         let mut w = 0.5;
-        for font in [primary, f.var.as_ref()].into_iter().flatten() {
+        for font in [primary, fallback].into_iter().flatten() {
             let id = font.font.glyph_id(ch);
             if id.0 != 0 {
                 w = font.advance(id);
@@ -135,7 +142,7 @@ fn char_advance(kind: FontKind, ch: char) -> f32 {
 /// as POB's own fonts share one: Consolas' smaller ascent would lift `FIXED`
 /// text off the middle of its line.
 pub fn baseline(_kind: FontKind, size: f32, height: f32) -> f32 {
-    let ascent = fonts().var.as_ref().map(|f| f.ascent).unwrap_or(0.9);
+    let ascent = fonts().ascent;
     let descent_gap = (height - size * 1.15).max(0.0) / 2.0;
     descent_gap + ascent * size * 0.92
 }

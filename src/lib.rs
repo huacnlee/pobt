@@ -292,6 +292,9 @@ fn src_rect(s: [f32; 4]) -> Bounds<ScaledPixels> {
 
 /// Records POB's frame as a canvas drawing.
 fn paint(frame: &Frame) -> Painter {
+    // Text starts on whole device pixels: its stems then land on pixels, not across two.
+    let ratio = pixel_ratio().max(1.0);
+    let snap = |v: f32| (v * ratio).round() / ratio;
     let mut p = Painter::new()
         .fill_color(rgba(frame.clear))
         .fill_rect(0.0, 0.0, frame.width, frame.height)
@@ -363,7 +366,7 @@ fn paint(frame: &Frame) -> Painter {
                     p = p.font(f);
                     font = Some(f.as_ref());
                 }
-                p.fill_color(rgba(*color)).fill_text(text, *x, *y + *baseline)
+                p.fill_color(rgba(*color)).fill_text(text, snap(*x), snap(*y + *baseline))
             }
         };
     }
