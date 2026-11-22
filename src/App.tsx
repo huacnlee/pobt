@@ -613,7 +613,7 @@ function GameCard(props: {
                     backgroundColor: moreHover() || menuOpen() ? "rgba(177,141,78,0.18)" : "transparent",
                   }}
                 >
-                  <Image src={gear} style={{ width: 16, height: 16, tintColor: moreHover() || menuOpen() ? C.goldHi : C.gold }} />
+                  <Image src={gear} style={{ width: 14, height: 14, tintColor: moreHover() || menuOpen() ? C.goldHi : C.gold }} />
                 </View>
               }
             >
