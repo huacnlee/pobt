@@ -48,6 +48,8 @@ pub struct Shared {
     /// The UI asks POB to quit (back to the launcher): it does if its
     /// `CanExit` agrees, or asks about unsaved changes first.
     pub quit: AtomicBool,
+    /// POB quits to go back to the launcher, not to end POBT.
+    pub to_launcher: AtomicBool,
     /// Set by the UI to have the Lua thread repaint and process input now.
     pub poke: AtomicBool,
     pub last_input: Mutex<Instant>,
@@ -67,6 +69,7 @@ impl Shared {
             translate: AtomicBool::new(true),
             exited: AtomicBool::new(false),
             quit: AtomicBool::new(false),
+            to_launcher: AtomicBool::new(false),
             poke: AtomicBool::new(false),
             last_input: Mutex::new(Instant::now()),
         })

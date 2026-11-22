@@ -151,13 +151,15 @@ impl Pob {
     /// agrees, or asks about unsaved changes first. `left` says when it did.
     pub fn leave() {
         if let Some(s) = session() {
+            s.to_launcher.store(true, Ordering::SeqCst);
             s.quit.store(true, Ordering::SeqCst);
             s.poke.store(true, Ordering::SeqCst);
         }
     }
 
-    /// After `leave`: "waiting" while POB decides, "stayed" when it did not
-    /// quit (it asks about unsaved changes), "left" once it quit.
+    /// After `leave`: "waiting" while POB decides, "stayed" while it has not
+    /// quit (it asks about unsaved changes, and may quit after), "left" once it
+    /// quit.
     pub fn left() -> String {
         let mut session = SESSION.lock().unwrap();
         let Some((shared, _)) = session.as_ref() else {
@@ -381,7 +383,8 @@ fn pob_view(shared: Arc<Shared>) -> impl IntoElement {
                 current_window().set(a);
                 title.set(t);
             }
-            if shared.exited.load(Ordering::SeqCst) {
+            // POB quitting ends POBT, unless it quits to go back to the launcher.
+            if shared.exited.load(Ordering::SeqCst) && !shared.to_launcher.load(Ordering::SeqCst) {
                 std::process::exit(0);
             }
         });

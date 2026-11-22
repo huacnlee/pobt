@@ -637,14 +637,14 @@ function App() {
   // No system title bar: the app draws its own (TitleBar).
   currentWindow().set({ titleBar: { style: "hidden", height: TITLE_BAR } });
   const running = signal(false);
-  // Back to the launcher: POB quits as it would on closing (asking about unsaved changes first, and staying when
-  // the user says so), then the launcher shows.
+  // Back to the launcher: POB quits as it would on closing (asking about unsaved changes first: it may stay, or quit
+  // once the user answers), then the launcher shows.
   const back = () => {
     Pob.leave();
     const poll = () => {
       const state = Pob.left();
       if (state === "left") running.set(false);
-      else if (state === "waiting") setTimeout(poll, 50);
+      else if (running()) setTimeout(poll, state === "waiting" ? 50 : 250);
     };
     poll();
   };
