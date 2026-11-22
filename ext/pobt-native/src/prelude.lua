@@ -414,10 +414,19 @@ function __pobt_hookClasses()
 		if type(placeholder) == "string" then
 			self.placeholder = sg.Translate(placeholder)
 		end
+		-- A gem's name, which POB keeps in English, shown translated until the box is focused to edit it.
+		local buf = self.buf
+		local gem = self._className == "GemSelectControl" and not self.hasFocus and type(buf) == "string"
+		if gem then
+			self.buf = sg.Translate(buf)
+		end
 		sg.SetRawText(true)
 		local r = pack(pcall(draw, self, ...))
 		sg.SetRawText(false)
 		self.prompt, self.placeholder = prompt, placeholder
+		if gem then
+			self.buf = buf
+		end
 		if not r[1] then
 			error(r[2], 0)
 		end

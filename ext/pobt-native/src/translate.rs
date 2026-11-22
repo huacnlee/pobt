@@ -200,6 +200,7 @@ impl Dictionary {
             .or_else(|| self.labelled(t))
             .or_else(|| self.joined(t))
             .or_else(|| self.listed(t))
+            .or_else(|| Some(format!("- {}", self.inner(t.strip_prefix("- ")?)?)))
             .or_else(|| self.delta(t))
     }
 
@@ -223,7 +224,11 @@ impl Dictionary {
     fn delta(&self, t: &str) -> Option<String> {
         let num = t.find(' ')?;
         let (value, rest) = (&t[..num], &t[num + 1..]);
-        if !value.starts_with(['+', '-']) || !value[1..].bytes().all(|c| c.is_ascii_digit() || b".,%".contains(&c)) {
+        let digits = value.get(1..).unwrap_or("");
+        if !value.starts_with(['+', '-'])
+            || !digits.starts_with(|c: char| c.is_ascii_digit())
+            || !digits.bytes().all(|c| c.is_ascii_digit() || b".,%".contains(&c))
+        {
             return None;
         }
         let (stat, tail) = match rest.rfind(" (") {
@@ -448,6 +453,10 @@ mod tests {
         assert_eq!(d.translate("-4,733.7 Average Damage (-6.2%)").as_deref(), Some("-4,733.7 平均伤害 (-6.2%)"));
         assert_eq!(d.translate("+1% Phys. Damage Reduction").as_deref(), Some("+1% 物理伤害减免"));
         assert_eq!(d.translate("Double click an item, or copy one from the game"), None);
+        // A bullet of a list of tips, known without its "- ".
+        assert_eq!(d.translate("- Ctrl + Click to enable/disable socket groups.").as_deref(), Some("- Ctrl+单击以启用/禁用插槽组。"));
+        assert_eq!(d.translate("- Frenzy"), Some("- 狂怒".into()));
+        assert_eq!(d.translate("-Frenzy"), None);
     }
 
     #[test]
@@ -538,4 +547,5 @@ mod tests {
         assert_eq!(d.translate("Mana"), None);
     }
 }
+
 
