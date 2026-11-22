@@ -313,13 +313,13 @@ fn shade(uv: vec2f) -> vec4f {
     // Mist lying on the near ground.
     view += vec3f(0.6, 0.66, 0.75) * 0.22 * smoothstep(0.12, 0.0, abs(p.y - nearTop - 0.02)) * (0.4 + 0.6 * fbm(vec2f(p.x * 3.0 + t * 0.03, 8.0)));
 
-    // Three gravestones on the ground: a round-topped slab, a cross and a broken one leaning, lit on the right.
+    // Three gravestones on the ground: a round-topped slab leaning, a cross and a broken one leaning the other way, lit on the right.
     for (var g = 0; g < 3; g++) {
       let fg = f32(g);
       let gx = select(select(0.27, 0.09, g == 1), -0.21, g == 0);
       let gy = 0.885 + 0.012 * fg;
       let size = 0.024 - 0.003 * fg;
-      let tilt = select(0.0, 0.18, g == 2);
+      let tilt = select(select(0.0, 0.18, g == 2), -0.22, g == 0);
       var q = vec2f(x - gx, p.y - gy) / size;
       q = vec2f(q.x + q.y * tilt, q.y);
       var stone = 0.0;
@@ -414,27 +414,62 @@ fn gust(t: f32) -> f32 {
   return smoothstep(0.62, 0.85, noise(vec2f(t * 0.07, 4.0)));
 }
 
-// A row of grass along base: thin blades, scale sized, bent by the wind towards their tips. Returns coverage.
-fn grass(p: vec2f, base: f32, scale: f32, t: f32, wind: f32, seed: f32) -> f32 {
-  let n = 230.0 / scale;
+// Grass along the horizon at base: thin blades in patches, thick here and bare there, bent by the wind towards their
+// tips. Returns coverage.
+fn grass(p: vec2f, base: f32, t: f32, wind: f32) -> f32 {
+  let n = 230.0;
   var cover = 0.0;
   for (var o = -1.0; o <= 1.0; o += 1.0) {
     let cell = floor(p.x * n) + o;
-    let h0 = hash(vec2f(cell, seed));
-    if (h0 < 0.3) {
+    let h0 = hash(vec2f(cell, 31.0));
+    let density = smoothstep(0.3, 0.75, noise(vec2f(cell * 0.06, 3.0)));
+    if (h0 > density) {
       continue;
     }
-    let height = scale * (0.005 + 0.016 * hash(vec2f(cell, seed + 1.0))) * (0.5 + 0.8 * noise(vec2f(cell * 0.08, seed)));
+    let height = (0.004 + 0.012 * hash(vec2f(cell, 32.0))) * (0.4 + 0.8 * density);
     let up = (base - p.y) / height;
     if (up < 0.0 || up > 1.0) {
       continue;
     }
-    let lean = (hash(vec2f(cell, seed + 2.0)) - 0.5) * 0.5 * height;
+    let lean = (hash(vec2f(cell, 33.0)) - 0.5) * 0.6 * height;
     let sway = (wind * (0.7 + 0.3 * sin(t * 2.3 + cell * 0.7)) * 0.7 + 0.04 * sin(t * 0.6 + cell)) * height;
-    let bx = (cell + 0.5 + 0.6 * (h0 - 0.65)) / n + (lean + sway) * up * up;
-    cover = max(cover, step(abs(p.x - bx), scale * 0.0011 * (1.0 - up * 0.85)));
+    let bx = (cell + 0.5 + 0.6 * (hash(vec2f(cell, 34.0)) - 0.5)) / n + (lean + sway) * up * up;
+    cover = max(cover, step(abs(p.x - bx), 0.0011 * (1.0 - up * 0.85)));
   }
   return cover;
+}
+
+// Tufts scattered over the ground below the horizon, a few blades fanning out of each, bigger nearer. Returns
+// coverage and how near (0 far .. 1 near).
+fn tufts(p: vec2f, t: f32, wind: f32) -> vec2f {
+  let size = vec2f(0.07, 0.028);
+  for (var o = 0.0; o <= 1.0; o += 1.0) {
+    let cell = floor(p / size) + vec2f(0.0, o);
+    if (hash(cell + 50.0) > 0.4) {
+      continue;
+    }
+    let at = (cell + vec2f(0.2 + 0.6 * hash(cell + 51.0), 0.5 + 0.5 * hash(cell + 52.0))) * size;
+    let nearness = clamp((at.y - 0.86) / 0.14, 0.0, 1.0);
+    if (at.y < 0.865) {
+      continue;
+    }
+    let s = 1.0 + 1.6 * nearness;
+    for (var b = 0.0; b < 5.0; b += 1.0) {
+      let hb = hash(cell + b * 7.3);
+      let height = s * (0.01 + 0.014 * hb);
+      let up = (at.y - p.y) / height;
+      if (up < 0.0 || up > 1.0) {
+        continue;
+      }
+      let spread = (b - 2.0) * 0.28 + (hb - 0.5) * 0.3;
+      let sway = (wind * (0.75 + 0.25 * sin(t * 2.1 + b + cell.x)) * 0.8 + 0.05 * sin(t * 0.6 + cell.x + b)) * height;
+      let bx = at.x + (b - 2.0) * 0.0012 * s + (spread * height + sway) * up * up;
+      if (abs(p.x - bx) < s * 0.001 * (1.0 - up * 0.85)) {
+        return vec2f(1.0, nearness);
+      }
+    }
+  }
+  return vec2f(0.0, 0.0);
 }
 
 // Dead trees on the near ground: a trunk thinning upwards and two branches, their tips moving in a gust.
@@ -514,21 +549,23 @@ fn shade(uv: vec2f) -> vec4f {
 
   // The dead trees and grass on the ground beyond the door, stirred by a gust now and then. Only near the
   // horizon and the ground below it, where they stand.
-  if (dd < 0.0 && p.y > 0.62) {
+  if (dd < 0.0 && p.y > 0.66) {
     let wind = gust(t);
-    let nearTop = 0.83 + 0.03 * fbm(vec2f((p.x - cx) * 9.0, 5.0));
-    if (p.y < nearTop + 0.004) {
-      let shape = max(trees(p, cx, nearTop, t, wind), grass(p, nearTop + 0.003, 1.0, t, wind, 31.0));
+    if (p.y < 0.865) {
+      let nearTop = 0.83 + 0.03 * fbm(vec2f((p.x - cx) * 9.0, 5.0));
+      let shape = max(trees(p, cx, nearTop, t, wind), grass(p, nearTop + 0.003, t, wind) * step(p.y, nearTop + 0.004));
       if (shape > 0.5) {
         col = vec3f(0.15, 0.165, 0.2);
         alpha = 1.0;
       }
     }
-    // Nearer tufts, bigger and darker, along a fold of the ground.
-    let fold = 0.93 + 0.02 * fbm(vec2f((p.x - cx) * 4.0, 9.0));
-    if (p.y > fold - 0.05 && p.y < fold + 0.002 && grass(p, fold, 2.6, t, wind, 47.0) > 0.5 && noise(vec2f(p.x * 12.0, 2.0)) > 0.45) {
-      col = vec3f(0.07, 0.08, 0.1);
-      alpha = 1.0;
+    // Tufts over the ground, darker nearer.
+    if (p.y > 0.84) {
+      let tuft = tufts(p, t, wind);
+      if (tuft.x > 0.5) {
+        col = mix(vec3f(0.13, 0.145, 0.18), vec3f(0.06, 0.07, 0.085), tuft.y);
+        alpha = 1.0;
+      }
     }
   }
 
