@@ -18,6 +18,7 @@ SimpleGraphic API POB is written against.
 | --- | --- |
 | `ext/pobt-native/src/host.rs` | Runs POB on its own thread: SimpleGraphic's functions (`DrawImage`, `DrawString`, `LaunchSubScript`, …), its callbacks, sub scripts, and the frames it draws |
 | `ext/pobt-native/src/prelude.lua` | The Lua half of the API: image handles, file searches, modules, `PCall` |
+| `ext/pobt-native/src/demo.lua` | A few of POB's edit boxes on their own, for the tests and to try typing by hand |
 | `ext/pobt-native/src/lua.rs` | A small binding to `lua51.dll`, loaded at run time so POB's native modules share the VM |
 | `ext/pobt-native/src/translate.rs` | The dictionary: exact matches and number templates, colour codes kept |
 | `ext/pobt-native/src/text.rs` | Colour escapes, measuring and laying out text with Segoe UI, Microsoft YaHei UI and Consolas |
@@ -37,6 +38,16 @@ nsh run                       # the app, rebuilt as you edit
 nsh check                     # cargo check, then type checks App.tsx
 cargo test --lib --manifest-path ext/pobt-native/Cargo.toml  # the Rust tests (dictionary, installs)
 nsh package --target windows  # POBT.zip
+```
+
+The tests of POB's Lua (the prelude, POB's edit boxes with input methods, Chinese text and translations) need a
+Path of Building and skip without one: set `POB_DIR` to its folder, as CI does with its latest portable release.
+They drive `ext/pobt-native/src/demo.lua`, a few of POB's edit boxes on their own, which you can also try by hand:
+start a development run with `POBT_DEMO=1` and play a game, and the demo opens in place of Path of Building.
+
+```sh
+POB_DIR="C:/Path of Building Community" cargo test --lib --manifest-path ext/pobt-native/Cargo.toml
+POBT_DEMO=1 nsh run
 ```
 
 The website is in `website/` (Astro, Bun): `bun install && bun run dev`.

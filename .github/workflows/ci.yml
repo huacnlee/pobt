@@ -39,5 +39,32 @@ jobs:
       - name: Check
         run: nsh check
 
+      # The tests that run POB's Lua (its LuaJIT, its edit boxes) need a Path of Building: its latest portable
+      # release, as POBT installs it, kept until a new one comes out.
+      - name: Find Path of Building's release
+        id: pob
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=$(gh api repos/PathOfBuildingCommunity/PathOfBuilding/releases/latest --jq .tag_name)
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "POB_DIR=$RUNNER_TEMP/pob" >> "$GITHUB_ENV"
+
+      - uses: actions/cache@v4
+        id: pob-cache
+        with:
+          path: ${{ runner.temp }}/pob
+          key: pob-${{ steps.pob.outputs.tag }}
+
+      - name: Download Path of Building
+        if: steps.pob-cache.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/pob.zip" https://github.com/PathOfBuildingCommunity/PathOfBuilding/releases/download/${{ steps.pob.outputs.tag }}/PathOfBuildingCommunity-Portable.zip
+          mkdir -p "$POB_DIR"
+          unzip -q "$RUNNER_TEMP/pob.zip" -d "$POB_DIR"
+          # The passive trees' art (most of it) is not for the tests.
+          rm -rf "$POB_DIR/TreeData"
+          test -f "$POB_DIR/lua51.dll" && test -f "$POB_DIR/Classes/EditControl.lua"
+
       - name: Test
         run: cargo test --lib --manifest-path ext/pobt-native/Cargo.toml
