@@ -1267,3 +1267,25 @@ native!(n_is_subscript_running, |l| {
 fn is_table(l: Lua, idx: i32) -> bool {
     l.kind(idx) == LUA_TTABLE
 }
+
+#[cfg(test)]
+mod tests {
+    /// The prelude loads in POB's LuaJIT: a syntax error in it would stop
+    /// POB before its first frame. Needs a Path of Building for its
+    /// `lua51.dll`: `POB_DIR=<folder> cargo test --lib prelude_loads`.
+    #[test]
+    fn prelude_loads() {
+        let Some(dir) = std::env::var_os("POB_DIR") else {
+            eprintln!("POB_DIR not set: skipped");
+            return;
+        };
+        crate::lua::init(std::path::Path::new(&dir)).unwrap();
+        let l = crate::lua::Lua::new().unwrap();
+        let loaded = l.load(super::PRELUDE.as_bytes(), "prelude.lua");
+        let broken = l.load(b"local s = \"a
+b\"", "broken.lua");
+        l.close();
+        loaded.unwrap();
+        assert!(broken.is_err(), "a string cut by a newline must not load");
+    }
+}
