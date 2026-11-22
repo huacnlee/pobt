@@ -13,6 +13,8 @@ import redLeft from "./assets/ui/red-left.png";
 import redMiddle from "./assets/ui/red-middle.png";
 import redRight from "./assets/ui/red-right.png";
 import rule from "./assets/ui/rule.png";
+import title from "./assets/ui/title.png";
+import pobtTitle from "./assets/ui/pobt.png";
 import { GATE } from "./gate";
 import icon from "./icon.png";
 type Game = "Poe1" | "Poe2";
@@ -411,29 +413,19 @@ function Launcher(props: { onStart: () => void }) {
     <View style={{ flex: 1, backgroundColor: C.bg }}>
       <Shader source={GATE} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
 
-      {/* Header */}
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 32, paddingVertical: 14 }}>
+      {/* POBT at the top left; the version, and a newer one when there is, at the top right */}
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 32, paddingTop: 16, height: 52 }}>
         <Image src={icon} style={{ width: 28, height: 28 }} />
-        <Text style={{ fontFamily: DISPLAY, fontSize: 19, fontWeight: "700", letterSpacing: 6, color: C.goldHi }}>POBT</Text>
-        <Text style={{ fontFamily: BODY, fontSize: 11, color: C.dim }}>v{shellInfo().version ?? "dev"}</Text>
+        <Image src={pobtTitle} style={{ width: 84, height: 46 }} accessibilityLabel="POBT" />
+        <View style={{ flex: 1 }} />
         <UpdateBadge t={t} />
+        <Text style={{ fontFamily: BODY, fontSize: 11, color: C.dim }}>v{shellInfo().version ?? "dev"}</Text>
       </View>
 
-      <View style={{ flex: 1, paddingHorizontal: 72, paddingVertical: 16, gap: 24, justifyContent: "center" }}>
+      <View style={{ flex: 1, paddingHorizontal: 72, paddingBottom: 16, gap: 24, justifyContent: "center" }}>
         {/* Title */}
         <View style={{ alignItems: "center", gap: 4 }}>
-          <Text
-            style={{
-              fontFamily: DISPLAY,
-              fontSize: 50,
-              fontWeight: "700",
-              letterSpacing: 5,
-              color: C.goldHi,
-              textShadow: "0 2px 1px #000, 0 0 3px #000, 0 0 26px rgba(0,0,0,0.9)",
-            }}
-          >
-            PATH OF BUILDING
-          </Text>
+          <Image src={title} style={{ width: 760, height: 104.5 }} accessibilityLabel="Path of Building" />
           <Image src={rule} style={{ width: 560, height: 19 }} />
           <Text style={{ fontFamily: BODY, fontSize: 14, color: C.text, textShadow: "0 0 3px #000, 0 0 8px #000, 0 0 14px #000, 0 1px 2px #000" }}>{t().subtitle}</Text>
         </View>
