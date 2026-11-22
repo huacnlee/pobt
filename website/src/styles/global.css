@@ -195,3 +195,9 @@ footer { margin-top: 96px; padding: 24px 0 40px; background: linear-gradient(#07
   .command { flex-direction: column; align-items: stretch; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
+
+.sponsor { text-align: center; }
+.sponsor .plaque { min-width: 220px; }
+.shots { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 24px; }
+.shots img { width: 100%; height: auto; }
+@media (max-width: 620px) { .shots { grid-template-columns: 1fr; } }

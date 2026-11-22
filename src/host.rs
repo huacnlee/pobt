@@ -45,6 +45,9 @@ pub struct Shared {
     pub error: Mutex<Option<String>>,
     pub translate: AtomicBool,
     pub exited: AtomicBool,
+    /// The UI asks POB to quit (back to the launcher): it does if its
+    /// `CanExit` agrees, or asks about unsaved changes first.
+    pub quit: AtomicBool,
     /// Set by the UI to have the Lua thread repaint and process input now.
     pub poke: AtomicBool,
     pub last_input: Mutex<Instant>,
@@ -63,6 +66,7 @@ impl Shared {
             error: Mutex::new(None),
             translate: AtomicBool::new(true),
             exited: AtomicBool::new(false),
+            quit: AtomicBool::new(false),
             poke: AtomicBool::new(false),
             last_input: Mutex::new(Instant::now()),
         })
@@ -137,8 +141,8 @@ fn with_host<R>(f: impl FnOnce(&mut Host) -> R) -> Option<R> {
     HOST.with(|h| h.borrow_mut().as_mut().map(f))
 }
 
-/// Starts POB from `pob_dir` on a new thread.
-pub fn start(pob_dir: PathBuf, shared: Arc<Shared>) -> Result<(), String> {
+/// Starts POB from `pob_dir` on a new thread, which ends when POB quits.
+pub fn start(pob_dir: PathBuf, shared: Arc<Shared>) -> Result<std::thread::JoinHandle<()>, String> {
     lua::init(&pob_dir)?;
     set_dll_directory(&pob_dir);
     std::env::set_current_dir(&pob_dir).map_err(|e| format!("{}: {e}", pob_dir.display()))?;
@@ -146,8 +150,7 @@ pub fn start(pob_dir: PathBuf, shared: Arc<Shared>) -> Result<(), String> {
         .name("pobt-lua".into())
         .stack_size(64 << 20)
         .spawn(move || run(pob_dir, shared))
-        .map_err(|e| e.to_string())?;
-    Ok(())
+        .map_err(|e| e.to_string())
 }
 
 #[cfg(windows)]
@@ -253,6 +256,14 @@ fn run_once(pob_dir: &Path, shared: &Arc<Shared>, rx: mpsc::Receiver<Input>) -> 
             if let Err(e) = callback(l, name, &args) {
                 report(shared, &format!("Error in {name}"), e);
             }
+        }
+        if shared.quit.load(Ordering::SeqCst) {
+            // POB says no while there are unsaved changes, and asks about them itself.
+            let can = callback(l, "CanExit", &[]);
+            if !matches!(can.as_deref(), Ok([Value::Bool(false), ..])) {
+                shared.exited.store(true, Ordering::SeqCst);
+            }
+            shared.quit.store(false, Ordering::SeqCst);
         }
         if with_host(|h| h.restart).unwrap_or(false) || shared.exited.load(Ordering::SeqCst) {
             break;

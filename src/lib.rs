@@ -15,7 +15,7 @@ pub mod trs;
 
 use std::{
     path::PathBuf,
-    sync::{Arc, OnceLock, atomic::Ordering},
+    sync::{Arc, Mutex, atomic::Ordering},
     time::Duration,
 };
 
@@ -39,8 +39,22 @@ fn native(registry: &mut Registry) {
     registry.register::<PobCanvas>().module::<Pob>();
 }
 
-/// The running POB, once started.
-static SESSION: OnceLock<Arc<Shared>> = OnceLock::new();
+/// The running POB, and its thread.
+static SESSION: Mutex<Option<(Arc<Shared>, std::thread::JoinHandle<()>)>> = Mutex::new(None);
+
+fn session() -> Option<Arc<Shared>> {
+    SESSION.lock().unwrap().as_ref().map(|(s, _)| s.clone())
+}
+
+/// Starts POBT again, as a new process, and ends this one.
+fn relaunch() {
+    if let Ok(exe) = std::env::current_exe() {
+        match std::process::Command::new(exe).spawn() {
+            Ok(_) => std::process::exit(0),
+            Err(e) => log::error!("relaunching: {e}"),
+        }
+    }
+}
 
 fn game_of(name: &str) -> Game {
     if name == "poe2" { Game::Poe2 } else { Game::Poe1 }
@@ -89,16 +103,20 @@ impl Pob {
     }
 
     /// Starts POB from `dir` translated to `language` ("" for none); an
-    /// error message, or "" once it runs. Only one POB runs per process.
+    /// error message, or "" once it runs. A process loads one POB's Lua (and
+    /// its native modules) for good: another one starts in a new POBT.
     pub fn start(dir: String, language: String) -> String {
-        if SESSION.get().is_some() {
+        if session().is_some() {
             return String::new();
+        }
+        if lua::loaded_from().is_some_and(|d| d != std::path::Path::new(&dir)) {
+            relaunch();
         }
         load_dictionary((!language.is_empty()).then_some(language));
         let shared = Shared::new();
         match host::start(PathBuf::from(dir), shared.clone()) {
-            Ok(()) => {
-                let _ = SESSION.set(shared);
+            Ok(thread) => {
+                *SESSION.lock().unwrap() = Some((shared, thread));
                 String::new()
             }
             Err(e) => e,
@@ -129,9 +147,37 @@ impl Pob {
         });
     }
 
+    /// Asks POB to quit, back to the launcher: it does once its `CanExit`
+    /// agrees, or asks about unsaved changes first. `left` says when it did.
+    pub fn leave() {
+        if let Some(s) = session() {
+            s.quit.store(true, Ordering::SeqCst);
+            s.poke.store(true, Ordering::SeqCst);
+        }
+    }
+
+    /// After `leave`: "waiting" while POB decides, "stayed" when it did not
+    /// quit (it asks about unsaved changes), "left" once it quit.
+    pub fn left() -> String {
+        let mut session = SESSION.lock().unwrap();
+        let Some((shared, _)) = session.as_ref() else {
+            return "left".into();
+        };
+        if shared.exited.load(Ordering::SeqCst) {
+            if let Some((_, thread)) = session.take() {
+                let _ = thread.join();
+            }
+            "left".into()
+        } else if shared.quit.load(Ordering::SeqCst) {
+            "waiting".into()
+        } else {
+            "stayed".into()
+        }
+    }
+
     /// Switches the translation on or off while POB runs.
     pub fn set_translate(on: bool) {
-        if let Some(s) = SESSION.get() {
+        if let Some(s) = session() {
             s.translate.store(on, Ordering::SeqCst);
             s.poke.store(true, Ordering::SeqCst);
         }
@@ -139,7 +185,7 @@ impl Pob {
 
     /// Whether the translation is on.
     pub fn translating() -> bool {
-        SESSION.get().is_some_and(|s| s.translate.load(Ordering::SeqCst))
+        session().is_some_and(|s| s.translate.load(Ordering::SeqCst))
     }
 }
 
@@ -158,8 +204,8 @@ fn load_dictionary(language: Option<String>) {
 /// The running Path of Building: start it with `Pob.start` first.
 #[component]
 pub fn PobCanvas() -> impl IntoElement {
-    match SESSION.get() {
-        Some(shared) => pob_view(shared.clone()).into_element(),
+    match session() {
+        Some(shared) => pob_view(shared).into_element(),
         None => view().into_element(),
     }
 }

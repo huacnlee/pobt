@@ -9,6 +9,11 @@
 
 <p align="center"><img src="docs/screenshot.zh-CN.jpg" alt="POBT 启动界面" width="800"></p>
 
+<p align="center">
+  <img src="docs/screenshot-tree.png" alt="翻译后的天赋树" width="49%">
+  <img src="docs/screenshot-pob.png" alt="翻译后的配置页" width="49%">
+</p>
+
 POBT 直接运行你电脑上已有的 [Path of Building Community](https://pathofbuilding.community/)（流放之路 1 和 2），
 并把整个界面翻译成中文：技能、物品、天赋、计算结果，一应俱全。支持简体中文、繁體中文和한국어。
 

@@ -1,4 +1,5 @@
 import { createAnimatedValue, Easing, Image, mount, Shader, signal, Text, View, type ViewStyle } from "nsh";
+import { currentWindow } from "nsh/desktop";
 import { checkForUpdate, downloadUpdate, installAndRestart, installOnQuit, shellInfo, type AppUpdate } from "nsh/updater";
 import { Pob, PobCanvas } from "pobt/native";
 import Cinzel from "./assets/fonts/Cinzel-Bold.woff2";
@@ -46,6 +47,7 @@ interface Strings {
   notFound: string;
   pick: string;
   start: string;
+  back: string;
   needDir: string;
   notPobDir: (dir: string, game: string) => string;
   downloading: (version: string, percent: number) => string;
@@ -65,6 +67,7 @@ const UI: Record<string, Strings> = {
     notFound: "Path of Building not found: choose its folder",
     pick: "Choose folder…",
     start: "Start",
+    back: "Launcher",
     needDir: "Choose the folder of Path of Building first",
     notPobDir: (dir, game) => `${dir} is not a Path of Building folder for ${game}`,
     downloading: (v, p) => `Downloading POBT ${v} … ${p}%`,
@@ -81,6 +84,7 @@ const UI: Record<string, Strings> = {
     notFound: "未找到 Path of Building，请选择它的安装目录",
     pick: "选择目录…",
     start: "启动",
+    back: "返回主界面",
     needDir: "请先选择 Path of Building 的安装目录",
     notPobDir: (dir, game) => `${dir} 不是${game}的 Path of Building 目录`,
     downloading: (v, p) => `正在下载 POBT ${v} … ${p}%`,
@@ -97,6 +101,7 @@ const UI: Record<string, Strings> = {
     notFound: "找不到 Path of Building，請選擇它的安裝目錄",
     pick: "選擇目錄…",
     start: "啟動",
+    back: "返回主介面",
     needDir: "請先選擇 Path of Building 的安裝目錄",
     notPobDir: (dir, game) => `${dir} 不是${game}的 Path of Building 目錄`,
     downloading: (v, p) => `正在下載 POBT ${v} … ${p}%`,
@@ -113,6 +118,7 @@ const UI: Record<string, Strings> = {
     notFound: "Path of Building을 찾을 수 없습니다. 폴더를 선택하세요",
     pick: "폴더 선택…",
     start: "시작",
+    back: "처음 화면",
     needDir: "먼저 Path of Building 폴더를 선택하세요",
     notPobDir: (dir, game) => `${dir}은(는) ${game}의 Path of Building 폴더가 아닙니다`,
     downloading: (v, p) => `POBT ${v} 다운로드 중 … ${p}%`,
@@ -434,6 +440,86 @@ function GameCard(props: { game: Game; settings: () => Settings; t: () => String
 const motionTime = createAnimatedValue(0);
 motionTime.timing(86400, { duration: 86400 * 1000, easing: Easing.linear, frameRate: 24 });
 
+const TITLE_BAR = 44;
+
+/** The window's title bar, drawn by the app: POBT at the left (a link to the site), the version and a newer one when
+ * there is; the system draws the window's buttons at its right end. Dragging it moves the window. Over the launcher's backdrop it is clear;
+ * over Path of Building, `solid`, with a way back to the launcher (`onBack`). */
+function TitleBar(props: { t: () => Strings; solid?: boolean; onBack?: () => void }) {
+  const brandHover = signal(false);
+  const backHover = signal(false);
+  const win = currentWindow();
+  return (
+    <View
+      desktop={{ windowDrag: true }}
+      style={{
+        height: TITLE_BAR,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 10,
+        paddingLeft: 20,
+        paddingRight: win.titleBar().right + 12,
+        backgroundColor: props.solid ? "#07080a" : "transparent",
+        borderBottomWidth: props.solid ? 1 : 0,
+        borderColor: "rgba(177,141,78,0.45)",
+      }}
+    >
+      <View
+        role="link"
+        onPress={() => Pob.openUrl(SITE)}
+        onMouseEnter={() => brandHover.set(true)}
+        onMouseLeave={() => brandHover.set(false)}
+        style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
+      >
+        <Image src={icon} style={{ width: 24, height: 24, filter: brandHover() ? "brightness(1.25)" : "none" }} />
+        <Text
+          style={{
+            fontFamily: DISPLAY,
+            fontSize: 14,
+            fontWeight: "600",
+            letterSpacing: 4,
+            color: brandHover() ? "#fff3d0" : C.gold,
+            textShadow: brandHover() ? "0 0 10px rgba(240,220,170,0.8)" : "0 1px 2px #000",
+          }}
+        >
+          POBT
+        </Text>
+      </View>
+      <If when={props.onBack}>
+        {(back) => (
+          <View
+            role="button"
+            onPress={() => back()()}
+            onMouseEnter={() => backHover.set(true)}
+            onMouseLeave={() => backHover.set(false)}
+            style={{ flexDirection: "row", alignItems: "center", gap: 6, marginLeft: 18, paddingVertical: 4 }}
+          >
+            <Text style={{ fontSize: 9, color: backHover() ? "#fff3d0" : C.trimHi }}>◀</Text>
+            <Text
+              style={{
+                fontFamily: DISPLAY,
+                fontSize: 12,
+                fontWeight: "600",
+                letterSpacing: 2,
+                color: backHover() ? "#fff3d0" : C.gold,
+                textShadow: backHover() ? "0 0 10px rgba(240,220,170,0.8)" : "none",
+              }}
+            >
+              {props.t().back.toUpperCase()}
+            </Text>
+          </View>
+        )}
+      </If>
+      <View style={{ flex: 1 }} />
+      <UpdateBadge t={props.t} />
+      {/* The packaged version; a development run has none to show. */}
+      <If when={shellInfo().version}>
+        {(v) => <Text style={{ fontFamily: BODY, fontSize: 11, color: C.dim }}>v{v()}</Text>}
+      </If>
+    </View>
+  );
+}
+
 function Launcher(props: { onStart: () => void }) {
   const settings = signal<Settings>(JSON.parse(Pob.settings()));
   const available = new Set<string>(JSON.parse(Pob.languages()).map((l: { value: string }) => l.value));
@@ -470,7 +556,6 @@ function Launcher(props: { onStart: () => void }) {
     props.onStart();
   };
 
-  const brandHover = signal(false);
 
   const chooseLanguage = (value: string | null) => {
     update({ language: value });
@@ -483,36 +568,7 @@ function Launcher(props: { onStart: () => void }) {
       <Shader source={GATE} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
       <Shader source={GATE_MOTION} uniforms={{ time: motionTime }} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
 
-      {/* POBT at the top left; the version, and a newer one when there is, at the top right */}
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 32, paddingTop: 16, height: 52 }}>
-        <View
-          role="link"
-          onPress={() => Pob.openUrl(SITE)}
-          onMouseEnter={() => brandHover.set(true)}
-          onMouseLeave={() => brandHover.set(false)}
-          style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
-        >
-          <Image src={icon} style={{ width: 28, height: 28, filter: brandHover() ? "brightness(1.25)" : "none" }} />
-          <Text
-            style={{
-              fontFamily: DISPLAY,
-              fontSize: 16,
-              fontWeight: "600",
-              letterSpacing: 4,
-              color: brandHover() ? "#fff3d0" : C.gold,
-              textShadow: brandHover() ? "0 0 10px rgba(240,220,170,0.8)" : "0 1px 2px #000",
-            }}
-          >
-            POBT
-          </Text>
-        </View>
-        <View style={{ flex: 1 }} />
-        <UpdateBadge t={t} />
-        {/* The packaged version; a development run has none to show. */}
-        <If when={shellInfo().version}>
-          {(v) => <Text style={{ fontFamily: BODY, fontSize: 11, color: C.dim }}>v{v()}</Text>}
-        </If>
-      </View>
+      <TitleBar t={t} />
 
       <View style={{ flex: 1, paddingHorizontal: 72, paddingBottom: 16, gap: 24, justifyContent: "center" }}>
         {/* Title */}
@@ -578,10 +634,26 @@ function Launcher(props: { onStart: () => void }) {
 }
 
 function App() {
+  // No system title bar: the app draws its own (TitleBar).
+  currentWindow().set({ titleBar: { style: "hidden", height: TITLE_BAR } });
   const running = signal(false);
+  // Back to the launcher: POB quits as it would on closing (asking about unsaved changes first, and staying when
+  // the user says so), then the launcher shows.
+  const back = () => {
+    Pob.leave();
+    const poll = () => {
+      const state = Pob.left();
+      if (state === "left") running.set(false);
+      else if (state === "waiting") setTimeout(poll, 50);
+    };
+    poll();
+  };
   return (
     <If when={running()} else={<Launcher onStart={() => running.set(true)} />}>
-      <PobCanvas />
+      <View style={{ flex: 1 }}>
+        <TitleBar t={() => strings((JSON.parse(Pob.settings()) as Settings).language)} solid onBack={back} />
+        <PobCanvas style={{ flex: 1 }} />
+      </View>
     </If>
   );
 }

@@ -10,7 +10,7 @@
 
 use std::{
     ffi::{CStr, CString, c_char, c_int, c_void},
-    path::Path,
+    path::{Path, PathBuf},
     sync::OnceLock,
 };
 
@@ -87,6 +87,13 @@ lua_api! {
 }
 
 static API: OnceLock<Api> = OnceLock::new();
+static LOADED_FROM: OnceLock<PathBuf> = OnceLock::new();
+
+/// The folder whose `lua51.dll` is loaded, once one is: a process keeps it (and
+/// POB's native modules, which link to it by name) for good.
+pub fn loaded_from() -> Option<&'static Path> {
+    LOADED_FROM.get().map(PathBuf::as_path)
+}
 
 /// Loads `lua51.dll` from POB's directory. Called once, before any state.
 pub fn init(pob_dir: &Path) -> Result<(), String> {
@@ -98,6 +105,7 @@ pub fn init(pob_dir: &Path) -> Result<(), String> {
         .map_err(|e| format!("cannot load {}: {e}", dll.display()))?;
     let api = unsafe { Api::load(lib) }.map_err(|e| format!("lua51.dll: {e}"))?;
     let _ = API.set(api);
+    let _ = LOADED_FROM.set(pob_dir.to_path_buf());
     Ok(())
 }
 

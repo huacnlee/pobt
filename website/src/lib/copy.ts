@@ -6,18 +6,21 @@ export const REPO = "https://github.com/huacnlee/pobt";
 export const ZIP = `${REPO}/releases/latest/download/pobt-windows-x86_64.zip`;
 export const RELEASES = `${REPO}/releases`;
 export const POB = "https://pathofbuilding.community/";
+export const SPONSOR = "https://github.com/sponsors/huacnlee";
 
 export interface Copy {
   title: string;
   description: string;
   skip: string;
-  nav: { download: string; install: string; faq: string; github: string; language: string };
+  nav: { download: string; install: string; faq: string; github: string; sponsor: string; language: string };
   subtitle: string;
   intro: string;
   download: string;
   downloadNote: string;
   scriptLink: string;
   shotAlt: string;
+  shotTreeAlt: string;
+  shotPobAlt: string;
   featuresTitle: string;
   features: string[];
   installTitle: string;
@@ -32,6 +35,9 @@ export interface Copy {
   requirements: string[];
   faqTitle: string;
   faq: [string, string][];
+  sponsorTitle: string;
+  sponsorIntro: string;
+  sponsorButton: string;
   creditsTitle: string;
   credits: [string, string, string][];
   footer: string;
@@ -44,7 +50,7 @@ export const copy: Record<Language, Copy> = {
     description:
       "POBT runs Path of Building Community with its interface translated to Simplified Chinese, Traditional Chinese or Korean. Free, open source, for Windows.",
     skip: "Skip to content",
-    nav: { download: "Download", install: "Install", faq: "FAQ", github: "GitHub", language: "Language" },
+    nav: { download: "Download", install: "Install", faq: "FAQ", github: "GitHub", sponsor: "Sponsor", language: "Language" },
     subtitle: "Your Path of Building, in your language",
     intro:
       "POBT runs the Path of Building Community you already have, with its whole interface translated: skills, items, passives, calculations. Simplified Chinese, Traditional Chinese and Korean, switchable any time.",
@@ -52,6 +58,8 @@ export const copy: Record<Language, Copy> = {
     downloadNote: "Free · .zip · 64-bit Windows 10 / 11 · no installer needed",
     scriptLink: "or install with PowerShell",
     shotAlt: "The POBT launcher: pick Path of Exile or Path of Exile 2 and a language, then Start.",
+    shotTreeAlt: "The passive tree in Path of Building, translated",
+    shotPobAlt: "Path of Building's configuration, translated",
     featuresTitle: "What it does",
     features: [
       "Translates Path of Building for Path of Exile 1 and 2",
@@ -99,6 +107,9 @@ export const copy: Record<Language, Copy> = {
         "The translations are plain CSV files in the repository: open an issue or a pull request on GitHub.",
       ],
     ],
+    sponsorTitle: "Support POBT",
+    sponsorIntro: "POBT is free and always will be. If it saves you time in your builds, you can support its development on GitHub Sponsors.",
+    sponsorButton: "Sponsor",
     creditsTitle: "Thanks",
     credits: [
       ["Path of Building Community", "the planner POBT runs", "https://github.com/PathOfBuildingCommunity/PathOfBuilding"],
@@ -112,7 +123,7 @@ export const copy: Record<Language, Copy> = {
     title: "POBT — 中文版 Path of Building",
     description: "POBT 让 Path of Building Community 显示简体中文、繁體中文或한국어界面。免费、开源，适用于 Windows。",
     skip: "跳到正文",
-    nav: { download: "下载", install: "安装", faq: "常见问题", github: "GitHub", language: "语言" },
+    nav: { download: "下载", install: "安装", faq: "常见问题", github: "GitHub", sponsor: "赞助", language: "语言" },
     subtitle: "POB 构筑的多语言翻译",
     intro:
       "POBT 直接运行你电脑上已有的 Path of Building Community，并把整个界面翻译成中文：技能、物品、天赋、计算结果，一应俱全。支持简体中文、繁體中文和한국어，随时切换。",
@@ -120,6 +131,8 @@ export const copy: Record<Language, Copy> = {
     downloadNote: "免费 · zip 压缩包 · 64 位 Windows 10 / 11 · 无需安装",
     scriptLink: "或用 PowerShell 安装",
     shotAlt: "POBT 启动界面：选择流放之路或流放之路 2 和语言，然后启动。",
+    shotTreeAlt: "翻译后的 Path of Building 天赋树",
+    shotPobAlt: "翻译后的 Path of Building 配置页",
     featuresTitle: "功能",
     features: ["翻译流放之路 1 与 2 的 Path of Building", "新增简体中文、繁體中文与한국어", "绝不修改你的 Path of Building 文件", "Ctrl+Shift+T 随时切换英文", "有新版本时自动更新"],
     installTitle: "一分钟装好",
@@ -148,6 +161,9 @@ export const copy: Record<Language, Copy> = {
       ["Path of Building 更新了，POBT 跟得上吗？", "跟得上。POBT 运行的就是你安装的 Path of Building，照常更新 Path of Building 即可。"],
       ["发现翻译错误或缺失？", "翻译是仓库里的 CSV 文件，欢迎在 GitHub 提 Issue 或 Pull Request。"],
     ],
+    sponsorTitle: "支持 POBT",
+    sponsorIntro: "POBT 免费，以后也会一直免费。如果它帮你省下了构筑的时间，欢迎通过 GitHub Sponsors 支持它的开发。",
+    sponsorButton: "赞助",
     creditsTitle: "致谢",
     credits: [
       ["Path of Building Community", "POBT 运行的构筑工具", "https://github.com/PathOfBuildingCommunity/PathOfBuilding"],

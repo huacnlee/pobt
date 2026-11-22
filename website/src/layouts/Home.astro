@@ -2,7 +2,7 @@
 import '@fontsource/cinzel/600.css';
 import '@fontsource/cinzel/700.css';
 import '../styles/global.css';
-import { copy, POB, REPO, ZIP, type Language } from '../lib/copy';
+import { copy, POB, REPO, SPONSOR, ZIP, type Language } from '../lib/copy';
 
 interface Props {
   language: Language;
@@ -47,6 +47,8 @@ const otherName = other === 'en' ? 'English' : '简体中文';
           <a href="#faq">{t.nav.faq}</a>
           <i aria-hidden="true">◆</i>
           <a href={REPO} rel="noopener">{t.nav.github}</a>
+          <i aria-hidden="true">◆</i>
+          <a href={SPONSOR} rel="noopener">{t.nav.sponsor}</a>
           <a class="plaque dark small lang" href={otherHref} hreflang={other} lang={other} aria-label={t.nav.language}><span>{otherName}</span></a>
         </nav>
       </div>
@@ -71,6 +73,10 @@ const otherName = other === 'en' ? 'English' : '简体中文';
         <figure class="card">
           <img src={`${base}${language === 'en' ? 'screenshot.jpg' : 'screenshot.zh-CN.jpg'}`} width="1600" height="1025" alt={t.shotAlt} loading="lazy" />
         </figure>
+        <div class="shots">
+          <img src={`${base}screenshot-tree.png`} width="1200" height="826" alt={t.shotTreeAlt} loading="lazy" />
+          <img src={`${base}screenshot-pob.png`} width="1200" height="826" alt={t.shotPobAlt} loading="lazy" />
+        </div>
       </section>
 
       <section class="shell section">
@@ -139,6 +145,14 @@ const otherName = other === 'en' ? 'English' : '简体中文';
         </div>
       </section>
 
+      <section class="shell section sponsor" id="sponsor">
+        <div class="section-heading">
+          <h2>{t.sponsorTitle}</h2>
+          <p>{t.sponsorIntro}</p>
+        </div>
+        <a class="plaque red" href={SPONSOR} rel="noopener"><span>♥ {t.sponsorButton}</span></a>
+      </section>
+
       <section class="shell section">
         <div class="section-heading">
           <h2>{t.creditsTitle}</h2>
@@ -164,6 +178,8 @@ const otherName = other === 'en' ? 'English' : '简体中文';
           <a href={POB} rel="noopener">POB</a>
           <i aria-hidden="true">◆</i>
           <a href={REPO} rel="noopener">GitHub</a>
+          <i aria-hidden="true">◆</i>
+          <a href={SPONSOR} rel="noopener">{t.nav.sponsor}</a>
         </nav>
         <p>{t.footer}</p>
       </div>

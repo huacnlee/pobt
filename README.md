@@ -9,6 +9,11 @@
 
 <p align="center"><img src="docs/screenshot.jpg" alt="The POBT launcher" width="800"></p>
 
+<p align="center">
+  <img src="docs/screenshot-tree.png" alt="The passive tree, translated" width="49%">
+  <img src="docs/screenshot-pob.png" alt="The configuration, translated" width="49%">
+</p>
+
 POBT runs the [Path of Building Community](https://pathofbuilding.community/) you already have — for Path of Exile
 and Path of Exile 2 — with its whole interface translated: skills, items, passives and calculations. Simplified
 Chinese, Traditional Chinese and Korean are included.
