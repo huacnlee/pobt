@@ -1,34 +1,42 @@
 # POBT
 
-多语言版 [Path of Building](https://github.com/PathOfBuildingCommunity/PathOfBuilding)（流放之路 / 流放之路 2），
-用 [Native Shell (NSH)](https://nsh.dev) 重写的 PoeCharm2 替代品：界面支持简体中文、繁體中文、한국어。
+English | [简体中文](README.zh-CN.md)
 
-## 原理
+[Path of Building](https://github.com/PathOfBuildingCommunity/PathOfBuilding) (Path of Exile 1 and 2) with a
+translated interface, built with [Native Shell (NSH)](https://nsh.dev) as a successor to PoeCharm2. Simplified Chinese,
+Traditional Chinese and Korean are included.
 
-POBT 不修改 Path of Building 的任何文件，而是直接用 POB 自带的 LuaJIT（`lua51.dll`）运行它的 Lua 代码，
-并自己实现 POB 依赖的 SimpleGraphic 接口：
+## How it works
 
-- `src/host.rs`：在独立线程上运行 POB，实现 `DrawImage`、`DrawString`、子脚本（`LaunchSubScript`）等接口，
-  每帧把绘制命令交给界面线程。
-- `src/translate.rs`：`DrawString` / `DrawStringWidth` 里的英文按词典替换成译文，支持 `{0}` / `#` 数字模板，
-  保留颜色转义（`^7`、`^xRRGGBB`）；输入框里的文字不翻译。
-- `src/text.rs`：用微软雅黑 / Consolas 的字形宽度排版，保证 POB 的布局按译文宽度计算。
-- `src/images.rs`、`src/dds.rs`：图片、着色副本、POB2 的 BC7 `.dds.zst` 纹理。
-- `src/lib.rs`：`PobCanvas` 组件（NSH Canvas 绘制 + 鼠标键盘转发）和 `Pob` 模块。
-- `App.tsx`：启动界面（选择游戏、POB 目录、语言）。
+POBT changes no file of Path of Building. It runs POB's Lua on the LuaJIT POB ships (`lua51.dll`) and implements the
+SimpleGraphic API POB is written against:
 
-运行中按 **Ctrl+Shift+T** 在译文和英文之间切换。
+- `src/host.rs`: runs POB on its own thread and provides `DrawImage`, `DrawString`, sub scripts (`LaunchSubScript`)
+  and the rest; every frame's draw commands go to the UI thread.
+- `src/translate.rs`: replaces the English that reaches `DrawString` / `DrawStringWidth` with the translation, with
+  number templates (`{0}`, `#`) and colour escapes (`^7`, `^xRRGGBB`) kept; text in edit boxes is left as typed.
+- `src/text.rs`: lays text out with the widths of Microsoft YaHei and Consolas, so POB's layout follows the translated
+  text.
+- `src/images.rs`, `src/dds.rs`: images, tinted copies, and POB2's BC7 `.dds.zst` textures.
+- `src/lib.rs`: the `PobCanvas` component (drawing on an NSH canvas, forwarding the mouse and keys) and the `Pob`
+  module.
+- `App.tsx`: the launcher (game, POB folder, language) and the update check.
 
-## 运行
+Press **Ctrl+Shift+T** while POB runs to switch between the translation and English.
 
-需要已安装的 Path of Building Community（PoE1 和/或 PoE2），以及 [nsh](https://nsh.dev/docs/installation)。
+## Running
+
+You need Path of Building Community installed (PoE1 and/or PoE2) and [nsh](https://nsh.dev/docs/installation).
 
 ```sh
 nsh run
 nsh package --target windows
 ```
 
-## 翻译数据
+POBT updates itself from this repository's GitHub Releases.
 
-`trs/` 下的翻译数据来自 [PoeCharm2](https://github.com/Chuanhsing/PoeCharm2)，版权归其作者与贡献者，详见
-[`trs/SOURCE.md`](trs/SOURCE.md)。翻译格式是两列 CSV：`英文,译文`，`{0}`、`{1}` 或 `#` 代表数字。
+## Translations
+
+The translations in `trs/` come from [PoeCharm2](https://github.com/Chuanhsing/PoeCharm2) and remain the work of its
+authors and contributors; see [`trs/SOURCE.md`](trs/SOURCE.md). Each file is a two-column CSV, `English,translation`,
+where `{0}`, `{1}` or `#` stand for numbers.

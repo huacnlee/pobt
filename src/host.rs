@@ -120,6 +120,9 @@ struct Host {
     subs: HashMap<u32, Sub>,
     next_sub: u32,
     restart: bool,
+    /// Images the canvas was given before: a frame brings in only so many
+    /// new ones, as the canvas loads a bounded number at once.
+    introduced: HashSet<Arc<str>>,
 }
 
 thread_local! {
@@ -200,6 +203,7 @@ fn run_once(pob_dir: &Path, shared: &Arc<Shared>, rx: mpsc::Receiver<Input>) -> 
             subs: HashMap::new(),
             next_sub: 1,
             restart: false,
+            introduced: HashSet::new(),
         })
     });
     register(l);
@@ -320,12 +324,31 @@ fn publish(shared: &Shared) {
     let frame = with_host(|h| {
         let mut items = std::mem::take(&mut h.items);
         items.sort_by_key(|(layer, seq, _)| (*layer, *seq));
-        Frame {
-            width: h.screen.0,
-            height: h.screen.1,
-            clear: h.clear,
-            items: items.into_iter().map(|(_, _, i)| i).collect(),
-        }
+        // Bring in at most NEW_IMAGES images the canvas has not seen; the
+        // rest wait for the next frames.
+        const NEW_IMAGES: usize = 96;
+        let mut fresh = 0;
+        let introduced = &mut h.introduced;
+        let items = items
+            .into_iter()
+            .map(|(_, _, i)| i)
+            .filter(|i| {
+                let uri = match &i.cmd {
+                    Cmd::Image { uri, .. } | Cmd::ImageAffine { uri, .. } => uri,
+                    _ => return true,
+                };
+                if introduced.contains(uri) {
+                    return true;
+                }
+                if fresh < NEW_IMAGES {
+                    fresh += 1;
+                    introduced.insert(uri.clone());
+                    return true;
+                }
+                false
+            })
+            .collect();
+        Frame { width: h.screen.0, height: h.screen.1, clear: h.clear, items }
     });
     let Some(frame) = frame else { return };
     let mut current = shared.frame.lock().unwrap();

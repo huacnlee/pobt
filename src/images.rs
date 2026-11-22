@@ -234,7 +234,7 @@ pub fn unload(_id: u32) {}
 
 /// Quantises a colour channel for the tint cache.
 fn q(c: f32) -> u32 {
-    (c.clamp(0.0, 1.0) * 31.0).round() as u32
+    (c.clamp(0.0, 1.0) * 15.0).round() as u32
 }
 
 /// The file to draw layer `layer` (0-based) of image `id` with,
@@ -250,7 +250,7 @@ pub fn uri(id: u32, layer: u32, rgb: [f32; 3]) -> Option<(Arc<str>, u32, u32)> {
     let base = info.uri.clone()?;
     let (w, h) = (info.width, info.height);
     let key = q(rgb[0]) << 10 | q(rgb[1]) << 5 | q(rgb[2]);
-    if key == 0x7fff {
+    if key == (15 << 10 | 15 << 5 | 15) {
         return Some((base, w, h));
     }
     if let Some(t) = reg.tints.get(&(id, key)) {
@@ -297,7 +297,7 @@ fn worker() -> mpsc::Sender<Job> {
                                     img
                                 }
                             };
-                            let m = [(job.key >> 10) & 31, (job.key >> 5) & 31, job.key & 31].map(|c| c as f32 / 31.0);
+                            let m = [(job.key >> 10) & 31, (job.key >> 5) & 31, job.key & 31].map(|c| c as f32 / 15.0);
                             let mut img = (*src).clone();
                             for p in img.pixels_mut() {
                                 for c in 0..3 {
