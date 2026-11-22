@@ -46,3 +46,44 @@ Cost,消耗
 "(Not supported in PoB yet)","(PoB 尚未支持)"
 "{0} (Tier {1}): {2}%","{0} (T{1}): {2}%"
 "Act {0} ({1}%)","第 {0} 章 ({1}%)"
+"{0} to {1}","{0} 至 {1}"
+"{name} has no base cooldown or cooldown override","{name}没有基础冷却时间或冷却时间覆盖值"
+"{name} has no base cooldown","{name}没有基础冷却时间"
+"Triggered skill has no base cooldown",被触发技能没有基础冷却时间
+"Cast While Channeling had no base cooldown",吟唱时施放没有基础冷却时间
+"(base cooldown of {name})","({name}的基础冷却时间)"
+"(hard override of cooldown of {name})","({name}的冷却时间强制覆盖值)"
+"(base activation cooldown of {name})","({name}的基础激活冷却时间)"
+"(base cooldown of triggered skill)",(被触发技能的基础冷却时间)
+"(final cooldown of triggered skill)",(被触发技能的最终冷却时间)
+"(base cooldown of trigger)",(触发技能的基础冷却时间)
+"(final cooldown of trigger)",(触发技能的最终冷却时间)
+"(adjusted for server tick rate)",(按服务器 tick 率调整)
+"(extra ICDR of {0}% would reach next breakpoint)","(再提高 {0}% 冷却回复速度可达下一档)"
+"(extra Cast Rate Increase of {0}% would reach next breakpoint)","(再提高 {0}% 施法速度可达下一档)"
+"Trigger rate:",触发速率:
+"(source damage from crits)",(暴击源伤害)
+"(avg ignite stacks)",(平均点燃层数)
+"(ailment effect modifier)",(异常状态效果修正)
+"min combined sources + (max combined sources - min combined sources) * average ignite roll","最小合计来源 + (最大合计来源 - 最小合计来源) * 平均点燃掷骰"
+"Average Ignite DPS:",平均点燃 DPS:
+"Average Bleed DPS:",平均流血 DPS:
+"Average Poison DPS:",平均中毒 DPS:
+"{0}% of Maximum Ignite DPS","最大点燃 DPS 的 {0}%"
+"{0}% of Maximum Bleed DPS","最大流血 DPS 的 {0}%"
+"{0}% of Maximum Poison DPS","最大中毒 DPS 的 {0}%"
+"DPS Range:",DPS 范围:
+"(Ignite DPS Range)",(点燃 DPS 范围)
+"(Uncapped Ignite DPS Range)",(未封顶点燃 DPS 范围)
+"(Capped Ignite DPS Range)",(封顶点燃 DPS 范围)
+"(Bleed DPS Range)",(流血 DPS 范围)
+"(Uncapped Bleed DPS Range)",(未封顶流血 DPS 范围)
+"(Capped Bleed DPS Range)",(封顶流血 DPS 范围)
+"(Poison DPS Range)",(中毒 DPS 范围)
+"(Uncapped Poison DPS Range)",(未封顶中毒 DPS 范围)
+"(Capped Poison DPS Range)",(封顶中毒 DPS 范围)
+"Guard Absorb Rate",护卫吸收比例
+"Guard Absorb Limit",护卫吸收上限
+"Freeze Immune",免疫冰冻
+"Avoid Bleed",避免流血
+True,是
