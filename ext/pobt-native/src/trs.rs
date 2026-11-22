@@ -6,13 +6,14 @@ use std::path::PathBuf;
 use serde::Deserialize;
 
 /// The `trs` folder beside the program, or up to a few folders above it (a
-/// development run's program sits deep in the source tree), if there is one.
+/// development run's program sits deep in the source tree), or in a macOS
+/// bundle's `Contents/Resources`, if there is one.
 pub fn root() -> Option<PathBuf> {
     let exe = std::env::current_exe().ok()?;
     exe.ancestors()
         .skip(1)
         .take(6)
-        .map(|d| d.join("trs"))
+        .flat_map(|d| [d.join("trs"), d.join("Resources").join("trs")])
         .find(|d| d.join("languages.json").is_file())
         .or_else(|| {
             // Tests run from cargo's target folder, wherever it is.
