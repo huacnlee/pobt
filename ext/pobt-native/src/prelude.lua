@@ -424,7 +424,9 @@ function __pobt_hookEdit(classes)
 		end
 		-- A gem's name, which POB keeps in English, shown translated until the box is focused to edit it.
 		local buf = self.buf
-		local gem = self._className == "GemSelectControl" and not self.hasFocus and type(buf) == "string"
+		-- A gem box draws through its parent proxy (self.EditControl:Draw), which reads the parent's class name.
+		local object = rawget(self, "_object") or self
+		local gem = object._className == "GemSelectControl" and not self.hasFocus and type(buf) == "string"
 		if gem then
 			self.buf = sg.Translate(buf)
 		end

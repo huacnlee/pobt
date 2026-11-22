@@ -226,6 +226,7 @@ impl Dictionary {
             .or_else(|| self.labelled(t))
             .or_else(|| self.joined(t))
             .or_else(|| self.listed(t))
+            .or_else(|| self.noted(t))
             .or_else(|| Some(format!("- {}", self.inner(t.strip_prefix("- ")?)?)))
             .or_else(|| self.delta(t))
     }
@@ -241,6 +242,15 @@ impl Dictionary {
             let name = self.inner(name).unwrap_or_else(|| name.to_string());
             Some(zh.replace(NAME, &name))
         })
+    }
+
+    /// "Tornado Shot (Disabled)": a known text and a known note in brackets
+    /// after it, the note known with its brackets or without.
+    fn noted(&self, t: &str) -> Option<String> {
+        let (text, note) = t.strip_suffix(')')?.rsplit_once(" (")?;
+        let text = self.inner(text)?;
+        let note = self.inner(&format!("({note})")).or_else(|| Some(format!("({})", self.inner(note)?)))?;
+        Some(format!("{text} {note}"))
     }
 
     /// "Hyrri's Truth, Jade Amulet" and "Arctic Armour, Grace, Precision": a
@@ -395,14 +405,27 @@ impl Dictionary {
 
     /// Translates `s`, keeping its colour escapes; `None` if nothing changed.
     pub fn translate(&self, s: &str) -> Option<String> {
+        // Part by part, its colours kept, when every part is known.
+        let (out, changed, missed) = self.parts(s, false);
+        if changed && !missed {
+            return Some(out);
+        }
         // A sentence coloured in parts ("Are you always on Full ^xE05030Life?") is known whole, without its
         // colours: its translation brings its own.
         if let Some(whole) = self.whole(s) {
             return Some(whole);
         }
+        let (out, changed, _) = self.parts(s, true);
+        changed.then_some(out)
+    }
+
+    /// `s` translated between its colour escapes and lines: the text, whether
+    /// a part changed, and whether a part with letters stayed as it was
+    /// (`note` notes those misses).
+    fn parts(&self, s: &str, note: bool) -> (String, bool, bool) {
         let b = s.as_bytes();
         let mut out = String::with_capacity(s.len());
-        let mut changed = false;
+        let (mut changed, mut missed) = (false, false);
         let mut seg_start = 0;
         let mut i = 0;
         let mut flush = |out: &mut String, seg: &str| {
@@ -410,12 +433,15 @@ impl Dictionary {
                 if n > 0 {
                     out.push('\n');
                 }
-                match self.segment(line) {
+                match if note { self.segment(line) } else { self.lookup(line) } {
                     Some(t) => {
                         changed = true;
                         out.push_str(&t);
                     }
-                    None => out.push_str(line),
+                    None => {
+                        missed |= line.bytes().any(|c| c.is_ascii_alphabetic());
+                        out.push_str(line);
+                    }
                 }
             }
         };
@@ -431,7 +457,7 @@ impl Dictionary {
             }
         }
         flush(&mut out, &s[seg_start..]);
-        changed.then_some(out)
+        (out, changed, missed)
     }
 }
 
@@ -573,6 +599,8 @@ mod tests {
         // A bullet of a list of tips, known without its "- ".
         assert_eq!(d.translate("- Ctrl + Click to enable/disable socket groups.").as_deref(), Some("- Ctrl+单击以启用/禁用插槽组。"));
         assert_eq!(d.translate("- Frenzy"), Some("- 狂怒".into()));
+        // A disabled socket group's label.
+        assert_eq!(d.translate("Tornado Shot, Frenzy (Disabled)").as_deref(), Some("龙卷射击, 狂怒 ^9(禁用)"));
         assert_eq!(d.translate("-Frenzy"), None);
     }
 
@@ -724,8 +752,8 @@ mod tests {
         assert_eq!(t("^xFFFF30Variant: Current (4 variants)").as_deref(), Some("^xFFFF30变种: 当前 (共 4 个变种)"));
         assert_eq!(t("^x8888FFSource: Drops from ^xAF6025Aul, the Crystal King^x8888FF").as_deref(), Some("^x8888FF来源: 由 Aul, the Crystal King 掉落"));
         assert_eq!(t("(replacing ").as_deref(), Some("(替换 "));
-        assert_eq!(t("^x7F7F7FWeapon Range: ^x33FF771.1 ^x7F7F7Fmetres").as_deref(), Some("^x7F7F7F武器范围: 1.1 米"));
-        assert_eq!(t("^x7F7F7FLimited to: ^71 Historic").as_deref(), Some("^x7F7F7F仅限: 1 史实"));
+        assert_eq!(t("^x7F7F7FWeapon Range: ^x33FF771.1 ^x7F7F7Fmetres").as_deref(), Some("^x7F7F7F武器范围: ^x33FF771.1 ^x7F7F7F米"));
+        assert_eq!(t("^x7F7F7FLimited to: ^71 Historic").as_deref(), Some("^x7F7F7F仅限: ^71 史实"));
         assert_eq!(t("My Quiver, Primal Arrow Quiver").as_deref(), Some("My Quiver, 原始箭袋"));
         // A range only in brackets of its own, and only in a known line.
         assert_eq!(t("We met (1-2) people"), None);

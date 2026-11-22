@@ -1568,6 +1568,11 @@ b\"", "broken.lua");
         assert_eq!(d.edit("gem").0, "Fireball");
         assert_eq!(d.string("demo.controls.gem.gems['Default:Fireball'].name"), "Fireball");
         assert!(d.drew("火球"), "{:?}", d.texts());
+        // Unfocused, the box itself shows the gem translated (it draws through its parent proxy).
+        d.focus("multi");
+        d.frame();
+        assert!(d.drew("火球"), "{:?}", d.texts());
+        assert!(!d.drew("Fireball"), "{:?}", d.texts());
         // English still finds it.
         d.focus("gem");
         d.eval("demo.controls.gem:SetText('')");
