@@ -50,6 +50,7 @@ interface Strings {
   pick: string;
   install: string;
   openFolder: string;
+  installed: string;
   more: string;
   reset: string;
   installing: (done: number, total: number) => string;
@@ -82,6 +83,7 @@ const UI: Record<string, Strings> = {
     pick: "Choose folder…",
     install: "Install",
     openFolder: "Open folder",
+    installed: "Ready",
     more: "More",
     reset: "Reset",
     installing: (d, t) => `Downloading ${d} / ${t} MB`,
@@ -111,6 +113,7 @@ const UI: Record<string, Strings> = {
     pick: "选择目录…",
     install: "安装",
     openFolder: "打开目录",
+    installed: "已就绪",
     more: "更多",
     reset: "重置",
     installing: (d, t) => `下载中 ${d} / ${t} MB`,
@@ -140,6 +143,7 @@ const UI: Record<string, Strings> = {
     pick: "選擇目錄…",
     install: "安裝",
     openFolder: "打開目錄",
+    installed: "已就緒",
     more: "更多",
     reset: "重置",
     installing: (d, t) => `下載中 ${d} / ${t} MB`,
@@ -169,6 +173,7 @@ const UI: Record<string, Strings> = {
     pick: "폴더 선택…",
     install: "설치",
     openFolder: "폴더 열기",
+    installed: "준비됨",
     more: "더 보기",
     reset: "초기화",
     installing: (d, t) => `다운로드 중 ${d} / ${t} MB`,
@@ -529,6 +534,8 @@ function GameCard(props: {
   const moreHover = signal(false);
   const menuOpen = signal(false);
   const hasMenu = () => !install() && !!dir();
+  // The version of the folder's Path of Building, read again when the folder changes.
+  const version = () => (dir() ? Pob.pobVersion(dir()!) : "");
   return (
     <View
       onPress={props.onSelect}
@@ -562,24 +569,55 @@ function GameCard(props: {
         </Text>
         </If>
         <Rule width={260} dim={!selected()} />
-        <Text
-          style={{
-            fontFamily: BODY,
-            fontSize: 12,
-            color: install() ? (install()!.phase === "failed" ? C.red : C.gold) : dir() ? C.muted : C.red,
-            textAlign: "center",
-            numberOfLines: 2,
-          }}
+        <If
+          when={hasMenu()}
+          else={
+            <>
+              <Text
+                style={{
+                  fontFamily: BODY,
+                  fontSize: 12,
+                  color: install() ? (install()!.phase === "failed" ? C.red : C.gold) : C.red,
+                  textAlign: "center",
+                  numberOfLines: 2,
+                }}
+              >
+                {install() ? status(install()!) : props.t().notFound}
+              </Text>
+              {/* No Path of Building yet: install it from its release, or choose where it is */}
+              <View style={{ flexDirection: "row", gap: 12, opacity: busy() ? 0.5 : 1 }}>
+                <If when={!dir()}>
+                  <Button label={props.t().install} onPress={() => !busy() && props.onInstall()} />
+                </If>
+                <Button label={props.t().pick} onPress={() => !busy() && props.onPick()} />
+              </View>
+            </>
+          }
         >
-          {install() ? status(install()!) : (dir() ?? props.t().notFound)}
-        </Text>
-        {/* No Path of Building yet: install it from its release, or choose where it is */}
-        <View style={{ flexDirection: "row", gap: 12, opacity: busy() ? 0.5 : 1 }}>
-          <If when={!dir()}>
-            <Button label={props.t().install} onPress={() => !busy() && props.onInstall()} />
-          </If>
-          <Button label={props.t().pick} onPress={() => !busy() && props.onPick()} />
-        </View>
+          {/* Installed: ready, its version, and where it is; the folder's actions are in the menu */}
+          <>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+                paddingHorizontal: 12,
+                paddingVertical: 4,
+                borderWidth: 1,
+                borderColor: selected() ? C.trimHi : C.trim,
+                borderRadius: 12,
+                backgroundColor: "rgba(177,141,78,0.08)",
+              }}
+            >
+              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: selected() ? C.goldHi : C.gold }} />
+              <Text style={{ fontFamily: BODY, fontSize: 13, color: selected() ? C.goldHi : C.gold }}>{props.t().installed}</Text>
+              <If when={version()}>
+                <Text style={{ fontFamily: DISPLAY, fontSize: 13, color: C.text }}>v{version()}</Text>
+              </If>
+            </View>
+            <Text style={{ fontFamily: BODY, fontSize: 12, color: C.muted, textAlign: "center", numberOfLines: 2 }}>{dir()}</Text>
+          </>
+        </If>
         {/* Its menu, in the top right corner: open the folder, or forget it (Reset), kept out of the way. A ghost
             button, shown while the card is hovered or the menu open */}
         <If when={hasMenu()}>
@@ -618,6 +656,7 @@ function GameCard(props: {
               }
             >
               <CardMenuItem label={props.t().openFolder} onSelect={() => Pob.openDir(dir()!)} />
+              <CardMenuItem label={props.t().pick} onSelect={props.onPick} />
               <MenuSeparator style={{ height: 1, marginVertical: 4, backgroundColor: C.trim }} />
               <CardMenuItem label={props.t().reset} color={C.red} onSelect={props.onReset} />
             </Menu>

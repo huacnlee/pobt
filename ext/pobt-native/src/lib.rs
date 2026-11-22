@@ -163,6 +163,16 @@ impl Pob {
         });
     }
 
+    /// The version of the Path of Building in `dir`, from its manifest.xml
+    /// (`<Version number="2.63.0" />`); empty if it has none.
+    pub fn pob_version(dir: String) -> String {
+        let xml = std::fs::read_to_string(std::path::Path::new(&dir).join("manifest.xml")).unwrap_or_default();
+        xml.split_once("<Version number=\"")
+            .and_then(|(_, rest)| rest.split_once('"'))
+            .map(|(v, _)| v.to_string())
+            .unwrap_or_default()
+    }
+
     /// Opens `dir` in Explorer, off the UI thread as `open_url`.
     pub fn open_dir(dir: String) {
         std::thread::spawn(move || {
