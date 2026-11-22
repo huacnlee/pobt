@@ -104,11 +104,6 @@ impl Pob {
         }
     }
 
-    /// Whether to start straight away (`POBT_AUTOSTART` set).
-    pub fn autostart() -> bool {
-        std::env::var_os("POBT_AUTOSTART").is_some()
-    }
-
     /// Switches the translation on or off while POB runs.
     pub fn set_translate(on: bool) {
         if let Some(s) = SESSION.get() {

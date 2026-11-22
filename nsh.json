@@ -1,7 +1,8 @@
 {
   "name": "POBT",
   "id": "com.huacnlee.pobt",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "build": 1,
+  "updater": { "github": "huacnlee/pobt" },
   "rust": "."
 }

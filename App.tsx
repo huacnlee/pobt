@@ -1,4 +1,5 @@
-import { mount, signal, Text, View } from "nsh";
+import { mount, openUrl, signal, Text, View } from "nsh";
+import { checkForUpdate, downloadUpdate, installAndRestart, type AppUpdate } from "nsh/updater";
 import { Pob, PobCanvas } from "pobt/native";
 
 type Game = "Poe1" | "Poe2";
@@ -36,6 +37,50 @@ function Chip(props: { label: string; selected: boolean; onPress: () => void }) 
   );
 }
 
+// Checks for a newer POBT once, at start, and offers to install it.
+function UpdateBanner() {
+  const update = signal<AppUpdate | null>(null);
+  const progress = signal<number | null>(null);
+  const failed = signal("");
+  checkForUpdate()
+    .then((u) => update.set(u))
+    .catch(() => {});
+
+  const install = async () => {
+    const u = update();
+    if (!u) return;
+    if (!u.canInstall) {
+      openUrl(u.url);
+      return;
+    }
+    try {
+      progress.set(0);
+      await downloadUpdate(({ received, total }) => progress.set(total ? received / total : 0));
+      await installAndRestart();
+    } catch (e) {
+      progress.set(null);
+      failed.set(String(e));
+    }
+  };
+
+  return (
+    <If when={update()}>
+      {(u) => (
+        <View class="flex-row items-center gap-3 rounded-lg border border-primary bg-accent px-4 py-3">
+          <Text class="flex-1 text-sm text-foreground">
+            {failed() ? `更新失败：${failed()}` : `POBT ${u().version} 已发布`}
+          </Text>
+          <If when={progress() === null} else={<Text class="text-sm text-muted-foreground">{`下载中 ${Math.round((progress() ?? 0) * 100)}%`}</Text>}>
+            <View onPress={install} role="button" class="rounded-md bg-primary px-3 py-1 active:opacity-80">
+              <Text class="text-sm text-primary-foreground">{u().canInstall ? "更新并重启" : "下载"}</Text>
+            </View>
+          </If>
+        </View>
+      )}
+    </If>
+  );
+}
+
 function Launcher(props: { onStart: () => void }) {
   const settings = signal<Settings>(JSON.parse(Pob.settings()));
   const languages: Language[] = JSON.parse(Pob.languages());
@@ -70,10 +115,9 @@ function Launcher(props: { onStart: () => void }) {
     props.onStart();
   };
 
-  if (Pob.autostart()) queueMicrotask(start);
-
   return (
     <View class="flex-1 justify-center gap-6 bg-background p-8">
+      <UpdateBanner />
       <View class="gap-1">
         <Text class="text-3xl font-bold text-foreground">POBT</Text>
         <Text class="text-sm text-muted-foreground">Path of Building 多语言界面 · 翻译数据来自 PoeCharm2</Text>
