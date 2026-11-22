@@ -1599,11 +1599,8 @@ b\"", "broken.lua");
 
     /// A box with POB's default filter (its rename boxes, an item's name): POB
     /// takes letters, digits and punctuation only unless it runs with a global
-    /// `utf8` table (`main.unicode`), so it drops Chinese typed there. Ignored
-    /// until POBT lets these boxes take other scripts:
-    /// `cargo test --lib default_filter -- --ignored`.
+    /// `utf8` table (`main.unicode`); POBT lets it take other scripts too.
     #[test]
-    #[ignore]
     fn default_filter_takes_other_scripts() {
         let Some(d) = Demo::start() else { return };
         d.focus("default");
