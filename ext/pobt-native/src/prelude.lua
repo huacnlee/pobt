@@ -401,7 +401,15 @@ end
 -- placeholders are POB's: translated before the box draws.
 function __pobt_hookClasses()
 	local classes = common and common.classes
-	if not classes or not classes.EditControl or classes.EditControl.__pobt or type(classes.EditControl.Draw) ~= "function" then
+	if not classes then
+		return
+	end
+	__pobt_hookEdit(classes)
+	__pobt_hookGemSelect(classes)
+end
+
+function __pobt_hookEdit(classes)
+	if not classes.EditControl or classes.EditControl.__pobt or type(classes.EditControl.Draw) ~= "function" then
 		return
 	end
 	local edit = classes.EditControl
@@ -430,8 +438,7 @@ function __pobt_hookClasses()
 			if self.prompt then
 				caretX = caretX + DrawStringWidth(textHeight, self.font, self.prompt) + textHeight / 2
 			end
-			local pre = type(self.buf) == "string" and self.buf:sub(1, (self.caret or 1) - 1):match("[^
-]*$") or ""
+			local pre = type(self.buf) == "string" and self.buf:sub(1, (self.caret or 1) - 1):match("[^\n]*$") or ""
 			local scroll = self.controls and self.controls.scrollBarH and self.controls.scrollBarH.offset or 0
 			caretX = math.min(math.max(caretX + DrawStringWidth(textHeight, self.font, pre) - scroll, x), x + w - 1)
 			sg.SetTextInput(caretX, y, x + w - caretX, h)
@@ -473,7 +480,57 @@ function __pobt_hookClasses()
 		end
 		return keyDown(self, key, ...)
 	end
+	-- A gem box takes letters only: it takes the characters of other scripts too, to search by translated names.
+	local function lettersAndScripts(self, f, ...)
+		local filter = self.filterPattern
+		if self._className == "GemSelectControl" and type(filter) == "string" and filter:sub(1, 2) == "[^" then
+			self.filterPattern = "[^\128-\255" .. filter:sub(3)
+		end
+		local r = pack(pcall(f, self, ...))
+		self.filterPattern = filter
+		if not r[1] then
+			error(r[2], 0)
+		end
+		return unpack(r, 2, r.n)
+	end
+	local insert, replaceSel = edit.Insert, edit.ReplaceSel
+	edit.Insert = function(self, ...)
+		return lettersAndScripts(self, insert, ...)
+	end
+	edit.ReplaceSel = function(self, ...)
+		return lettersAndScripts(self, replaceSel, ...)
+	end
 	edit.__pobt = true
+end
+
+function __pobt_hookGemSelect(classes)
+	-- A search in another script matches the gems' translated names: they stand in for the English while POB
+	-- builds its list.
+	local gemSelect = classes.GemSelectControl
+	if gemSelect and type(gemSelect.BuildList) == "function" and not gemSelect.__pobt then
+		local buildList = gemSelect.BuildList
+		gemSelect.BuildList = function(self, buf, ...)
+			if type(buf) ~= "string" or not buf:find("[\128-\255]") or type(self.gems) ~= "table" then
+				return buildList(self, buf, ...)
+			end
+			local names = { }
+			for _, gem in pairs(self.gems) do
+				if type(gem) == "table" and type(gem.name) == "string" and names[gem] == nil then
+					names[gem] = gem.name
+					gem.name = sg.Translate(gem.name)
+				end
+			end
+			local r = pack(pcall(buildList, self, buf, ...))
+			for gem, name in pairs(names) do
+				gem.name = name
+			end
+			if not r[1] then
+				error(r[2], 0)
+			end
+			return unpack(r, 2, r.n)
+		end
+		gemSelect.__pobt = true
+	end
 end
 
 -- POB's error popups also go to the log.
