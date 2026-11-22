@@ -21,6 +21,7 @@ export interface Copy {
   shotAlt: string;
   shotTreeAlt: string;
   shotPobAlt: string;
+  shotPob2Alt: string;
   featuresTitle: string;
   features: string[];
   installTitle: string;
@@ -60,6 +61,7 @@ export const copy: Record<Language, Copy> = {
     shotAlt: "The POBT launcher: pick Path of Exile or Path of Exile 2 and a language, then Start.",
     shotTreeAlt: "The passive tree in Path of Building, translated",
     shotPobAlt: "Path of Building's configuration, translated",
+    shotPob2Alt: "Path of Building for Path of Exile 2, translated",
     featuresTitle: "What it does",
     features: [
       "Translates Path of Building for Path of Exile 1 and 2",
@@ -133,6 +135,7 @@ export const copy: Record<Language, Copy> = {
     shotAlt: "POBT 启动界面：选择流放之路或流放之路 2 和语言，然后启动。",
     shotTreeAlt: "翻译后的 Path of Building 天赋树",
     shotPobAlt: "翻译后的 Path of Building 配置页",
+    shotPob2Alt: "翻译后的流放之路 2 Path of Building",
     featuresTitle: "功能",
     features: ["翻译流放之路 1 与 2 的 Path of Building", "新增简体中文、繁體中文与한국어", "绝不修改你的 Path of Building 文件", "Ctrl+Shift+T 随时切换英文", "有新版本时自动更新"],
     installTitle: "一分钟装好",
