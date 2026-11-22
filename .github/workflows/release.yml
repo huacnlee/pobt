@@ -52,25 +52,25 @@ jobs:
           out="$RUNNER_TEMP/out"
           nsh package --target windows -o "$out" "${args[@]}"
           ls -l "$out"
-          mkdir -p assets
+          mkdir -p dist
           # The installers' archive, and the versioned one for the updater.
-          mv "$out/POBT.zip" "assets/$ASSET"
+          mv "$out/POBT.zip" "dist/$ASSET"
           for f in "$out"/POBT-*.zip; do
-            mv "$f" "assets/$(basename "$f" | tr '[:upper:]' '[:lower:]')"
+            mv "$f" "dist/$(basename "$f" | tr '[:upper:]' '[:lower:]')"
           done
-          ls -l assets
+          ls -l dist
 
       # The installer, run against this package served locally.
       - name: Try the installer
         run: |
-          (cd assets && sha256sum "$ASSET" > sha256sums)
-          (cd assets && exec python -m http.server 8765 > /dev/null 2>&1) &
+          (cd dist && sha256sum "$ASSET" > sha256sums)
+          (cd dist && exec python -m http.server 8765 > /dev/null 2>&1) &
           server=$!
           trap 'kill "$server" 2> /dev/null || true' EXIT
           sleep 2
           POBT_BASE_URL=http://127.0.0.1:8765 powershell -NoProfile -ExecutionPolicy Bypass -File website/public/install.ps1
           test -f "$LOCALAPPDATA/Programs/POBT/POBT.exe"
-          rm assets/sha256sums
+          rm dist/sha256sums
 
       # The app fetches `releases/latest/download/latest.json` and the versioned archive it names (nsh/updater).
       - name: Write the update manifest
@@ -79,12 +79,12 @@ jobs:
           version="${GITHUB_REF_NAME#v}"
           jq --arg version "$version" '.version = $version' nsh.json > "$RUNNER_TEMP/nsh.json"
           mv "$RUNNER_TEMP/nsh.json" nsh.json
-          nsh update-manifest assets/pobt-"$version"-*.zip --out assets
+          nsh update-manifest dist/pobt-"$version"-*.zip --out dist
 
       - uses: actions/upload-artifact@v4
         with:
           name: pobt-windows
-          path: assets/
+          path: dist/
           if-no-files-found: error
 
       - name: Publish the release
@@ -93,7 +93,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          cd assets
+          cd dist
           sha256sum * > sha256sums
           cat sha256sums
           if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
