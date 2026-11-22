@@ -46,6 +46,10 @@ interface Strings {
   pobFolder: string;
   notFound: string;
   pick: string;
+  install: string;
+  installing: (done: number, total: number) => string;
+  unpacking: (percent: number) => string;
+  installFailed: string;
   start: string;
   back: string;
   needDir: string;
@@ -66,6 +70,10 @@ const UI: Record<string, Strings> = {
     pobFolder: "PATH OF BUILDING",
     notFound: "Path of Building not found: choose its folder",
     pick: "Choose folder…",
+    install: "Install",
+    installing: (d, t) => `Downloading ${d} / ${t} MB`,
+    unpacking: (p) => `Unpacking ${p}%`,
+    installFailed: "Install failed",
     start: "Start",
     back: "Launcher",
     needDir: "Choose the folder of Path of Building first",
@@ -83,6 +91,10 @@ const UI: Record<string, Strings> = {
     pobFolder: "PATH OF BUILDING",
     notFound: "未找到 Path of Building，请选择它的安装目录",
     pick: "选择目录…",
+    install: "安装",
+    installing: (d, t) => `下载中 ${d} / ${t} MB`,
+    unpacking: (p) => `解压中 ${p}%`,
+    installFailed: "安装失败",
     start: "启动",
     back: "返回主界面",
     needDir: "请先选择 Path of Building 的安装目录",
@@ -100,6 +112,10 @@ const UI: Record<string, Strings> = {
     pobFolder: "PATH OF BUILDING",
     notFound: "找不到 Path of Building，請選擇它的安裝目錄",
     pick: "選擇目錄…",
+    install: "安裝",
+    installing: (d, t) => `下載中 ${d} / ${t} MB`,
+    unpacking: (p) => `解壓中 ${p}%`,
+    installFailed: "安裝失敗",
     start: "啟動",
     back: "返回主介面",
     needDir: "請先選擇 Path of Building 的安裝目錄",
@@ -117,6 +133,10 @@ const UI: Record<string, Strings> = {
     pobFolder: "PATH OF BUILDING",
     notFound: "Path of Building을 찾을 수 없습니다. 폴더를 선택하세요",
     pick: "폴더 선택…",
+    install: "설치",
+    installing: (d, t) => `다운로드 중 ${d} / ${t} MB`,
+    unpacking: (p) => `압축 해제 중 ${p}%`,
+    installFailed: "설치 실패",
     start: "시작",
     back: "처음 화면",
     needDir: "먼저 Path of Building 폴더를 선택하세요",
@@ -385,9 +405,39 @@ function UpdateBadge(props: { t: () => Strings }) {
   );
 }
 
-function GameCard(props: { game: Game; settings: () => Settings; t: () => Strings; onSelect: () => void; onPick: () => void }) {
+// An install of Path of Building, as `Pob.installProgress` reports it.
+interface InstallProgress {
+  game: Game;
+  phase: "downloading" | "unpacking" | "done" | "failed";
+  done: number;
+  total: number;
+  message: string;
+}
+
+function GameCard(props: {
+  game: Game;
+  settings: () => Settings;
+  t: () => Strings;
+  installing: () => InstallProgress | null;
+  onSelect: () => void;
+  onPick: () => void;
+  onInstall: () => void;
+}) {
   const selected = () => props.settings().game === props.game;
   const dir = () => dirOf(props.settings(), props.game);
+  // This game's install while it runs, or failed.
+  const install = () => {
+    const p = props.installing();
+    return p && p.game === props.game && p.phase !== "done" ? p : null;
+  };
+  const status = (p: InstallProgress) => {
+    const t = props.t();
+    if (p.phase === "failed") return `${t.installFailed}: ${p.message}`;
+    if (p.phase === "unpacking") return t.unpacking(p.total ? Math.floor((p.done / p.total) * 100) : 0);
+    const mb = (n: number) => Math.round(n / 1048576);
+    return t.installing(mb(p.done), mb(p.total));
+  };
+  const busy = () => install()?.phase === "downloading" || install()?.phase === "unpacking";
   return (
     <View onPress={props.onSelect} style={{ flex: 1, paddingTop: 22 }}>
       {/* The panel, framed by a double trim line */}
@@ -416,10 +466,24 @@ function GameCard(props: { game: Game; settings: () => Settings; t: () => String
         </Text>
         </If>
         <Rule width={260} dim={!selected()} />
-        <Text style={{ fontFamily: BODY, fontSize: 12, color: dir() ? C.muted : C.red, textAlign: "center", numberOfLines: 2 }}>
-          {dir() ?? props.t().notFound}
+        <Text
+          style={{
+            fontFamily: BODY,
+            fontSize: 12,
+            color: install() ? (install()!.phase === "failed" ? C.red : C.gold) : dir() ? C.muted : C.red,
+            textAlign: "center",
+            numberOfLines: 2,
+          }}
+        >
+          {install() ? status(install()!) : (dir() ?? props.t().notFound)}
         </Text>
-        <Button label={props.t().pick} onPress={props.onPick} />
+        {/* No Path of Building yet: install it from its release, or choose where it is */}
+        <View style={{ flexDirection: "row", gap: 12, opacity: busy() ? 0.5 : 1 }}>
+          <If when={!dir()}>
+            <Button label={props.t().install} onPress={() => !busy() && props.onInstall()} />
+          </If>
+          <Button label={props.t().pick} onPress={() => !busy() && props.onPick()} />
+        </View>
       </View>
       {/* Its title plaque, set over the top edge */}
       <View style={{ position: "absolute", top: 0, left: 0, right: 0, alignItems: "center" }}>
@@ -540,6 +604,26 @@ function Launcher(props: { onStart: () => void }) {
     update(game.id === "Poe1" ? { poe1_dir: dir, game: game.id } : { poe2_dir: dir, game: game.id });
   };
 
+  // Installing Path of Building: its progress, polled while it runs; done, its folder is the game's.
+  const installing = signal<InstallProgress | null>(null);
+  const watchInstall = () => {
+    const json = Pob.installProgress();
+    const p: InstallProgress | null = json ? JSON.parse(json) : null;
+    installing.set(p);
+    if (p?.phase === "done") {
+      update(p.game === "Poe1" ? { poe1_dir: p.message, game: p.game } : { poe2_dir: p.message, game: p.game });
+    } else if (p && p.phase !== "failed") {
+      setTimeout(watchInstall, 250);
+    }
+  };
+  const install = (game: (typeof GAMES)[number]) => {
+    error.set("");
+    Pob.install(game.key);
+    update({ game: game.id });
+    watchInstall();
+  };
+  watchInstall();
+
   const start = () => {
     const s = settings();
     const dir = dirOf(s, s.game);
@@ -583,7 +667,17 @@ function Launcher(props: { onStart: () => void }) {
         {/* Games */}
         <View style={{ flexDirection: "row", gap: 28 }}>
           <Each of={GAMES}>
-            {(g) => <GameCard game={g().id} settings={settings} t={t} onSelect={() => update({ game: g().id })} onPick={() => pick(g())} />}
+            {(g) => (
+              <GameCard
+                game={g().id}
+                settings={settings}
+                t={t}
+                installing={installing}
+                onSelect={() => update({ game: g().id })}
+                onPick={() => pick(g())}
+                onInstall={() => install(g())}
+              />
+            )}
           </Each>
         </View>
 

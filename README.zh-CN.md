@@ -28,7 +28,7 @@ POBT 直接运行你电脑上已有的 [Path of Building Community](https://path
 
 1. 把压缩包解压到任意位置（右键 → 全部解压缩）。
 2. 运行 `POBT.exe`。Windows 提示新程序时，点 **更多信息**，再点 **仍要运行**。
-3. POBT 会自动找到 Path of Building；找不到时手动选择它的文件夹。
+3. POBT 会自动找到 Path of Building；找不到时手动选择它的文件夹，或点「安装」从 GitHub 下载最新版。
 4. 选好游戏和语言，点 **启动**。
 
 也可以用 PowerShell 安装（会创建开始菜单和桌面快捷方式，再次运行即可更新）：

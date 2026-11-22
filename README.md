@@ -29,7 +29,7 @@ Chinese, Traditional Chinese and Korean are included.
 
 1. Unpack the zip anywhere (right-click → Extract All).
 2. Run `POBT.exe`. Windows may warn about a new program: choose **More info**, then **Run anyway**.
-3. POBT finds Path of Building on its own; if it does not, choose its folder.
+3. POBT finds Path of Building on its own; if it does not, choose its folder, or press **Install** to download it from its GitHub release.
 4. Pick the game and the language, then **Start**.
 
 Or install it with PowerShell, which adds Start menu and desktop shortcuts and updates POBT when run again:

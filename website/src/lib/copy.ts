@@ -76,7 +76,7 @@ export const copy: Record<Language, Copy> = {
       ["Download", "Get pobt-windows-x86_64.zip with the button above."],
       ["Unpack", "Right-click the zip and choose Extract All, to any folder you like."],
       ["Run POBT.exe", "Windows may ask whether to run it, as with any new program: choose More info, then Run anyway."],
-      ["Pick your POB", "POBT finds Path of Building on its own; if not, choose its folder. Pick the game and the language, then Start."],
+      ["Pick your POB", "POBT finds Path of Building on its own; if not, choose its folder, or Install downloads it for you. Pick the game and the language, then Start."],
     ],
     scriptTitle: "Prefer a script?",
     scriptIntro: "In PowerShell, this installs POBT to your user folder with Start menu and desktop shortcuts, and updates it when run again.",
@@ -86,7 +86,7 @@ export const copy: Record<Language, Copy> = {
     requireTitle: "What you need",
     requirements: [
       "64-bit Windows 10 or 11",
-      "Path of Building Community (Path of Exile 1, 2, or both) installed",
+      "Path of Building Community for Path of Exile 1, 2 or both: POBT installs it if you have none",
       "Microsoft YaHei, which Windows includes, for the text",
     ],
     faqTitle: "Questions",
@@ -144,7 +144,7 @@ export const copy: Record<Language, Copy> = {
       ["下载", "点上面的按钮下载 pobt-windows-x86_64.zip。"],
       ["解压", "右键压缩包，选“全部解压缩”，放到任意文件夹。"],
       ["运行 POBT.exe", "第一次运行新程序时 Windows 可能会提示：点“更多信息”，再点“仍要运行”。"],
-      ["选择 POB", "POBT 会自动找到 Path of Building；找不到时手动选择它的文件夹。选好游戏和语言，点“启动”。"],
+      ["选择 POB", "POBT 会自动找到 Path of Building；找不到时手动选择它的文件夹，或点“安装”自动下载。选好游戏和语言，点“启动”。"],
     ],
     scriptTitle: "想用脚本安装？",
     scriptIntro: "在 PowerShell 中运行这条命令，会把 POBT 安装到用户目录，并创建开始菜单和桌面快捷方式；再次运行即可更新。",
@@ -152,7 +152,7 @@ export const copy: Record<Language, Copy> = {
     copied: "已复制",
     readScript: "查看脚本",
     requireTitle: "运行需要",
-    requirements: ["64 位 Windows 10 或 11", "已安装 Path of Building Community（流放之路 1、2 任一或全部）", "系统自带的微软雅黑字体"],
+    requirements: ["64 位 Windows 10 或 11", "Path of Building Community（流放之路 1、2 任一或全部）：没有的话 POBT 可以帮你安装", "系统自带的微软雅黑字体"],
     faqTitle: "常见问题",
     faq: [
       [

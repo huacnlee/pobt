@@ -94,6 +94,7 @@ fn detect(game: Game) -> Option<PathBuf> {
     }
     if let Some(d) = dirs::data_local_dir() {
         roots.push(d.join("Programs"));
+        roots.push(d.join("pobt"));
         roots.push(d);
     }
     if let Ok(exe) = std::env::current_exe() {

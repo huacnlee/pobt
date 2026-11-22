@@ -7,6 +7,7 @@ pub mod dds;
 pub mod frame;
 pub mod host;
 pub mod images;
+pub mod install;
 pub mod lua;
 pub mod settings;
 pub mod text;
@@ -109,6 +110,16 @@ impl Pob {
         if session().is_some() {
             return String::new();
         }
+        // A runtime update POB left for its `Update.exe` goes in before its DLLs load; in a POBT that loaded them
+        // already, in a new one.
+        if install::pending_runtime_update(std::path::Path::new(&dir)).is_some() {
+            if lua::loaded_from().is_some() {
+                relaunch();
+            }
+            if let Err(e) = install::apply_runtime_update(std::path::Path::new(&dir)) {
+                return format!("updating Path of Building: {e}");
+            }
+        }
         if lua::loaded_from().is_some_and(|d| d != std::path::Path::new(&dir)) {
             relaunch();
         }
@@ -145,6 +156,29 @@ impl Pob {
                 log::warn!("opening {url}: {e}");
             }
         });
+    }
+
+    /// Installs a game's Path of Building ("poe1" or "poe2") from its latest
+    /// release into POBT's folder, in the background; false while one installs.
+    pub fn install(game: String) -> bool {
+        install::start(game_of(&game))
+    }
+
+    /// The install running or last run, as JSON: `{ game, phase, done, total,
+    /// message }` (`phase`: "downloading", "unpacking", "done", "failed"); "" for
+    /// none. Once done, the game's folder is saved in the settings.
+    pub fn install_progress() -> String {
+        let Some(p) = install::progress() else { return String::new() };
+        if p.phase == "done" {
+            let mut s = Settings::load();
+            let dir = Some(PathBuf::from(&p.message));
+            match p.game.as_str() {
+                "Poe2" => s.poe2_dir = dir,
+                _ => s.poe1_dir = dir,
+            }
+            s.save();
+        }
+        serde_json::to_string(&p).unwrap_or_default()
     }
 
     /// Asks POB to quit, back to the launcher: it does once its `CanExit`
@@ -383,8 +417,12 @@ fn pob_view(shared: Arc<Shared>) -> impl IntoElement {
                 current_window().set(a);
                 title.set(t);
             }
-            // POB quitting ends POBT, unless it quits to go back to the launcher.
+            // POB quitting ends POBT, unless it quits to go back to the launcher; or to update its runtime, which a new
+            // POBT applies before it loads it.
             if shared.exited.load(Ordering::SeqCst) && !shared.to_launcher.load(Ordering::SeqCst) {
+                if shared.runtime_update.load(Ordering::SeqCst) {
+                    relaunch();
+                }
                 std::process::exit(0);
             }
         });

@@ -50,6 +50,8 @@ pub struct Shared {
     pub quit: AtomicBool,
     /// POB quits to go back to the launcher, not to end POBT.
     pub to_launcher: AtomicBool,
+    /// POB asked its `Update.exe` to replace its runtime: POBT does instead.
+    pub runtime_update: AtomicBool,
     /// Set by the UI to have the Lua thread repaint and process input now.
     pub poke: AtomicBool,
     pub last_input: Mutex<Instant>,
@@ -70,6 +72,7 @@ impl Shared {
             exited: AtomicBool::new(false),
             quit: AtomicBool::new(false),
             to_launcher: AtomicBool::new(false),
+            runtime_update: AtomicBool::new(false),
             poke: AtomicBool::new(false),
             last_input: Mutex::new(Instant::now()),
         })
@@ -1031,6 +1034,12 @@ pub fn open_url(url: &str) -> std::io::Result<()> {
 native!(n_spawn_process, |l| {
     let cmd = l.string(1).unwrap_or_default();
     let args = l.string(2).unwrap_or_default();
+    // POB's runtime update: its `Update.exe` would replace the DLLs this process has loaded, then open POB's own
+    // program. POBT applies it itself, in a new POBT (`install::apply_runtime_update`).
+    if Path::new(&cmd).file_stem().is_some_and(|s| s.eq_ignore_ascii_case("Update")) && args.contains("UpdateApply.lua") {
+        shared().runtime_update.store(true, Ordering::SeqCst);
+        return 0;
+    }
     let mut c = std::process::Command::new(&cmd);
     #[cfg(windows)]
     {
