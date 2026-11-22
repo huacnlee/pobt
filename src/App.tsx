@@ -10,7 +10,7 @@ import title from "../assets/ui/title.png";
 import { GATE, GATE_MOTION } from "./gate";
 // The icon at the size the launcher shows it (icon.png is the app's, 1024 square).
 import icon from "../assets/ui/icon-64.png";
-import more from "../assets/ui/more.svg";
+import gear from "../assets/ui/gear.svg";
 type Game = "Poe1" | "Poe2";
 
 interface Settings {
@@ -613,7 +613,7 @@ function GameCard(props: {
                     backgroundColor: moreHover() || menuOpen() ? "rgba(177,141,78,0.18)" : "transparent",
                   }}
                 >
-                  <Image src={more} style={{ width: 16, height: 16, tintColor: moreHover() || menuOpen() ? C.goldHi : C.gold }} />
+                  <Image src={gear} style={{ width: 16, height: 16, tintColor: moreHover() || menuOpen() ? C.goldHi : C.gold }} />
                 </View>
               }
             >
@@ -624,8 +624,8 @@ function GameCard(props: {
           </View>
         </If>
       </View>
-      {/* Its title plaque, set over the top edge */}
-      <View style={{ position: "absolute", top: 0, left: 0, right: 0, alignItems: "center" }}>
+      {/* Its title plaque, set over the top edge; the row around it lets the pointer through to the panel's corners */}
+      <View style={{ position: "absolute", top: 0, left: 0, right: 0, alignItems: "center", pointerEvents: "box-none" }}>
         <View style={{ width: 300 }}>
           <Plaque kind={() => (selected() ? "red" : "dark")} height={46}>
             <Text style={{ fontFamily: DISPLAY, fontSize: 19, fontWeight: "700", color: selected() ? "#f6e6c2" : C.goldHi }}>
