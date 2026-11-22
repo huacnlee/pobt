@@ -17,7 +17,12 @@ pub struct Dictionary {
     /// Key: the English with each placeholder as `\u{1}`; value: the
     /// translation and, per placeholder in the English, its number index.
     templates: HashMap<String, Template>,
+    /// Entries with a `{name}` hole, for a name POB puts in ("{name} has no
+    /// base cooldown"): the English before and after it, and the translation.
+    named: Vec<(String, String, String)>,
 }
+
+const NAME: &str = "{name}";
 
 struct Template {
     text: String,
@@ -107,6 +112,12 @@ impl Dictionary {
         if en_t.is_empty() || zh.trim().is_empty() || en_t.starts_with("##") {
             return;
         }
+        if let Some((before, after)) = en_t.split_once(NAME) {
+            if !after.contains(NAME) {
+                self.named.push((before.to_string(), after.to_string(), zh.trim().to_string()));
+            }
+            return;
+        }
         if let Some(key) = template_key(en_t) {
             self.templates.entry(key).or_insert(Template { text: zh.trim().to_string() });
         }
@@ -137,6 +148,10 @@ impl Dictionary {
             if j < b.len() && b[j].is_ascii_digit() {
                 while j < b.len() && b[j].is_ascii_digit() {
                     j += 1;
+                }
+                // "23,059": POB's thousands separators, a comma before exactly three digits.
+                while j + 3 < b.len() && b[j] == b',' && b[j + 1..j + 4].iter().all(u8::is_ascii_digit) && !b.get(j + 4).is_some_and(u8::is_ascii_digit) {
+                    j += 4;
                 }
                 if j + 1 < b.len() && b[j] == b'.' && b[j + 1].is_ascii_digit() {
                     j += 1;
@@ -204,6 +219,7 @@ impl Dictionary {
                 Some(known.trim_end_matches([':', '：']).trim_end().to_string())
             })
             .or_else(|| self.folded.get(&t.to_lowercase()).cloned())
+            .or_else(|| self.named(t))
             .or_else(|| self.supported(t))
             .or_else(|| self.phrase(t))
             .or_else(|| self.wrapped(t))
@@ -212,6 +228,19 @@ impl Dictionary {
             .or_else(|| self.listed(t))
             .or_else(|| Some(format!("- {}", self.inner(t.strip_prefix("- ")?)?)))
             .or_else(|| self.delta(t))
+    }
+
+    /// "Tornado Shot has no base cooldown or cooldown override": an entry's
+    /// `{name}` filled with the name POB put there, translated when known.
+    fn named(&self, t: &str) -> Option<String> {
+        self.named.iter().find_map(|(before, after, zh)| {
+            let name = t.strip_prefix(before.as_str())?.strip_suffix(after.as_str())?.trim();
+            if name.is_empty() {
+                return None;
+            }
+            let name = self.inner(name).unwrap_or_else(|| name.to_string());
+            Some(zh.replace(NAME, &name))
+        })
     }
 
     /// "Hyrri's Truth, Jade Amulet" and "Arctic Armour, Grace, Precision": a
@@ -635,6 +664,45 @@ mod tests {
         assert_eq!(d.translate("Mana"), None);
     }
 
+    /// The Calcs tab's breakdowns: trigger rates, ignite and the mod table.
+    #[test]
+    fn calcs_breakdowns() {
+        let d = Dictionary::load("zh-rCN");
+        let t = |s: &str| d.translate(s);
+        assert_eq!(t("Tornado Shot has no base cooldown or cooldown override").as_deref(), Some("龙卷射击没有基础冷却时间或冷却时间覆盖值"));
+        assert_eq!(t("0.50 ^8(base cooldown of Manaforged Arrows)").as_deref(), Some("0.50 ^8(法铸箭矢（辅）的基础冷却时间)"));
+        assert_eq!(t("0.50 ^8(base cooldown of My Skill)").as_deref(), Some("0.50 ^8(My Skill的基础冷却时间)"));
+        assert_eq!(t("= 0.4762 ^8(final cooldown of trigger)").as_deref(), Some("= 0.4762 ^8(触发技能的最终冷却时间)"));
+        assert_eq!(t("0.495 ^8(adjusted for server tick rate)").as_deref(), Some("0.495 ^8(按服务器 tick 率调整)"));
+        assert_eq!(t("^8(extra ICDR of 3% would reach next breakpoint)").as_deref(), Some("^8(再提高 3% 冷却回复速度可达下一档)"));
+        assert_eq!(t("Trigger rate:").as_deref(), Some("触发速率:"));
+        assert_eq!(t("Guard Absorb Rate").as_deref(), Some("护卫吸收比例"));
+        assert_eq!(t("Freeze Immune").as_deref(), Some("免疫冰冻"));
+        assert_eq!(t("Avoid Bleed").as_deref(), Some("避免流血"));
+        assert_eq!(t("True").as_deref(), Some("是"));
+        assert_eq!(
+            t("^8min combined sources + (max combined sources - min combined sources) * average ignite roll").as_deref(),
+            Some("^8最小合计来源 + (最大合计来源 - 最小合计来源) * 平均点燃掷骰")
+        );
+        assert_eq!(t("Average Ignite DPS:").as_deref(), Some("平均点燃 DPS:"));
+        assert_eq!(t("98.71% of Maximum Ignite DPS").as_deref(), Some("最大点燃 DPS 的 98.71%"));
+        assert_eq!(t("DPS Range:").as_deref(), Some("DPS 范围:"));
+        assert_eq!(t("0 to 616 ^8(Ignite DPS Range)").as_deref(), Some("0 至 616 ^8(点燃 DPS 范围)"));
+        // Numbers with POB's thousands separators.
+        assert_eq!(t("^75,566 to 23,059").as_deref(), Some("^75,566 至 23,059"));
+        assert_eq!(t("532 to 1,654").as_deref(), Some("532 至 1,654"));
+        assert_eq!(t("1,2 to 3"), None);
+        assert_eq!(t("has no base cooldown"), None);
+    }
+
+    #[test]
+    fn named() {
+        let mut d = dict();
+        d.insert("{name} has no base cooldown".into(), "{name}没有基础冷却时间".into());
+        assert_eq!(d.translate("Life has no base cooldown").as_deref(), Some("生命没有基础冷却时间"));
+        assert_eq!(d.translate("Foo Bar has no base cooldown").as_deref(), Some("Foo Bar没有基础冷却时间"));
+        assert_eq!(d.translate(" has no base cooldown"), None);
+    }
 
     /// The Items tab's tooltips: unique mods with value ranges, supports
     /// granted by items, and the lines POB writes around an item.
