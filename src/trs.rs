@@ -2,10 +2,7 @@
 //! directory beside the program, which takes precedence so translations
 //! can be updated without a new release.
 
-use std::{
-    borrow::Cow,
-    path::{Path, PathBuf},
-};
+use std::{borrow::Cow, path::PathBuf};
 
 use serde::Deserialize;
 
@@ -107,6 +104,7 @@ pub fn languages() -> Vec<Language> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::Path;
 
     /// `trs_files.rs` lists every file under `trs/`: run
     /// `scripts/gen-trs.sh` after changing them.

@@ -119,6 +119,16 @@ impl Pob {
             .unwrap_or_default()
     }
 
+    /// Opens `url` in the browser, off the UI thread (NSH's `openUrl` runs the
+    /// shell on it, whose message loop can re-enter the window mid-update).
+    pub fn open_url(url: String) {
+        std::thread::spawn(move || {
+            if let Err(e) = host::open_url(&url) {
+                log::warn!("opening {url}: {e}");
+            }
+        });
+    }
+
     /// Switches the translation on or off while POB runs.
     pub fn set_translate(on: bool) {
         if let Some(s) = SESSION.get() {

@@ -1,12 +1,13 @@
-import { Image, mount, openUrl, Shader, signal, Text, View, type ViewStyle } from "nsh";
+import { createAnimatedValue, Easing, Image, mount, Shader, signal, Text, View, type ViewStyle } from "nsh";
 import { checkForUpdate, downloadUpdate, installAndRestart, installOnQuit, shellInfo, type AppUpdate } from "nsh/updater";
 import { Pob, PobCanvas } from "pobt/native";
 import Cinzel from "./assets/fonts/Cinzel-Bold.woff2";
 import "./assets/fonts/Cinzel-SemiBold.woff2";
 import plaques from "./assets/ui/plaques.png";
 import title from "./assets/ui/title.png";
-import { GATE } from "./gate";
-import icon from "./icon.png";
+import { GATE, GATE_MOTION } from "./gate";
+// The icon at the size the launcher shows it (icon.png is the app's, 1024 square).
+import icon from "./assets/ui/icon-64.png";
 type Game = "Poe1" | "Poe2";
 
 interface Settings {
@@ -146,15 +147,38 @@ const C = {
 const DISPLAY = `${Cinzel}, Microsoft YaHei, Malgun Gothic, serif`;
 const BODY = "Microsoft YaHei, Malgun Gothic, Segoe UI, sans-serif";
 
-// Buttons light up under the pointer and sink when pressed: pushed in, smaller and darker.
+// Buttons light up under the pointer; pressed, their plaque is drawn sunk in (the atlas' pressed rows).
 // Letters cut into brass: dark, with light catching their lower edge.
 const ENGRAVED = "0 1px 0 rgba(255,236,190,0.45)";
 const HOVER: ViewStyle = { filter: "brightness(1.18)" };
-const PRESSED: ViewStyle = { filter: "brightness(0.62)", transform: [{ translateY: 3 }, { scale: 0.96 }] };
+/** A button that sinks when pressed, and stays down a moment after a quick click so the press is seen: `children`
+ * is given whether it is down. */
+function PressButton(props: { onPress: () => void; style: ViewStyle; children: (down: () => boolean) => any }) {
+  const down = signal(false);
+  let release: ReturnType<typeof setTimeout> | undefined;
+  return (
+    <View
+      role="button"
+      onPress={props.onPress}
+      onPressDown={() => {
+        clearTimeout(release);
+        down.set(true);
+      }}
+      onPressUp={() => {
+        release = setTimeout(() => down.set(false), 120);
+      }}
+      style={props.style}
+      hoverStyle={down() ? undefined : HOVER}
+    >
+      {props.children(down)}
+    </View>
+  );
+}
 
 // The plaques' atlas (scripts/ui-art.mjs): a row per kind, each a left cap, a middle that stretches and a right cap.
 const ATLAS = { width: 640, rowHeight: 96, cap: 64, middle: 512 };
 const ROWS = { red: 0, dark: 1, brass: 2 };
+const KINDS = 3; // then the same, pressed
 type PlaqueKind = keyof typeof ROWS;
 
 /** A part of a plaque's row: the atlas, scaled to `sx` across and `sy` down, moved so `x` sits at the left. */
@@ -168,7 +192,7 @@ function AtlasPart(props: { row: () => number; x: number; sx: () => number; sy: 
           left: -props.x * props.sx(),
           top: -props.row() * ATLAS.rowHeight * props.sy,
           width: ATLAS.width * props.sx(),
-          height: ATLAS.rowHeight * 3 * props.sy,
+          height: ATLAS.rowHeight * KINDS * 2 * props.sy,
           objectFit: "fill",
         }}
       />
@@ -189,10 +213,11 @@ function Rule(props: { width: number; dim?: boolean }) {
 }
 
 /** A plaque with pointed ends, `height` tall, its content centred over it. */
-function Plaque(props: { kind: () => PlaqueKind; height: number; children: any }) {
+function Plaque(props: { kind: () => PlaqueKind; height: number; pressed?: () => boolean; children: any }) {
   const s = props.height / ATLAS.rowHeight;
   const cap = ATLAS.cap * s;
-  const row = () => ROWS[props.kind()];
+  const down = () => props.pressed?.() ?? false;
+  const row = () => ROWS[props.kind()] + (down() ? KINDS : 0);
   // The middle stretches across: its scale follows its width.
   const middleWidth = signal(ATLAS.middle * s);
   return (
@@ -211,8 +236,8 @@ function Plaque(props: { kind: () => PlaqueKind; height: number; children: any }
       <View
         style={{
           position: "absolute",
-          top: 0,
-          bottom: 0,
+          top: down() ? 2 : 0,
+          bottom: down() ? -2 : 0,
           left: cap * 0.75,
           right: cap * 0.75,
           alignItems: "center",
@@ -232,22 +257,26 @@ function dirOf(s: Settings, game: Game): string | null {
 /** The start button: the red banner with gold trim. */
 function PrimaryButton(props: { label: string; onPress: () => void }) {
   return (
-    <View role="button" onPress={props.onPress} style={{ width: 360 }} hoverStyle={HOVER} pressedStyle={PRESSED}>
-      <Plaque kind={() => "red"} height={64}>
+    <PressButton onPress={props.onPress} style={{ width: 360 }}>
+      {(down) => (
+        <Plaque kind={() => "red"} height={64} pressed={down}>
         <Text style={{ fontFamily: DISPLAY, fontSize: 24, fontWeight: "700", letterSpacing: 6, color: "#f6e6c2" }}>{props.label}</Text>
-      </Plaque>
-    </View>
+        </Plaque>
+      )}
+    </PressButton>
   );
 }
 
 /** A small brass button, as the site's store buttons. */
 function Button(props: { label: string; onPress: () => void }) {
   return (
-    <View role="button" onPress={props.onPress} style={{ minWidth: 150 }} hoverStyle={HOVER} pressedStyle={PRESSED}>
-      <Plaque kind={() => "brass"} height={38}>
+    <PressButton onPress={props.onPress} style={{ minWidth: 150 }}>
+      {(down) => (
+        <Plaque kind={() => "brass"} height={38} pressed={down}>
         <Text style={{ fontFamily: BODY, fontSize: 13, fontWeight: "700", color: C.ink, textShadow: ENGRAVED }}>{props.label}</Text>
-      </Plaque>
-    </View>
+        </Plaque>
+      )}
+    </PressButton>
   );
 }
 
@@ -258,7 +287,7 @@ function Link(props: { label: string; url: string }) {
   return (
     <View
       role="link"
-      onPress={() => openUrl(props.url)}
+      onPress={() => Pob.openUrl(props.url)}
       onMouseEnter={() => hover.set(true)}
       onMouseLeave={() => hover.set(false)}
       style={{ paddingVertical: 4 }}
@@ -326,7 +355,7 @@ function UpdateBadge(props: { t: () => Strings }) {
       {(u) => (
         <View
           role="button"
-          onPress={() => (state() === "ready" ? installAndRestart() : !u().canInstall ? openUrl(u().url) : undefined)}
+          onPress={() => (state() === "ready" ? installAndRestart() : !u().canInstall ? Pob.openUrl(u().url) : undefined)}
           style={{
             flexDirection: "row",
             alignItems: "center",
@@ -400,6 +429,11 @@ function GameCard(props: { game: Game; settings: () => Settings; t: () => String
   );
 }
 
+// The backdrop's motion runs on its own clock at 24 frames a second: the drift is slow, and the screen's full rate
+// would redraw the whole window for nothing. (A day of seconds; then it stops.)
+const motionTime = createAnimatedValue(0);
+motionTime.timing(86400, { duration: 86400 * 1000, easing: Easing.linear, frameRate: 24 });
+
 function Launcher(props: { onStart: () => void }) {
   const settings = signal<Settings>(JSON.parse(Pob.settings()));
   const available = new Set<string>(JSON.parse(Pob.languages()).map((l: { value: string }) => l.value));
@@ -447,12 +481,13 @@ function Launcher(props: { onStart: () => void }) {
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
       <Shader source={GATE} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
+      <Shader source={GATE_MOTION} uniforms={{ time: motionTime }} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
 
       {/* POBT at the top left; the version, and a newer one when there is, at the top right */}
       <View style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 32, paddingTop: 16, height: 52 }}>
         <View
           role="link"
-          onPress={() => openUrl(SITE)}
+          onPress={() => Pob.openUrl(SITE)}
           onMouseEnter={() => brandHover.set(true)}
           onMouseLeave={() => brandHover.set(false)}
           style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
@@ -502,13 +537,15 @@ function Launcher(props: { onStart: () => void }) {
             {(l) => {
               const selected = () => settings().language === l().value;
               return (
-                <View role="button" onPress={() => chooseLanguage(l().value)} style={{ width: 132 }} hoverStyle={HOVER} pressedStyle={PRESSED}>
-                  <Plaque kind={() => (selected() ? "brass" : "dark")} height={40}>
+                <PressButton onPress={() => chooseLanguage(l().value)} style={{ width: 132 }}>
+                  {(down) => (
+                    <Plaque kind={() => (selected() ? "brass" : "dark")} height={40} pressed={down}>
                     <Text style={{ fontFamily: BODY, fontSize: 14, fontWeight: selected() ? "700" : "400", color: selected() ? C.ink : C.gold, textShadow: selected() ? ENGRAVED : "0 1px 2px #000" }}>
                       {l().name}
                     </Text>
-                  </Plaque>
-                </View>
+                    </Plaque>
+                  )}
+                </PressButton>
               );
             }}
           </Each>
@@ -525,7 +562,7 @@ function Launcher(props: { onStart: () => void }) {
       </View>
 
       {/* Footer */}
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 16, paddingHorizontal: 32, paddingVertical: 14, backgroundColor: "rgba(0,0,0,0.45)" }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 16, paddingHorizontal: 32, paddingVertical: 14 }}>
         <Link label={LINKS[0].label} url={LINKS[0].url} />
         <Dot />
         <Link label={LINKS[1].label} url={LINKS[1].url} />

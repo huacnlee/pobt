@@ -76,7 +76,7 @@ const defs = (face, seed) => `
     </filter>
   </defs>`;
 
-const faceLayers = (face, shape, ao) => `
+const faceLayers = (face, shape, ao, pressed) => `
   <clipPath id="faceClip"><path d="${shape}"/></clipPath>
   <g clip-path="url(#faceClip)">
     <rect width="100%" height="100%" fill="url(#face)"/>
@@ -86,8 +86,11 @@ const faceLayers = (face, shape, ao) => `
     <rect width="100%" height="100%" filter="url(#tarnish)"/>
     <rect width="100%" height="100%" filter="url(#pits)"/>
     <rect width="100%" height="100%" filter="url(#wear)" opacity=".5"/>
-    <rect x="0" y="14" width="100%" height="2" fill="#fff2c4" opacity=".5"/>` : `<rect width="100%" height="100%" filter="url(#wear)"/>`}
+    ${pressed ? "" : `<rect x="0" y="14" width="100%" height="2" fill="#fff2c4" opacity=".5"/>`}` : `<rect width="100%" height="100%" filter="url(#wear)"/>`}
     <path d="${ao}" fill="none" stroke="#000" stroke-width="16" stroke-opacity=".6" filter="url(#soft)"/>
+    ${pressed ? `<rect width="100%" height="100%" fill="#000" opacity=".32"/>
+    <path d="${ao}" transform="translate(0 7)" fill="none" stroke="#000" stroke-width="22" stroke-opacity=".85" filter="url(#soft)"/>
+    <path d="${ao}" transform="translate(0 -4)" fill="none" stroke="#fff2c4" stroke-width="3" stroke-opacity=".12" filter="url(#soft)"/>` : ""}
   </g>`;
 
 const W = CAP * 2 + MID;
@@ -107,12 +110,12 @@ const endOrnaments = `
 
 // A whole plaque in one drawing — both pointed ends and the middle share one face, one grime and one light, so the
 // parts cut from it meet without a seam.
-const plaque = (face, seed) => {
+const plaque = (face, seed, pressed) => {
   const shape = `M34 10 H${W - 34} L${W - 12} 48 L${W - 34} 86 H34 L12 48 Z`;
   const outer = `M33 9.5 H${W - 33} L${W - 10} 48 L${W - 33} 86.5 H33 L10 48 Z`;
   const inner = `M38 17.8 H${W - 38} L${W - 20.5} 48 L${W - 38} 78.2 H38 L20.5 48 Z`;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">${defs(face, seed)}
-  ${faceLayers(face, shape, outer)}
+  ${faceLayers(face, shape, outer, pressed)}
   <path d="${outer}" fill="none" stroke="#000" stroke-width="10" stroke-opacity=".85"/>
   <path d="${outer}" fill="none" stroke="url(#gold)" stroke-width="6.5"/>
   <path d="${inner}" fill="none" stroke="url(#gold)" stroke-width="1.6" opacity=".6"/>
@@ -127,13 +130,14 @@ const plaque = (face, seed) => {
 
 const toPng = (svg) => new Resvg(svg, { fitTo: { mode: "original" } }).render().asPng();
 
-// One atlas, a row per face (in ROWS' order): the launcher cuts each row into the left cap (CAP wide), the middle
+// One atlas, a row per face (in ROWS' order), then the same faces pressed in: darker, shadowed from the rim: the launcher cuts each row into the left cap (CAP wide), the middle
 // (MID, stretched) and the right cap.
 const ROWS = ["red", "dark", "brass"];
-const rows = ROWS.map((name, row) => {
-  const png = toPng(plaque(faces[name], 3 + row * 7));
+const rows = [false, true].flatMap((pressed, half) => ROWS.map((name, i) => {
+  const row = half * ROWS.length + i;
+  const png = toPng(plaque(faces[name], 3 + i * 7, pressed));
   return `<image x="0" y="${row * H}" width="${W}" height="${H}" href="data:image/png;base64,${png.toString("base64")}"/>`;
-});
-writeFileSync(join(out, "plaques.png"), toPng(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H * ROWS.length}">${rows.join("")}</svg>`));
+}));
+writeFileSync(join(out, "plaques.png"), toPng(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H * ROWS.length * 2}">${rows.join("")}</svg>`));
 
-console.log(`wrote ${join(out, "plaques.png")}: ${W}×${H * ROWS.length}, rows ${ROWS.join(", ")}, caps ${CAP}, middle ${MID}`);
+console.log(`wrote ${join(out, "plaques.png")}: ${W}×${H * ROWS.length * 2}, rows ${ROWS.join(", ")} then pressed, caps ${CAP}, middle ${MID}`);
