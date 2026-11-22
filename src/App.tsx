@@ -525,11 +525,17 @@ function GameCard(props: {
     return t.installing(mb(p.done), mb(p.total));
   };
   const busy = () => install()?.phase === "downloading" || install()?.phase === "unpacking";
+  const cardHover = signal(false);
   const moreHover = signal(false);
   const menuOpen = signal(false);
   const hasMenu = () => !install() && !!dir();
   return (
-    <View onPress={props.onSelect} style={{ flex: 1, paddingTop: 22 }}>
+    <View
+      onPress={props.onSelect}
+      onMouseEnter={() => cardHover.set(true)}
+      onMouseLeave={() => cardHover.set(false)}
+      style={{ flex: 1, paddingTop: 22 }}
+    >
       {/* The panel, framed by a double trim line */}
       <View
         style={{
@@ -574,7 +580,8 @@ function GameCard(props: {
           </If>
           <Button label={props.t().pick} onPress={() => !busy() && props.onPick()} />
         </View>
-        {/* Its menu, in the top right corner: open the folder, or forget it (Reset), kept out of the way */}
+        {/* Its menu, in the top right corner: open the folder, or forget it (Reset), kept out of the way. A ghost
+            button, shown while the card is hovered or the menu open */}
         <If when={hasMenu()}>
           <View style={{ position: "absolute", top: 8, right: 8 }}>
             <Menu
@@ -596,9 +603,17 @@ function GameCard(props: {
                   accessibilityLabel={props.t().more}
                   onMouseEnter={() => moreHover.set(true)}
                   onMouseLeave={() => moreHover.set(false)}
-                  style={{ width: 24, height: 24, alignItems: "center", justifyContent: "center" }}
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: 4,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    opacity: cardHover() || menuOpen() ? 1 : 0,
+                    backgroundColor: moreHover() || menuOpen() ? "rgba(177,141,78,0.18)" : "transparent",
+                  }}
                 >
-                  <Image src={more} style={{ width: 16, height: 16, tintColor: moreHover() || menuOpen() ? C.goldHi : C.dim }} />
+                  <Image src={more} style={{ width: 16, height: 16, tintColor: moreHover() || menuOpen() ? C.goldHi : C.gold }} />
                 </View>
               }
             >
