@@ -7,7 +7,7 @@
   English | <a href="README.zh-CN.md">简体中文</a> · <a href="https://huacnlee.github.io/pobt/">Website</a>
 </p>
 
-<p align="center"><img src="docs/screenshot.zh-CN.jpg" alt="The POBT launcher" width="800"></p>
+<p align="center"><img src="docs/screenshot.png" alt="The POBT launcher" width="800"></p>
 
 <p align="center">
   <img src="docs/screenshot-tree.png" alt="The passive tree, translated" width="49%">

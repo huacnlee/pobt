@@ -7,7 +7,7 @@
   <a href="README.md">English</a> | 简体中文 · <a href="https://huacnlee.github.io/pobt/zh-CN/">官网</a>
 </p>
 
-<p align="center"><img src="docs/screenshot.zh-CN.jpg" alt="POBT 启动界面" width="800"></p>
+<p align="center"><img src="docs/screenshot.png" alt="POBT 启动界面" width="800"></p>
 
 <p align="center">
   <img src="docs/screenshot-tree.png" alt="翻译后的天赋树" width="49%">
