@@ -33,15 +33,15 @@ jobs:
         with:
           workspaces: ext/pobt-native
           key: ci-check
-      # The workspace nsh generates in `.nsh/rust` to build the program that describes the crate to the type check:
-      # not rust-cache's, which cannot read a workspace that does not exist yet, and so keeps none of its build.
+      # The workspace nsh generates in `.nsh/rust` to build the program that describes the crate to the type check,
+      # into the app's `target`: not rust-cache's, which cannot read a workspace that does not exist yet.
       - uses: actions/cache@v4
         with:
           path: |
-            .nsh/rust/target
+            target
             .nsh/rust/Cargo.lock
-          key: nsh-rust-${{ env.NSH_VERSION }}-${{ steps.toolchain.outputs.cachekey }}-${{ hashFiles('ext/pobt-native/Cargo.lock') }}
-          restore-keys: nsh-rust-${{ env.NSH_VERSION }}-${{ steps.toolchain.outputs.cachekey }}-
+          key: nsh-target-${{ env.NSH_VERSION }}-${{ steps.toolchain.outputs.cachekey }}-${{ hashFiles('ext/pobt-native/Cargo.lock') }}
+          restore-keys: nsh-target-${{ env.NSH_VERSION }}-${{ steps.toolchain.outputs.cachekey }}-
 
       - name: Install the NSH CLI
         shell: pwsh
