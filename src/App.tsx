@@ -10,7 +10,6 @@ import title from "../assets/ui/title.png";
 import { GATE, GATE_MOTION } from "./gate";
 // The icon at the size the launcher shows it (icon.png is the app's, 1024 square).
 import icon from "../assets/ui/icon-64.png";
-import more from "../assets/ui/more.svg";
 type Game = "Poe1" | "Poe2";
 
 interface Settings {
@@ -50,7 +49,7 @@ interface Strings {
   pick: string;
   install: string;
   openFolder: string;
-  more: string;
+  configure: string;
   reset: string;
   installing: (done: number, total: number) => string;
   unpacking: (percent: number) => string;
@@ -82,7 +81,7 @@ const UI: Record<string, Strings> = {
     pick: "Choose folder…",
     install: "Install",
     openFolder: "Open folder",
-    more: "More",
+    configure: "Configure",
     reset: "Reset",
     installing: (d, t) => `Downloading ${d} / ${t} MB`,
     unpacking: (p) => `Unpacking ${p}%`,
@@ -111,7 +110,7 @@ const UI: Record<string, Strings> = {
     pick: "选择目录…",
     install: "安装",
     openFolder: "打开目录",
-    more: "更多",
+    configure: "配置",
     reset: "重置",
     installing: (d, t) => `下载中 ${d} / ${t} MB`,
     unpacking: (p) => `解压中 ${p}%`,
@@ -140,7 +139,7 @@ const UI: Record<string, Strings> = {
     pick: "選擇目錄…",
     install: "安裝",
     openFolder: "打開目錄",
-    more: "更多",
+    configure: "配置",
     reset: "重置",
     installing: (d, t) => `下載中 ${d} / ${t} MB`,
     unpacking: (p) => `解壓中 ${p}%`,
@@ -169,7 +168,7 @@ const UI: Record<string, Strings> = {
     pick: "폴더 선택…",
     install: "설치",
     openFolder: "폴더 열기",
-    more: "더 보기",
+    configure: "설정",
     reset: "초기화",
     installing: (d, t) => `다운로드 중 ${d} / ${t} MB`,
     unpacking: (p) => `압축 해제 중 ${p}%`,
@@ -525,17 +524,12 @@ function GameCard(props: {
     return t.installing(mb(p.done), mb(p.total));
   };
   const busy = () => install()?.phase === "downloading" || install()?.phase === "unpacking";
-  const cardHover = signal(false);
-  const moreHover = signal(false);
   const menuOpen = signal(false);
   const hasMenu = () => !install() && !!dir();
+  // The version of the folder's Path of Building, read again when the folder changes.
+  const version = () => (dir() ? Pob.pobVersion(dir()!) : "");
   return (
-    <View
-      onPress={props.onSelect}
-      onMouseEnter={() => cardHover.set(true)}
-      onMouseLeave={() => cardHover.set(false)}
-      style={{ flex: 1, paddingTop: 22 }}
-    >
+    <View onPress={props.onSelect} style={{ flex: 1, paddingTop: 22 }}>
       {/* The panel, framed by a double trim line */}
       <View
         style={{
@@ -562,70 +556,67 @@ function GameCard(props: {
         </Text>
         </If>
         <Rule width={260} dim={!selected()} />
-        <Text
-          style={{
-            fontFamily: BODY,
-            fontSize: 12,
-            color: install() ? (install()!.phase === "failed" ? C.red : C.gold) : dir() ? C.muted : C.red,
-            textAlign: "center",
-            numberOfLines: 2,
-          }}
+        <If
+          when={hasMenu()}
+          else={
+            <>
+              <Text
+                style={{
+                  fontFamily: BODY,
+                  fontSize: 12,
+                  color: install() ? (install()!.phase === "failed" ? C.red : C.gold) : C.red,
+                  textAlign: "center",
+                  numberOfLines: 2,
+                }}
+              >
+                {install() ? status(install()!) : props.t().notFound}
+              </Text>
+              {/* No Path of Building yet: install it from its release, or choose where it is */}
+              <View style={{ flexDirection: "row", gap: 12, opacity: busy() ? 0.5 : 1 }}>
+                <If when={!dir()}>
+                  <Button label={props.t().install} onPress={() => !busy() && props.onInstall()} />
+                </If>
+                <Button label={props.t().pick} onPress={() => !busy() && props.onPick()} />
+              </View>
+            </>
+          }
         >
-          {install() ? status(install()!) : (dir() ?? props.t().notFound)}
-        </Text>
-        {/* No Path of Building yet: install it from its release, or choose where it is */}
-        <View style={{ flexDirection: "row", gap: 12, opacity: busy() ? 0.5 : 1 }}>
-          <If when={!dir()}>
-            <Button label={props.t().install} onPress={() => !busy() && props.onInstall()} />
-          </If>
-          <Button label={props.t().pick} onPress={() => !busy() && props.onPick()} />
-        </View>
-        {/* Its menu, in the top right corner: open the folder, or forget it (Reset), kept out of the way. A ghost
-            button, shown while the card is hovered or the menu open */}
-        <If when={hasMenu()}>
-          <View style={{ position: "absolute", top: 8, right: 8 }}>
+          {/* Installed: where it is, and a Configure button for the folder's menu */}
+          <>
+            <Text style={{ alignSelf: "stretch", fontFamily: BODY, fontSize: 12, color: C.muted, textAlign: "center", numberOfLines: 1, textOverflow: "ellipsis-middle" }}>
+              {dir()}
+            </Text>
             <Menu
               offset={4}
-              align="end"
+              align="center"
               open={menuOpen()}
               onOpenChange={(e) => menuOpen.set(e.open)}
               popupStyle={{
-                minWidth: 140,
+                minWidth: 150,
                 padding: 4,
                 backgroundColor: C.panel,
                 borderWidth: 1,
                 borderColor: C.trim,
                 boxShadow: "0 8px 24px rgba(0,0,0,0.7)",
               }}
-              trigger={
-                <View
-                  role="button"
-                  accessibilityLabel={props.t().more}
-                  onMouseEnter={() => moreHover.set(true)}
-                  onMouseLeave={() => moreHover.set(false)}
-                  style={{
-                    width: 26,
-                    height: 26,
-                    borderRadius: 4,
-                    alignItems: "center",
-                    justifyContent: "center",
-                    opacity: cardHover() || menuOpen() ? 1 : 0,
-                    backgroundColor: moreHover() || menuOpen() ? "rgba(177,141,78,0.18)" : "transparent",
-                  }}
-                >
-                  <Image src={more} style={{ width: 16, height: 16, tintColor: moreHover() || menuOpen() ? C.goldHi : C.gold }} />
-                </View>
-              }
+              trigger={<Button label={props.t().configure} onPress={() => menuOpen.set(true)} />}
             >
               <CardMenuItem label={props.t().openFolder} onSelect={() => Pob.openDir(dir()!)} />
+              <CardMenuItem label={props.t().pick} onSelect={props.onPick} />
               <MenuSeparator style={{ height: 1, marginVertical: 4, backgroundColor: C.trim }} />
               <CardMenuItem label={props.t().reset} color={C.red} onSelect={props.onReset} />
             </Menu>
-          </View>
+          </>
+        </If>
+        {/* Its version, in the top right corner */}
+        <If when={hasMenu() && version()}>
+          <Text style={{ position: "absolute", top: 10, right: 14, fontFamily: DISPLAY, fontSize: 12, color: selected() ? C.gold : C.dim }}>
+            v{version()}
+          </Text>
         </If>
       </View>
-      {/* Its title plaque, set over the top edge */}
-      <View style={{ position: "absolute", top: 0, left: 0, right: 0, alignItems: "center" }}>
+      {/* Its title plaque, set over the top edge; the row around it lets the pointer through to the panel's corners */}
+      <View style={{ position: "absolute", top: 0, left: 0, right: 0, alignItems: "center", pointerEvents: "box-none" }}>
         <View style={{ width: 300 }}>
           <Plaque kind={() => (selected() ? "red" : "dark")} height={46}>
             <Text style={{ fontFamily: DISPLAY, fontSize: 19, fontWeight: "700", color: selected() ? "#f6e6c2" : C.goldHi }}>
