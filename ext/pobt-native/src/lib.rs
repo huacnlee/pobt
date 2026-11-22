@@ -61,6 +61,15 @@ fn relaunch() {
     }
 }
 
+/// The `number` of a POB manifest's `<Version …/>`, whichever of its
+/// attributes comes first (an install's has `branch` before it).
+fn manifest_version(xml: &str) -> Option<&str> {
+    let (_, tag) = xml.split_once("<Version ")?;
+    let tag = &tag[..tag.find('>')?];
+    let (_, rest) = tag.split_once("number=\"")?;
+    Some(&rest[..rest.find('"')?])
+}
+
 fn game_of(name: &str) -> Game {
     if name == "poe2" { Game::Poe2 } else { Game::Poe1 }
 }
@@ -167,10 +176,7 @@ impl Pob {
     /// (`<Version number="2.63.0" />`); empty if it has none.
     pub fn pob_version(dir: String) -> String {
         let xml = std::fs::read_to_string(std::path::Path::new(&dir).join("manifest.xml")).unwrap_or_default();
-        xml.split_once("<Version number=\"")
-            .and_then(|(_, rest)| rest.split_once('"'))
-            .map(|(v, _)| v.to_string())
-            .unwrap_or_default()
+        manifest_version(&xml).unwrap_or_default().to_string()
     }
 
     /// Opens `dir` in Explorer, off the UI thread as `open_url`.
@@ -619,4 +625,17 @@ fn pob_view(shared: Arc<Shared>) -> impl IntoElement {
                     .child(text(e).text_size(px(12.0)).text_color(rgb(0xfecaca)))
             })
         }))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::manifest_version;
+
+    #[test]
+    fn manifest_versions() {
+        assert_eq!(manifest_version("<PoBVersion>\n\t<Version number=\"2.63.0\" />"), Some("2.63.0"));
+        assert_eq!(manifest_version("<Version branch=\"master\" number=\"2.68.1\" platform=\"win32\"/>"), Some("2.68.1"));
+        assert_eq!(manifest_version("<Version branch=\"master\"/><Source number=\"1\"/>"), None);
+        assert_eq!(manifest_version(""), None);
+    }
 }

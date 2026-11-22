@@ -594,7 +594,7 @@ function GameCard(props: {
             </>
           }
         >
-          {/* Installed: where it is, then ready and its version; the folder's actions are in the menu */}
+          {/* Installed: where it is, then its version; the folder's actions are in the menu */}
           <>
             <Text style={{ fontFamily: BODY, fontSize: 12, color: C.muted, textAlign: "center", numberOfLines: 2 }}>{dir()}</Text>
             <View
@@ -609,9 +609,12 @@ function GameCard(props: {
               }}
             >
               <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: selected() ? C.goldHi : C.gold }} />
-              <Text style={{ fontFamily: BODY, fontSize: 13, color: selected() ? C.goldHi : C.gold }}>{props.t().installed}</Text>
-              <If when={version()}>
-                <Text style={{ fontFamily: DISPLAY, fontSize: 13, color: C.text }}>v{version()}</Text>
+              {/* Its version, or Ready when its manifest has none */}
+              <If
+                when={version()}
+                else={<Text style={{ fontFamily: BODY, fontSize: 13, color: selected() ? C.goldHi : C.gold }}>{props.t().installed}</Text>}
+              >
+                <Text style={{ fontFamily: DISPLAY, fontSize: 13, color: selected() ? C.goldHi : C.gold }}>v{version()}</Text>
               </If>
             </View>
           </>
