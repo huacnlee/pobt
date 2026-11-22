@@ -1,6 +1,7 @@
 import { createAnimatedValue, Easing, Image, Shader, signal, Text, View, type ViewStyle } from "nsh";
 import { currentWindow } from "nsh/desktop";
 import { checkForUpdate, downloadUpdate, installAndRestart, installOnQuit, shellInfo, type AppUpdate } from "nsh/updater";
+import { Menu, MenuItem, MenuSeparator } from "nsh/base";
 import { Pob, PobCanvas } from "pobt/native";
 import Cinzel from "../assets/fonts/Cinzel-Bold.woff2";
 import "../assets/fonts/Cinzel-SemiBold.woff2";
@@ -9,7 +10,7 @@ import title from "../assets/ui/title.png";
 import { GATE, GATE_MOTION } from "./gate";
 // The icon at the size the launcher shows it (icon.png is the app's, 1024 square).
 import icon from "../assets/ui/icon-64.png";
-import folderOpen from "../assets/ui/folder-open.svg";
+import more from "../assets/ui/more.svg";
 type Game = "Poe1" | "Poe2";
 
 interface Settings {
@@ -49,6 +50,8 @@ interface Strings {
   pick: string;
   install: string;
   openFolder: string;
+  more: string;
+  reset: string;
   installing: (done: number, total: number) => string;
   unpacking: (percent: number) => string;
   installFailed: string;
@@ -79,6 +82,8 @@ const UI: Record<string, Strings> = {
     pick: "Choose folder…",
     install: "Install",
     openFolder: "Open folder",
+    more: "More",
+    reset: "Reset",
     installing: (d, t) => `Downloading ${d} / ${t} MB`,
     unpacking: (p) => `Unpacking ${p}%`,
     installFailed: "Install failed",
@@ -106,6 +111,8 @@ const UI: Record<string, Strings> = {
     pick: "选择目录…",
     install: "安装",
     openFolder: "打开目录",
+    more: "更多",
+    reset: "重置",
     installing: (d, t) => `下载中 ${d} / ${t} MB`,
     unpacking: (p) => `解压中 ${p}%`,
     installFailed: "安装失败",
@@ -133,6 +140,8 @@ const UI: Record<string, Strings> = {
     pick: "選擇目錄…",
     install: "安裝",
     openFolder: "打開目錄",
+    more: "更多",
+    reset: "重置",
     installing: (d, t) => `下載中 ${d} / ${t} MB`,
     unpacking: (p) => `解壓中 ${p}%`,
     installFailed: "安裝失敗",
@@ -160,6 +169,8 @@ const UI: Record<string, Strings> = {
     pick: "폴더 선택…",
     install: "설치",
     openFolder: "폴더 열기",
+    more: "더 보기",
+    reset: "초기화",
     installing: (d, t) => `다운로드 중 ${d} / ${t} MB`,
     unpacking: (p) => `압축 해제 중 ${p}%`,
     installFailed: "설치 실패",
@@ -480,6 +491,15 @@ interface InstallProgress {
   message: string;
 }
 
+function CardMenuItem(props: { label: string; color?: string; onSelect: () => void }) {
+  const active = { backgroundColor: "rgba(177,141,78,0.18)" };
+  return (
+    <MenuItem onSelect={props.onSelect} style={{ paddingHorizontal: 12, paddingVertical: 6 }} hoverStyle={active} focusStyle={active}>
+      <Text style={{ fontFamily: BODY, fontSize: 13, color: props.color ?? C.text }}>{props.label}</Text>
+    </MenuItem>
+  );
+}
+
 function GameCard(props: {
   game: Game;
   settings: () => Settings;
@@ -488,6 +508,7 @@ function GameCard(props: {
   onSelect: () => void;
   onPick: () => void;
   onInstall: () => void;
+  onReset: () => void;
 }) {
   const selected = () => props.settings().game === props.game;
   const dir = () => dirOf(props.settings(), props.game);
@@ -504,10 +525,10 @@ function GameCard(props: {
     return t.installing(mb(p.done), mb(p.total));
   };
   const busy = () => install()?.phase === "downloading" || install()?.phase === "unpacking";
-  // Hovering the folder shows a button after it that opens it.
+  // Hovering the folder shows a menu button after it: open the folder, or forget it (Reset), kept out of the way.
   const dirHover = signal(false);
-  const openHover = signal(false);
-  const canOpen = () => !install() && !!dir();
+  const menuOpen = signal(false);
+  const hasMenu = () => !install() && !!dir();
   return (
     <View onPress={props.onSelect} style={{ flex: 1, paddingTop: 22 }}>
       {/* The panel, framed by a double trim line */}
@@ -541,9 +562,9 @@ function GameCard(props: {
           onMouseLeave={() => dirHover.set(false)}
           style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
         >
-          {/* As wide as the button, so the text stays centred */}
-          <If when={canOpen()}>
-            <View style={{ width: 16 }} />
+          {/* As wide as the menu button, so the text stays centred */}
+          <If when={hasMenu()}>
+            <View style={{ width: 20 }} />
           </If>
           <Text
             style={{
@@ -557,17 +578,33 @@ function GameCard(props: {
           >
             {install() ? status(install()!) : (dir() ?? props.t().notFound)}
           </Text>
-          <If when={canOpen()}>
-            <View
-              role="button"
-              accessibilityLabel={props.t().openFolder}
-              onPress={() => Pob.openDir(dir()!)}
-              onMouseEnter={() => openHover.set(true)}
-              onMouseLeave={() => openHover.set(false)}
-              style={{ opacity: dirHover() ? 1 : 0 }}
+          <If when={hasMenu()}>
+            <Menu
+              offset={4}
+              open={menuOpen()}
+              onOpenChange={(e) => menuOpen.set(e.open)}
+              popupStyle={{
+                minWidth: 140,
+                padding: 4,
+                backgroundColor: C.panel,
+                borderWidth: 1,
+                borderColor: C.trim,
+                boxShadow: "0 8px 24px rgba(0,0,0,0.7)",
+              }}
+              trigger={
+                <View
+                  role="button"
+                  accessibilityLabel={props.t().more}
+                  style={{ width: 20, height: 20, alignItems: "center", justifyContent: "center", opacity: dirHover() || menuOpen() ? 1 : 0 }}
+                >
+                  <Image src={more} style={{ width: 16, height: 16, tintColor: menuOpen() ? C.goldHi : C.gold }} />
+                </View>
+              }
             >
-              <Image src={folderOpen} style={{ width: 16, height: 16, tintColor: openHover() ? C.goldHi : C.gold }} />
-            </View>
+              <CardMenuItem label={props.t().openFolder} onSelect={() => Pob.openDir(dir()!)} />
+              <MenuSeparator style={{ height: 1, marginVertical: 4, backgroundColor: C.trim }} />
+              <CardMenuItem label={props.t().reset} color={C.red} onSelect={props.onReset} />
+            </Menu>
           </If>
         </View>
         {/* No Path of Building yet: install it from its release, or choose where it is */}
@@ -697,6 +734,13 @@ function Launcher(props: { onStart: () => void }) {
     update(game.id === "Poe1" ? { poe1_dir: dir, game: game.id } : { poe2_dir: dir, game: game.id });
   };
 
+  // Forgets the game's folder: the card is as on a first run, until one is chosen or found again.
+  const reset = (game: (typeof GAMES)[number]) => {
+    error.set("");
+    update(game.id === "Poe1" ? { poe1_dir: null } : { poe2_dir: null });
+    Pob.saveSettings(JSON.stringify(settings()));
+  };
+
   // Installing Path of Building: its progress, polled while it runs; done, its folder is the game's.
   const installing = signal<InstallProgress | null>(null);
   const watchInstall = () => {
@@ -769,6 +813,7 @@ function Launcher(props: { onStart: () => void }) {
                 onSelect={() => update({ game: g().id })}
                 onPick={() => pick(g())}
                 onInstall={() => install(g())}
+                onReset={() => reset(g())}
               />
             )}
           </Each>

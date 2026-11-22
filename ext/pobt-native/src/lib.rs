@@ -536,7 +536,8 @@ fn pob_view(shared: Arc<Shared>) -> impl IntoElement {
         }
         *s.cursor.lock().unwrap() = (e.position.x.0, e.position.y.0);
         sync_modifiers(&s, &e.modifiers);
-        let name = if dy > 0.0 { "WHEELUP" } else { "WHEELDOWN" };
+        // nsh-core follows the DOM: positive y scrolls down.
+        let name = if dy > 0.0 { "WHEELDOWN" } else { "WHEELUP" };
         for _ in 0..(dy.abs().round().max(1.0) as usize).min(5) {
             s.send(Input::KeyDown(name.into(), false));
             s.send(Input::KeyUp(name.into()));
