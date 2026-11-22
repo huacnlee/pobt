@@ -41,7 +41,8 @@ nsh package --target windows  # POBT.zip
 ```
 
 The tests of POB's Lua (the prelude, POB's edit boxes with input methods, Chinese text and translations) need a
-Path of Building and skip without one: set `POB_DIR` to its folder, as CI does with its latest portable release.
+Path of Building and skip without one: set `POB_DIR` to its folder, as CI does with its latest portable release
+(`node scripts/fetch-pob.mjs <tag> <dir>` fetches the 17 MB of it they need).
 They drive `ext/pobt-native/src/demo.lua`, a few of POB's edit boxes on their own, which you can also try by hand:
 start a development run with `POBT_DEMO=1` and play a game, and the demo opens in place of Path of Building.
 

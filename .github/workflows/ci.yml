@@ -1,4 +1,5 @@
-# Checks pull requests and main: the Rust crate and the TSX type check (`nsh check`), then the Rust tests.
+# Checks pull requests and main: the Rust crate and the TSX type check (`nsh check`), and the Rust tests, side by
+# side: each builds the crate its own way (`cargo check` and nsh's describe program; the test profile).
 name: CI
 on:
   push:
@@ -11,6 +12,8 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
+  # No debug info: faster to build and link, smaller caches; a failing test still says where.
+  CARGO_PROFILE_DEV_DEBUG: 0
   # The NSH CLI of the crates Cargo.toml takes from crates.io.
   NSH_VERSION: v0.6.1
 
@@ -19,16 +22,26 @@ defaults:
     shell: bash
 
 jobs:
-  windows:
+  check:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: dtolnay/rust-toolchain@stable
+        id: toolchain
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: ext/pobt-native
-          key: ci-windows
+          key: ci-check
+      # The workspace nsh generates in `.nsh/rust` to build the program that describes the crate to the type check,
+      # into the app's `target`: not rust-cache's, which cannot read a workspace that does not exist yet.
+      - uses: actions/cache@v4
+        with:
+          path: |
+            target
+            .nsh/rust/Cargo.lock
+          key: nsh-target-${{ env.NSH_VERSION }}-${{ steps.toolchain.outputs.cachekey }}-${{ hashFiles('ext/pobt-native/Cargo.lock') }}
+          restore-keys: nsh-target-${{ env.NSH_VERSION }}-${{ steps.toolchain.outputs.cachekey }}-
 
       - name: Install the NSH CLI
         shell: pwsh
@@ -39,8 +52,19 @@ jobs:
       - name: Check
         run: nsh check
 
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ext/pobt-native
+          key: ci-test-deps-o0
+
       # The tests that run POB's Lua (its LuaJIT, its edit boxes) need a Path of Building: its latest portable
-      # release, as POBT installs it, kept until a new one comes out.
+      # release, as POBT installs it, without the art and data they do not read, kept until a new one comes out.
       - name: Find Path of Building's release
         id: pob
         env:
@@ -54,17 +78,16 @@ jobs:
         id: pob-cache
         with:
           path: ${{ runner.temp }}/pob
-          key: pob-${{ steps.pob.outputs.tag }}
+          key: pob-files-${{ steps.pob.outputs.tag }}-${{ hashFiles('scripts/fetch-pob.mjs') }}
 
-      - name: Download Path of Building
+      - name: Fetch Path of Building
         if: steps.pob-cache.outputs.cache-hit != 'true'
-        run: |
-          curl -fsSL -o "$RUNNER_TEMP/pob.zip" https://github.com/PathOfBuildingCommunity/PathOfBuilding/releases/download/${{ steps.pob.outputs.tag }}/PathOfBuildingCommunity-Portable.zip
-          mkdir -p "$POB_DIR"
-          unzip -q "$RUNNER_TEMP/pob.zip" -d "$POB_DIR"
-          # The passive trees' art (most of it) is not for the tests.
-          rm -rf "$POB_DIR/TreeData"
-          test -f "$POB_DIR/lua51.dll" && test -f "$POB_DIR/Classes/EditControl.lua"
+        run: node scripts/fetch-pob.mjs "${{ steps.pob.outputs.tag }}" "$POB_DIR"
 
       - name: Test
-        run: cargo test --lib --manifest-path ext/pobt-native/Cargo.toml
+        run: |
+          # Without a Path of Building the tests of POB's Lua would pass skipped.
+          test -f "$POB_DIR/lua51.dll" && test -f "$POB_DIR/Classes/EditControl.lua"
+          # The dependencies unoptimized (Cargo.toml's -O2 is for running the app): they build in a fraction of the
+          # time, and the tests take a second either way.
+          cargo test --lib --manifest-path ext/pobt-native/Cargo.toml --config 'profile.dev.package."*".opt-level=0'
