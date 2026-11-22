@@ -3,58 +3,56 @@
 <h1 align="center">POBT</h1>
 
 <p align="center">
-  <b>Path of Building, in your language.</b><br>
-  English | <a href="README.zh-CN.md">简体中文</a> · <a href="https://huacnlee.github.io/pobt/">Website</a>
+  <b>POB 构筑的多语言翻译</b><br>
+  简体中文 | <a href="README.en.md">English</a> · <a href="https://huacnlee.github.io/pobt/">官网</a>
 </p>
 
-<p align="center"><img src="docs/screenshot.jpg" alt="The POBT launcher" width="800"></p>
+<p align="center"><img src="docs/screenshot.zh-CN.jpg" alt="POBT 启动界面" width="800"></p>
 
 <p align="center">
-  <img src="docs/screenshot-tree.png" alt="The passive tree, translated" width="49%">
-  <img src="docs/screenshot-pob.png" alt="The configuration, translated" width="49%">
+  <img src="docs/screenshot-tree.png" alt="翻译后的天赋树" width="49%">
+  <img src="docs/screenshot-pob.png" alt="翻译后的配置页" width="49%">
 </p>
 
-POBT runs the [Path of Building Community](https://pathofbuilding.community/) you already have — for Path of Exile
-and Path of Exile 2 — with its whole interface translated: skills, items, passives and calculations. Simplified
-Chinese, Traditional Chinese and Korean are included.
+POBT 直接运行你电脑上已有的 [Path of Building Community](https://pathofbuilding.community/)（流放之路 1 和 2），
+并把整个界面翻译成中文：技能、物品、天赋、计算结果，一应俱全。支持简体中文、繁體中文和한국어。
 
-- Your Path of Building files are never modified; your builds stay where they are.
-- Press **Ctrl+Shift+T** at any time to switch to English and back.
-- POBT updates itself when a new version is out.
+- 不修改任何 Path of Building 文件，你的 BD 仍在原来的位置。
+- 随时按 **Ctrl+Shift+T** 切换中文 / 英文。
+- 有新版本时自动更新。
 
-## Download
+## 下载
 
-**[Download POBT for Windows (.zip)](https://github.com/huacnlee/pobt/releases/latest/download/pobt-windows-x86_64.zip)**
+**[下载 POBT Windows 版（zip）](https://github.com/huacnlee/pobt/releases/latest/download/pobt-windows-x86_64.zip)**
 
-1. Unpack the zip anywhere (right-click → Extract All).
-2. Run `POBT.exe`. Windows may warn about a new program: choose **More info**, then **Run anyway**.
-3. POBT finds Path of Building on its own; if it does not, choose its folder.
-4. Pick the game and the language, then **Start**.
+1. 把压缩包解压到任意位置（右键 → 全部解压缩）。
+2. 运行 `POBT.exe`。Windows 提示新程序时，点 **更多信息**，再点 **仍要运行**。
+3. POBT 会自动找到 Path of Building；找不到时手动选择它的文件夹。
+4. 选好游戏和语言，点 **启动**。
 
-Or install it with PowerShell, which adds Start menu and desktop shortcuts and updates POBT when run again:
+也可以用 PowerShell 安装（会创建开始菜单和桌面快捷方式，再次运行即可更新）：
 
 ```powershell
 irm https://huacnlee.github.io/pobt/install.ps1 | iex
 ```
 
-## Requirements
+## 运行需要
 
-- 64-bit Windows 10 or 11
-- [Path of Building Community](https://pathofbuilding.community/) for Path of Exile 1, 2 or both
+- 64 位 Windows 10 或 11
+- 已安装 [Path of Building Community](https://pathofbuilding.community/)（流放之路 1、2 任一或全部）
 
-## Questions
+## 常见问题
 
-**Path of Building updated — does POBT keep up?** Yes: POBT runs the Path of Building you have installed, so update
-Path of Building as usual.
+**Path of Building 更新了，POBT 跟得上吗？** 跟得上：POBT 运行的就是你安装的 Path of Building，照常更新即可。
 
-**A translation is wrong or missing.** Translations are CSV files in [`trs/`](trs); issues and pull requests are
-welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
+**发现翻译错误或缺失？** 翻译是 [`trs/`](trs) 下的 CSV 文件，欢迎提 Issue 或 Pull Request，参见
+[CONTRIBUTING.md](CONTRIBUTING.md)。
 
-## Credits
+## 致谢
 
-- [Path of Building Community](https://github.com/PathOfBuildingCommunity/PathOfBuilding), the planner POBT runs.
-- [PoeCharm2](https://github.com/Chuanhsing/PoeCharm2), whose contributors wrote the translations ([`trs/SOURCE.md`](trs/SOURCE.md)).
-- [Native Shell](https://nsh.dev), the framework POBT is built with.
+- [Path of Building Community](https://github.com/PathOfBuildingCommunity/PathOfBuilding)：POBT 运行的构筑工具。
+- [PoeCharm2](https://github.com/Chuanhsing/PoeCharm2)：翻译数据由其贡献者整理（[`trs/SOURCE.md`](trs/SOURCE.md)）。
+- [Native Shell](https://nsh.dev)：POBT 使用的框架。
 
-Path of Exile is a trademark of Grinding Gear Games. POBT is not affiliated with Grinding Gear Games or the Path of
-Building Community. POBT is licensed under the [Apache License 2.0](LICENSE).
+Path of Exile（流放之路）是 Grinding Gear Games 的商标。POBT 与 Grinding Gear Games 及 Path of Building Community
+无关。POBT 以 [Apache License 2.0](LICENSE) 开源。
