@@ -1,8 +1,6 @@
 ---
 import '@fontsource/cinzel/600.css';
 import '@fontsource/cinzel/700.css';
-import '@fontsource/cormorant-garamond/500.css';
-import '@fontsource/cormorant-garamond/600.css';
 import '../styles/global.css';
 import { copy, POB, REPO, ZIP, type Language } from '../lib/copy';
 
@@ -38,48 +36,50 @@ const otherName = other === 'en' ? 'English' : '简体中文';
     <header>
       <div class="shell nav-row">
         <a class="brand" href={language === 'en' ? base : `${base}zh-CN/`}>
-          <img src={`${base}favicon.png`} width="30" height="30" alt="" />
+          <img src={`${base}favicon.png`} width="26" height="26" alt="" />
           <span>POBT</span>
         </a>
         <nav aria-label="Primary">
           <a href="#download">{t.nav.download}</a>
+          <i aria-hidden="true">◆</i>
           <a href="#install">{t.nav.install}</a>
+          <i aria-hidden="true">◆</i>
           <a href="#faq">{t.nav.faq}</a>
+          <i aria-hidden="true">◆</i>
           <a href={REPO} rel="noopener">{t.nav.github}</a>
-          <a class="lang" href={otherHref} hreflang={other} lang={other} aria-label={t.nav.language}>{otherName}</a>
+          <a class="plaque dark small lang" href={otherHref} hreflang={other} lang={other} aria-label={t.nav.language}><span>{otherName}</span></a>
         </nav>
       </div>
     </header>
 
     <main id="main">
-      <section class="shell hero" id="download">
-        <div class="hero-text">
-          <p class="eyebrow">{t.eyebrow}</p>
-          <h1><span>{t.heading[0]}</span> <span class="gold">{t.heading[1]}</span></h1>
-          <div class="divider" aria-hidden="true"><span></span></div>
+      <section class="hero" id="download">
+        <div class="gate" aria-hidden="true"></div>
+        <div class="beam" aria-hidden="true"></div>
+        <div class="shell hero-text">
+          <h1><img src={`${base}ui/title.png`} width="760" height="105" alt="Path of Building" /></h1>
+          <div class="rule" aria-hidden="true"><span></span></div>
+          <p class="subtitle">{t.subtitle}</p>
           <p class="intro">{t.intro}</p>
-          <div class="actions">
-            <a class="poe-button primary" href={ZIP}>
-              <span>{t.download}</span>
-            </a>
-            <a class="text-link" href="#script">{t.scriptLink}</a>
-          </div>
+          <a class="plaque red big" href={ZIP}><span>{t.download}</span></a>
           <p class="note">{t.downloadNote}</p>
+          <a class="text-link" href="#script">{t.scriptLink}</a>
         </div>
+      </section>
 
-        <aside class="tooltip" aria-label={t.tooltip.name}>
-          <div class="tooltip-header">
-            <span class="tooltip-name">{t.tooltip.name}</span>
-            <span class="tooltip-base">{t.tooltip.base}</span>
-          </div>
-          <div class="tooltip-body">
-            <p class="implicit">{t.tooltip.implicit}</p>
-            <hr />
-            {t.tooltip.mods.map((m) => <p class="mod">{m}</p>)}
-            <hr />
-            <p class="flavour">{t.tooltip.flavour}</p>
-          </div>
-        </aside>
+      <section class="shell shot">
+        <figure class="card">
+          <img src={`${base}${language === 'en' ? 'screenshot.jpg' : 'screenshot.zh-CN.jpg'}`} width="1600" height="1025" alt={t.shotAlt} loading="lazy" />
+        </figure>
+      </section>
+
+      <section class="shell section">
+        <div class="section-heading">
+          <h2>{t.featuresTitle}</h2>
+        </div>
+        <ul class="features">
+          {t.features.map((f) => <li class="card">{f}</li>)}
+        </ul>
       </section>
 
       <section class="shell section" id="install">
@@ -90,7 +90,7 @@ const otherName = other === 'en' ? 'English' : '简体中文';
         <ol class="steps">
           {
             t.steps.map(([title, body], i) => (
-              <li class="panel">
+              <li class="card">
                 <span class="step-number">{['I', 'II', 'III', 'IV'][i]}</span>
                 <h3>{title}</h3>
                 <p>{body}</p>
@@ -106,9 +106,9 @@ const otherName = other === 'en' ? 'English' : '简体中文';
           <p>{t.scriptIntro}</p>
         </div>
         <div>
-          <div class="command panel">
+          <div class="command card">
             <pre><code id="command">{command}</code></pre>
-            <button class="poe-button small" type="button" data-copy="command" data-copied={t.copied}>{t.copy}</button>
+            <button class="plaque brass small" type="button" data-copy="command" data-copied={t.copied}><span>{t.copy}</span></button>
           </div>
           <a class="text-link script-link" href={`${base}install.ps1`}>{t.readScript}</a>
         </div>
@@ -130,7 +130,7 @@ const otherName = other === 'en' ? 'English' : '简体中文';
         <div class="faq">
           {
             t.faq.map(([q, a]) => (
-              <details class="panel">
+              <details class="card">
                 <summary>{q}</summary>
                 <p>{a}</p>
               </details>
@@ -146,7 +146,7 @@ const otherName = other === 'en' ? 'English' : '简体中文';
         <ul class="credits">
           {
             t.credits.map(([name, what, href]) => (
-              <li class="panel">
+              <li class="card">
                 <a href={href} rel="noopener">{name}</a>
                 <p>{what}</p>
               </li>
@@ -157,23 +157,29 @@ const otherName = other === 'en' ? 'English' : '简体中文';
     </main>
 
     <footer>
-      <div class="shell">
-        <p>
-          {t.footer} <a class="text-link" href={REPO} rel="noopener">GitHub</a>
-        </p>
-        <p class="trademark">{t.trademark}</p>
+      <div class="shell foot-row">
+        <nav aria-label="Links">
+          <a href="https://poe.ninja" rel="noopener">poe.ninja</a>
+          <i aria-hidden="true">◆</i>
+          <a href={POB} rel="noopener">POB</a>
+          <i aria-hidden="true">◆</i>
+          <a href={REPO} rel="noopener">GitHub</a>
+        </nav>
+        <p>{t.footer}</p>
       </div>
+      <p class="shell trademark">{t.trademark}</p>
     </footer>
 
     <script>
       for (const button of document.querySelectorAll<HTMLButtonElement>('[data-copy]')) {
         button.addEventListener('click', async () => {
           const text = document.getElementById(button.dataset.copy!)?.textContent ?? '';
-          const label = button.textContent;
+          const label = button.querySelector('span')!;
+          const text0 = label.textContent;
           try {
             await navigator.clipboard.writeText(text);
-            button.textContent = button.dataset.copied ?? label;
-            setTimeout(() => (button.textContent = label), 1600);
+            label.textContent = button.dataset.copied ?? text0;
+            setTimeout(() => (label.textContent = text0), 1600);
           } catch {}
         });
       }

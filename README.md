@@ -7,6 +7,8 @@
   English | <a href="README.zh-CN.md">简体中文</a> · <a href="https://huacnlee.github.io/pobt/">Website</a>
 </p>
 
+<p align="center"><img src="docs/screenshot.jpg" alt="The POBT launcher" width="800"></p>
+
 POBT runs the [Path of Building Community](https://pathofbuilding.community/) you already have — for Path of Exile
 and Path of Exile 2 — with its whole interface translated: skills, items, passives and calculations. Simplified
 Chinese, Traditional Chinese and Korean are included.

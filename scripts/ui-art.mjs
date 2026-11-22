@@ -8,6 +8,8 @@ import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 
 const out = process.env.UI_ART_OUT ?? join(dirname(fileURLToPath(import.meta.url)), "..", "assets", "ui");
+// The website's buttons: each plaque on its own (plaque-<face>.png, pressed plaque-<face>-down.png).
+const web = process.env.UI_WEB_OUT ?? join(dirname(fileURLToPath(import.meta.url)), "..", "website", "public", "ui");
 mkdirSync(out, { recursive: true });
 
 const H = 96; // drawn at 2x: 48 points tall
@@ -136,6 +138,8 @@ const ROWS = ["red", "dark", "brass"];
 const rows = [false, true].flatMap((pressed, half) => ROWS.map((name, i) => {
   const row = half * ROWS.length + i;
   const png = toPng(plaque(faces[name], 3 + i * 7, pressed));
+  mkdirSync(web, { recursive: true });
+  writeFileSync(join(web, `plaque-${name}${pressed ? "-down" : ""}.png`), png);
   return `<image x="0" y="${row * H}" width="${W}" height="${H}" href="data:image/png;base64,${png.toString("base64")}"/>`;
 }));
 writeFileSync(join(out, "plaques.png"), toPng(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H * ROWS.length * 2}">${rows.join("")}</svg>`));
