@@ -594,8 +594,9 @@ function GameCard(props: {
             </>
           }
         >
-          {/* Installed: ready, its version, and where it is; the folder's actions are in the menu */}
+          {/* Installed: where it is, then ready and its version; the folder's actions are in the menu */}
           <>
+            <Text style={{ fontFamily: BODY, fontSize: 12, color: C.muted, textAlign: "center", numberOfLines: 2 }}>{dir()}</Text>
             <View
               style={{
                 flexDirection: "row",
@@ -613,7 +614,6 @@ function GameCard(props: {
                 <Text style={{ fontFamily: DISPLAY, fontSize: 13, color: C.text }}>v{version()}</Text>
               </If>
             </View>
-            <Text style={{ fontFamily: BODY, fontSize: 12, color: C.muted, textAlign: "center", numberOfLines: 2 }}>{dir()}</Text>
           </>
         </If>
         {/* Its menu, in the top right corner: open the folder, or forget it (Reset), kept out of the way. A ghost
