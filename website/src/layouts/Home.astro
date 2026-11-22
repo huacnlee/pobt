@@ -29,7 +29,7 @@ const otherName = other === 'en' ? 'English' : '简体中文';
     <meta name="description" content={t.description} />
     <meta property="og:title" content={t.title} />
     <meta property="og:description" content={t.description} />
-    <link rel="icon" type="image/svg+xml" href={`${base}favicon.svg`} />
+    <link rel="icon" type="image/png" href={`${base}favicon.png`} />
     <link rel="alternate" hreflang="en" href={new URL(base, Astro.site).href} />
     <link rel="alternate" hreflang="zh-CN" href={new URL(`${base}zh-CN/`, Astro.site).href} />
   </head>
@@ -38,7 +38,7 @@ const otherName = other === 'en' ? 'English' : '简体中文';
     <header>
       <div class="shell nav-row">
         <a class="brand" href={language === 'en' ? base : `${base}zh-CN/`}>
-          <img src={`${base}favicon.svg`} width="30" height="30" alt="" />
+          <img src={`${base}favicon.png`} width="30" height="30" alt="" />
           <span>POBT</span>
         </a>
         <nav aria-label="Primary">

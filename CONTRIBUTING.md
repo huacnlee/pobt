@@ -41,6 +41,8 @@ nsh package --target windows  # POBT.zip
 
 The website is in `website/` (Astro, Bun): `bun install && bun run dev`.
 
+The art in `assets/ui` and `icon.png` is drawn by scripts (`bun add @resvg/resvg-js` first): `bun scripts/ui-art.mjs` (the plaques), `bun scripts/title-art.mjs <Cinzel.ttf>` (the title) and `bun scripts/icon-art.mjs <Cinzel.ttf>` (the icon), with [Cinzel](https://github.com/google/fonts/tree/main/ofl/cinzel).
+
 ## Releasing
 
 Bump `version` in `nsh.json` and `Cargo.toml`, then push a tag `vX.Y.Z`. The Release workflow packages Windows,

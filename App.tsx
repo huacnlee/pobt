@@ -3,18 +3,8 @@ import { checkForUpdate, downloadUpdate, installAndRestart, installOnQuit, shell
 import { Pob, PobCanvas } from "pobt/native";
 import Cinzel from "./assets/fonts/Cinzel-Bold.woff2";
 import "./assets/fonts/Cinzel-SemiBold.woff2";
-import darkLeft from "./assets/ui/dark-left.png";
-import darkMiddle from "./assets/ui/dark-middle.png";
-import darkRight from "./assets/ui/dark-right.png";
-import brassLeft from "./assets/ui/brass-left.png";
-import brassMiddle from "./assets/ui/brass-middle.png";
-import brassRight from "./assets/ui/brass-right.png";
-import redLeft from "./assets/ui/red-left.png";
-import redMiddle from "./assets/ui/red-middle.png";
-import redRight from "./assets/ui/red-right.png";
-import rule from "./assets/ui/rule.png";
+import plaques from "./assets/ui/plaques.png";
 import title from "./assets/ui/title.png";
-import pobtTitle from "./assets/ui/pobt.png";
 import { GATE } from "./gate";
 import icon from "./icon.png";
 type Game = "Poe1" | "Poe2";
@@ -162,22 +152,62 @@ const ENGRAVED = "0 1px 0 rgba(255,236,190,0.45)";
 const HOVER: ViewStyle = { filter: "brightness(1.18)" };
 const PRESSED: ViewStyle = { filter: "brightness(0.62)", transform: [{ translateY: 3 }, { scale: 0.96 }] };
 
-const PLAQUES = {
-  red: { left: redLeft, middle: redMiddle, right: redRight },
-  dark: { left: darkLeft, middle: darkMiddle, right: darkRight },
-  brass: { left: brassLeft, middle: brassMiddle, right: brassRight },
-};
-type PlaqueKind = keyof typeof PLAQUES;
+// The plaques' atlas (scripts/ui-art.mjs): a row per kind, each a left cap, a middle that stretches and a right cap.
+const ATLAS = { width: 640, rowHeight: 96, cap: 64, middle: 512 };
+const ROWS = { red: 0, dark: 1, brass: 2 };
+type PlaqueKind = keyof typeof ROWS;
 
-/** A plaque with pointed ends (art 64×96 caps), `height` tall, its content centred over it. */
+/** A part of a plaque's row: the atlas, scaled to `sx` across and `sy` down, moved so `x` sits at the left. */
+function AtlasPart(props: { row: () => number; x: number; sx: () => number; sy: number; style: ViewStyle }) {
+  return (
+    <View style={{ overflow: "hidden", ...props.style }}>
+      <Image
+        src={plaques}
+        style={{
+          position: "absolute",
+          left: -props.x * props.sx(),
+          top: -props.row() * ATLAS.rowHeight * props.sy,
+          width: ATLAS.width * props.sx(),
+          height: ATLAS.rowHeight * 3 * props.sy,
+          objectFit: "fill",
+        }}
+      />
+    </View>
+  );
+}
+
+/** A tarnished gold rule with a jewelled diamond at its middle. */
+function Rule(props: { width: number; dim?: boolean }) {
+  const line = (dir: string) => ({ flex: 1, height: 2, backgroundImage: `linear-gradient(${dir}, rgba(143,118,70,0), #b9a370)`, boxShadow: "0 1px 0 rgba(0,0,0,0.6)" });
+  return (
+    <View style={{ width: props.width, height: 18, flexDirection: "row", alignItems: "center", alignSelf: "center", opacity: props.dim ? 0.5 : 1 }}>
+      <View style={line("90deg")} />
+      <View style={{ width: 12, height: 12, marginHorizontal: 4, transform: [{ rotate: "45deg" }], borderWidth: 2, borderColor: "#a68d5a", backgroundColor: "#640d0e", boxShadow: "0 0 0 1px #000" }} />
+      <View style={line("270deg")} />
+    </View>
+  );
+}
+
+/** A plaque with pointed ends, `height` tall, its content centred over it. */
 function Plaque(props: { kind: () => PlaqueKind; height: number; children: any }) {
-  const cap = (props.height * 64) / 96;
-  const art = () => PLAQUES[props.kind()];
+  const s = props.height / ATLAS.rowHeight;
+  const cap = ATLAS.cap * s;
+  const row = () => ROWS[props.kind()];
+  // The middle stretches across: its scale follows its width.
+  const middleWidth = signal(ATLAS.middle * s);
   return (
     <View style={{ height: props.height, flexDirection: "row" }}>
-      <Image src={art().left} style={{ width: cap, height: props.height }} />
-      <Image src={art().middle} style={{ flex: 1, height: props.height, objectFit: "fill" }} />
-      <Image src={art().right} style={{ width: cap, height: props.height }} />
+      <AtlasPart row={row} x={0} sx={() => s} sy={s} style={{ width: cap, height: props.height }} />
+      <View style={{ flex: 1, height: props.height }} onLayout={(e) => middleWidth.set(e.bounds.size.width)}>
+        <AtlasPart
+          row={row}
+          x={ATLAS.cap}
+          sx={() => middleWidth() / ATLAS.middle}
+          sy={s}
+          style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+        />
+      </View>
+      <AtlasPart row={row} x={ATLAS.cap + ATLAS.middle} sx={() => s} sy={s} style={{ width: cap, height: props.height }} />
       <View
         style={{
           position: "absolute",
@@ -334,7 +364,10 @@ function GameCard(props: { game: Game; settings: () => Settings; t: () => String
           boxShadow: selected()
             ? "inset 0 0 0 3px rgba(0,0,0,0.7), inset 0 0 0 4px rgba(177,141,78,0.45), 0 0 36px rgba(140,170,220,0.18)"
             : "inset 0 0 0 3px rgba(0,0,0,0.7), inset 0 0 0 4px rgba(107,82,44,0.35), 0 12px 30px rgba(0,0,0,0.7)",
-          paddingTop: 38,
+          // A fixed height, so changing the language moves nothing.
+          height: 200,
+          justifyContent: "center",
+          paddingTop: 30,
           paddingBottom: 22,
           paddingHorizontal: 24,
           gap: 12,
@@ -347,7 +380,7 @@ function GameCard(props: { game: Game; settings: () => Settings; t: () => String
           {UI.en.games[props.game].toUpperCase()}
         </Text>
         </If>
-        <Image src={rule} style={{ width: 260, height: 9, opacity: selected() ? 1 : 0.5 }} />
+        <Rule width={260} dim={!selected()} />
         <Text style={{ fontFamily: BODY, fontSize: 12, color: dir() ? C.muted : C.red, textAlign: "center", numberOfLines: 2 }}>
           {dir() ?? props.t().notFound}
         </Text>
@@ -403,6 +436,8 @@ function Launcher(props: { onStart: () => void }) {
     props.onStart();
   };
 
+  const brandHover = signal(false);
+
   const chooseLanguage = (value: string | null) => {
     update({ language: value });
     error.set("");
@@ -415,18 +450,40 @@ function Launcher(props: { onStart: () => void }) {
 
       {/* POBT at the top left; the version, and a newer one when there is, at the top right */}
       <View style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 32, paddingTop: 16, height: 52 }}>
-        <Image src={icon} style={{ width: 28, height: 28 }} />
-        <Image src={pobtTitle} style={{ width: 84, height: 46 }} accessibilityLabel="POBT" />
+        <View
+          role="link"
+          onPress={() => openUrl(SITE)}
+          onMouseEnter={() => brandHover.set(true)}
+          onMouseLeave={() => brandHover.set(false)}
+          style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
+        >
+          <Image src={icon} style={{ width: 28, height: 28, filter: brandHover() ? "brightness(1.25)" : "none" }} />
+          <Text
+            style={{
+              fontFamily: DISPLAY,
+              fontSize: 16,
+              fontWeight: "600",
+              letterSpacing: 4,
+              color: brandHover() ? "#fff3d0" : C.gold,
+              textShadow: brandHover() ? "0 0 10px rgba(240,220,170,0.8)" : "0 1px 2px #000",
+            }}
+          >
+            POBT
+          </Text>
+        </View>
         <View style={{ flex: 1 }} />
         <UpdateBadge t={t} />
-        <Text style={{ fontFamily: BODY, fontSize: 11, color: C.dim }}>v{shellInfo().version ?? "dev"}</Text>
+        {/* The packaged version; a development run has none to show. */}
+        <If when={shellInfo().version}>
+          {(v) => <Text style={{ fontFamily: BODY, fontSize: 11, color: C.dim }}>v{v()}</Text>}
+        </If>
       </View>
 
       <View style={{ flex: 1, paddingHorizontal: 72, paddingBottom: 16, gap: 24, justifyContent: "center" }}>
         {/* Title */}
         <View style={{ alignItems: "center", gap: 4 }}>
           <Image src={title} style={{ width: 760, height: 104.5 }} accessibilityLabel="Path of Building" />
-          <Image src={rule} style={{ width: 560, height: 19 }} />
+          <Rule width={560} />
           <Text style={{ fontFamily: BODY, fontSize: 14, color: C.text, textShadow: "0 0 3px #000, 0 0 8px #000, 0 0 14px #000, 0 1px 2px #000" }}>{t().subtitle}</Text>
         </View>
 

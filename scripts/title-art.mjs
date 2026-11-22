@@ -1,7 +1,6 @@
 // Draws the launcher's titles into assets/ui as Path of Exile sets its titles: small capitals with larger initials in
 // tarnished gold, bevelled and lit from above, a dark outline, a drop shadow and a faint warm glow.
 //   title.png  "Path of Building"
-//   pobt.png   "POBT"
 //   bun scripts/title-art.mjs <Cinzel.ttf>     (Cinzel: https://github.com/google/fonts/tree/main/ofl/cinzel)
 import { Resvg } from "@resvg/resvg-js";
 import { mkdirSync, writeFileSync } from "fs";
@@ -85,15 +84,4 @@ title({
   baseline: 150,
   spacing: 6,
   file: "title.png",
-});
-
-title({
-  words: [["P", "OBT"]],
-  big: 132,
-  small: 104,
-  width: 400,
-  height: 220,
-  baseline: 150,
-  spacing: 6,
-  file: "pobt.png",
 });
