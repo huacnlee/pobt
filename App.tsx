@@ -519,7 +519,7 @@ function Launcher(props: { onStart: () => void }) {
         <View style={{ alignItems: "center", gap: 4 }}>
           <Image src={title} style={{ width: 760, height: 104.5 }} accessibilityLabel="Path of Building" />
           <Rule width={560} />
-          <View style={{ paddingHorizontal: 14, paddingVertical: 3, backgroundImage: "linear-gradient(90deg, rgba(0,0,0,0), rgba(0,0,0,0.6) 18%, rgba(0,0,0,0.6) 82%, rgba(0,0,0,0))" }}>
+          <View style={{ paddingHorizontal: 64, paddingVertical: 10, backgroundImage: "radial-gradient(ellipse closest-side, rgba(0,0,0,0.55), rgba(0,0,0,0.35) 45%, rgba(0,0,0,0.12) 75%, rgba(0,0,0,0))" }}>
             <Text style={{ fontFamily: BODY, fontSize: 14, color: C.text, textShadow: "0 0 3px #000, 0 0 8px #000, 0 0 14px #000, 0 1px 2px #000" }}>{t().subtitle}</Text>
           </View>
         </View>
