@@ -1,7 +1,7 @@
-// The launcher's backdrop, a WGSL shader, after Path of Exile 2's site: a great pointed doorway in the middle of a
+// The launcher's backdrop, a WGSL shader, after Path of Exile 2's site: a great round-arched doorway in the middle of a
 // grey-black wall, its frame carved in receding orders — a bead, dog-tooth, voussoirs with sunk panels, a hood with
-// crockets, on shafts with capitals, a keystone — and the pale light of dusk slanting down from the top right in
-// shafts, three layers of them at different depths, drifting slowly; mist in the doorway, ash in the air.
+// crockets, on shafts with capitals, a keystone — seen from inside: the pale light of dusk is outside, high on the
+// right, and comes in through the door in a beam cast into the room, dust and mist showing it in layers; ash in the air.
 export const GATE = /* wgsl */ `
 const PI = 3.14159265;
 
@@ -38,17 +38,19 @@ fn fbm(p: vec2f) -> f32 {
   return v;
 }
 
-const DOOR_HW = 0.27;
-const DOOR_SPRING = 0.5;
+// A round arch, wider than it is tall: half width, the rise of the arch above the spring line, the spring line.
+const DOOR_HW = 0.38;
+const DOOR_RISE = 0.32;
+const DOOR_SPRING = 0.44;
 const FLOOR = 0.95;
 const FRAME = 0.12;
 
-// Distance-ish to the pointed doorway: negative inside.
+// Distance-ish to the doorway: negative inside.
 fn doorway(p: vec2f, cx: f32) -> f32 {
   var d: f32;
   if (p.y < DOOR_SPRING) {
-    let r = DOOR_HW * 2.0;
-    d = max(distance(p, vec2f(cx + DOOR_HW, DOOR_SPRING)) - r, distance(p, vec2f(cx - DOOR_HW, DOOR_SPRING)) - r);
+    let e = vec2f((p.x - cx) / DOOR_HW, (p.y - DOOR_SPRING) / DOOR_RISE);
+    d = (length(e) - 1.0) * DOOR_RISE;
   } else {
     d = abs(p.x - cx) - DOOR_HW;
   }
@@ -60,9 +62,8 @@ fn along(p: vec2f, cx: f32) -> f32 {
   if (p.y >= DOOR_SPRING) {
     return -(p.y - DOOR_SPRING);
   }
-  let side = sign(p.x - cx);
-  let v = p - vec2f(cx - side * DOOR_HW, DOOR_SPRING);
-  return atan2(-v.y, abs(v.x)) * DOOR_HW * 2.0;
+  let theta = atan2((DOOR_SPRING - p.y) / DOOR_RISE, abs(p.x - cx) / DOOR_HW);
+  return theta * (DOOR_HW + DOOR_RISE) * 0.5;
 }
 
 fn masonry(p: vec2f) -> vec2f {
@@ -110,85 +111,95 @@ fn carving(p: vec2f, cx: f32, dd: f32) -> vec2f {
   return vec2f(tone * (0.6 + 0.6 * fbm(p * 26.0)), k);
 }
 
-// Shafts of dusk light slanting down from the top right: one layer at a given depth — its spacing, width, strength
-// and drift — as a pattern across the slant, fading as the light travels.
-fn shaftLayer(p: vec2f, aspect: f32, seed: f32, density: f32, width: f32, speed: f32, t: f32) -> f32 {
-  let dir = normalize(vec2f(-0.55, 1.0));
-  let across = vec2f(dir.y, -dir.x);
-  let x = dot(p, across);
-  let along = dot(p - vec2f(aspect, 0.0), dir);
-  let pattern = noise1(x * density + seed * 37.0 + t * speed);
-  let shaft = smoothstep(1.0 - width, 1.0, pattern);
-  let breakup = 0.6 + 0.4 * noise(vec2f(x * density * 0.5 + seed, along * 2.0 - t * speed * 0.6));
-  return shaft * breakup * exp(-max(along, 0.0) * 0.6);
-}
-
 fn shade(uv: vec2f) -> vec4f {
   let aspect = nsh.size.x / nsh.size.y;
   let p = vec2f(uv.x * aspect, uv.y);
   let t = nsh.time;
 
   let cx = 0.5 * aspect;
-  // Dusk: a pale light, faintly warm, against grey-black stone.
+  // Dusk: a pale light, faintly warm, outside; inside, grey-black stone in shadow.
   let dusk = vec3f(0.95, 0.92, 0.86);
-  // The light falls from the top right.
-  let fromLight = exp(-distance(p, vec2f(aspect * 0.95, -0.1)) * 1.1);
+  // We stand inside, looking out: the light is beyond the door, high on the right, and comes in through it.
+  let toSun = normalize(vec2f(0.5, -1.0));
+  let dd = doorway(p, cx);
+  let open = step(dd, 0.0);
 
-  // The wall: grey-black blocks, stained and sooty.
+  // Light through the door: walk from p towards the sun; where the way passes through the doorway, p is in the
+  // beam. Parallel rays make the beam the door's shape, cast down and to the left into the room.
+  var beam = 0.0;
+  var reach = 0.0;
+  for (var i = 1; i <= 28; i++) {
+    let s = f32(i) * 0.03;
+    if (doorway(p + toSun * s, cx) < 0.0) {
+      beam = 1.0;
+      reach = s;
+      break;
+    }
+  }
+  // The beam fades as it travels from the door, and its edges soften with it.
+  let beamFall = beam * exp(-reach * 1.6) * (1.0 - open);
+
+  // The wall around the door, seen from inside: in shadow, but for light thrown back from the floor near the door.
   let m = masonry(p);
   let weather = fbm(p * 9.0);
   let stain = fbm(vec2f(p.x * 3.0, p.y * 0.8) + 11.0);
   let soot = smoothstep(0.35, 0.75, fbm(p * 2.2 + 5.0));
-  var col = vec3f(0.034, 0.034, 0.036) * (0.65 + 0.5 * m.y) * (0.45 + 0.9 * weather) * (0.55 + 0.6 * stain);
+  var col = vec3f(0.03, 0.03, 0.032) * (0.65 + 0.5 * m.y) * (0.45 + 0.9 * weather) * (0.55 + 0.6 * stain);
   col *= 1.0 - 0.5 * soot;
-  col = mix(col, vec3f(0.005), m.x * 0.55);
-  col *= 0.5 + 1.6 * fromLight;
+  col = mix(col, vec3f(0.004), m.x * 0.55);
+  let bounce = exp(-max(dd, 0.0) * 5.0) * smoothstep(0.0, 0.9, p.y);
+  col *= 0.45 + 1.1 * bounce + 1.4 * beamFall;
 
-  // The frame, lit from the top right: the faces turned to the light are brighter.
-  let dd = doorway(p, cx);
-  let rightSide = smoothstep(-0.1, 0.25, p.x - cx);
+  // The frame, backlit: dark, its carving caught only where light from the opening reaches round it.
   if (dd > 0.0 && dd < FRAME) {
     let carved = carving(p, cx, dd);
-    let lit = 0.45 + 1.8 * fromLight + 0.5 * rightSide * (1.0 - carved.y);
-    col = vec3f(0.058, 0.058, 0.06) * carved.x * lit;
-    col += dusk * 0.12 * smoothstep(0.004, 0.0, abs(dd - FRAME)) * (0.3 + rightSide);
+    let rim = exp(-carved.y * 2.5);
+    let lit = 0.6 + 2.6 * rim + 1.8 * beamFall;
+    col = vec3f(0.075, 0.075, 0.079) * carved.x * lit;
   }
-  // Crockets: leaves climbing the outer edge of the arch.
+  // Crockets: leaves climbing the outer edge of the arch, in silhouette.
   if (p.y < DOOR_SPRING && dd > FRAME && dd < FRAME + 0.022) {
     let w = fract(along(p, cx) / 0.075);
     let leaf = smoothstep(0.022, 0.0, (dd - FRAME) + abs(w - 0.5) * 0.06);
-    col = mix(col, vec3f(0.062, 0.062, 0.065) * (0.5 + 1.6 * fromLight), leaf);
+    col = mix(col, vec3f(0.05, 0.05, 0.053) * (0.4 + 0.8 * bounce), leaf);
   }
   // The keystone at the apex.
-  let apex = vec2f(cx, DOOR_SPRING - DOOR_HW * 1.732);
-  let ky = p.y - apex.y + 0.035;
-  let kw = 0.03 - ky * 0.25;
-  if (abs(p.x - cx) < kw && abs(ky) < 0.06 && dd > -0.01) {
-    col = vec3f(0.07, 0.07, 0.073) * (0.6 + 0.4 * fbm(p * 30.0)) * (0.6 + 1.5 * fromLight);
-    col += dusk * 0.15 * smoothstep(0.004, 0.0, abs(abs(p.x - cx) - kw));
+  let apex = vec2f(cx, DOOR_SPRING - DOOR_RISE);
+  // A wedge set in the frame, wider at its top: u runs from its foot (0) at the opening up to its head (1).
+  let u = (apex.y + 0.01 - p.y) / (FRAME + 0.02);
+  let kw = 0.028 + 0.022 * u;
+  if (abs(p.x - cx) < kw && u >= 0.0 && u <= 1.0) {
+    col = vec3f(0.06, 0.06, 0.063) * (0.6 + 0.4 * fbm(p * 30.0)) * (0.5 + 1.4 * exp(-u * 3.0));
   }
 
-  // Beyond the door: a pale haze, brightest high on the right, mist drifting through it.
-  let open = step(dd, 0.0);
+  // Outside: bright haze, brightest high on the right where the sun is, mist drifting across.
   if (open > 0.5) {
     let haze = fbm(p * vec2f(2.5, 1.8) + vec2f(-t * 0.02, t * 0.008));
-    let glow = smoothstep(0.9, -0.1, distance(p, vec2f(cx + 0.2, 0.15)));
-    col = mix(vec3f(0.05, 0.05, 0.055), dusk * 0.85, clamp(glow * (0.55 + 0.6 * haze), 0.0, 1.0));
-    // The floor beyond, catching the light.
-    if (p.y > FLOOR - 0.14) {
-      col *= 0.7 + 0.3 * fbm(vec2f(p.x * 18.0, (p.y - FLOOR) * 50.0));
-    }
+    let sun = smoothstep(1.1, -0.1, distance(p, vec2f(cx + 0.35, DOOR_SPRING - DOOR_RISE - 0.05)));
+    let sky = mix(dusk * 0.42, dusk * 1.05, clamp(sun * (0.6 + 0.5 * haze), 0.0, 1.0));
+    // The land outside below the horizon: grey, darker near, a lit path running off into the haze.
+    let horizon = 0.62;
+    let depth = clamp((p.y - horizon) / (FLOOR - horizon), 0.0, 1.0);
+    let ground = dusk * mix(0.36, 0.1, depth) * (0.75 + 0.35 * fbm(vec2f(p.x * 6.0 / (0.2 + depth), depth * 8.0)));
+    let path = smoothstep(0.05 + depth * 0.2, 0.0, abs(p.x - cx - 0.04 * (1.0 - depth))) * (1.0 - depth * 0.5);
+    let land = ground + dusk * 0.18 * path;
+    col = mix(sky, land, smoothstep(horizon - 0.01, horizon + 0.02, p.y));
   }
-  // Light spilling round the doorway's edge onto the frame.
-  col += dusk * 0.1 * exp(-max(dd, 0.0) * 18.0) * (1.0 - open) * (0.4 + rightSide);
+  // A thin edge of light round the opening, where it spills past the stone.
+  col += dusk * 0.35 * smoothstep(0.012, 0.0, max(dd, 0.0)) * (1.0 - open);
 
-  // Shafts of dusk light from the top right, three layers at different depths: near ones broad, bright and slow,
-  // far ones fine, faint and quicker. They are seen against the dark, less so against the light.
-  let far = shaftLayer(p, aspect, 1.0, 9.0, 0.4, 0.05, t) * 0.22;
-  let mid = shaftLayer(p, aspect, 2.0, 5.0, 0.36, 0.03, t) * 0.34;
-  let nearL = shaftLayer(p, aspect, 3.0, 2.6, 0.3, 0.018, t) * 0.45;
-  let shafts = (far + mid + nearL) * (0.6 + 0.6 * fbm(p * 2.5 + vec2f(t * 0.03, 0.0)));
-  col += dusk * shafts * (1.0 - 0.5 * open);
+  // The beam made visible by the dust and mist in the room: three layers at different depths, near ones broad and
+  // slow, far ones fine and quicker.
+  let across = dot(p, vec2f(-toSun.y, toSun.x));
+  let along2 = dot(p, toSun);
+  let layerFar = 0.55 + 0.45 * noise(vec2f(across * 9.0 + t * 0.05, along2 * 2.0));
+  let layerMid = 0.5 + 0.5 * noise(vec2f(across * 5.0 - t * 0.03, along2 * 1.4 + 7.0));
+  let layerNear = 0.45 + 0.55 * noise(vec2f(across * 2.4 + t * 0.018, along2 * 0.9 + 3.0));
+  let mist = fbm(p * 2.2 + vec2f(t * 0.03, -t * 0.01));
+  let shafts = beamFall * (0.18 * layerFar + 0.24 * layerMid + 0.3 * layerNear) * (0.6 + 0.7 * mist);
+  col += dusk * shafts;
+  // Where the beam meets the floor, a pool of light shaped like the door.
+  col += dusk * 0.22 * beamFall * smoothstep(0.78, 0.98, p.y);
 
   // Ash drifting down through the light.
   var ash = 0.0;
@@ -204,8 +215,8 @@ fn shade(uv: vec2f) -> vec4f {
   col += dusk * ash * 0.3 * (0.3 + shafts * 4.0);
 
   // Mist on the floor, haze in the air.
-  let mist = fbm(p * vec2f(1.4, 3.5) + vec2f(-t * 0.025, 0.0));
-  col += vec3f(0.2, 0.2, 0.21) * mist * smoothstep(0.45, 1.0, uv.y) * 0.2;
+  let floorMist = fbm(p * vec2f(1.4, 3.5) + vec2f(-t * 0.025, 0.0));
+  col += vec3f(0.2, 0.2, 0.21) * floorMist * smoothstep(0.45, 1.0, uv.y) * 0.2;
 
   // Black at the edges, deep shadows.
   let vig = smoothstep(1.05, 0.15, distance(uv, vec2f(0.55, 0.45)));
