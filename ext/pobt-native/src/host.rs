@@ -891,7 +891,7 @@ native!(n_set_raw_text, |l| {
     0
 });
 
-/// `s` as it is shown, raw text or not: for the labels of edit boxes, which draw raw.
+// `s` as it is shown, raw text or not: for the labels of edit boxes, which draw raw.
 native!(n_translate, |l| {
     let Some(s) = l.string(1) else { return 0 };
     let t = with_host(|h| {
