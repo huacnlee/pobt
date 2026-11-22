@@ -70,7 +70,7 @@ fn template_key(en: &str) -> Option<String> {
                 continue;
             }
         }
-        if c == '#' {
+        if c == '#' && !en[i + 1..].starts_with('{') {
             out.push(HOLE);
             holes += 1;
             continue;
@@ -185,9 +185,10 @@ impl Dictionary {
             .or_else(|| self.lookup_template(t, true))
             .or_else(|| self.lookup_template(t, false))
             .or_else(|| {
-                // "Label:" when only "Label" is known.
-                let base = t.strip_suffix(':')?;
-                Some(format!("{}:", self.exact.get(base.trim_end())?))
+                // "Label:" when only "Label" is known, or its template ("Flask 1:" by "Flask {0}").
+                let base = t.strip_suffix(':')?.trim_end();
+                let known = self.exact.get(base).cloned().or_else(|| self.lookup_template(base, false))?;
+                Some(format!("{known}:"))
             })
             .or_else(|| {
                 // "Label" when only "Label:" is known (POB adds the colon as it draws some).
@@ -198,6 +199,48 @@ impl Dictionary {
             .or_else(|| self.wrapped(t))
             .or_else(|| self.labelled(t))
             .or_else(|| self.joined(t))
+            .or_else(|| self.listed(t))
+            .or_else(|| Some(format!("- {}", self.inner(t.strip_prefix("- ")?)?)))
+            .or_else(|| self.delta(t))
+    }
+
+    /// "Hyrri's Truth, Jade Amulet" and "Arctic Armour, Grace, Precision": a
+    /// list whose every part is known, but its first, which may be a name the
+    /// user gave (a rare item's), kept as it is.
+    fn listed(&self, t: &str) -> Option<String> {
+        let parts: Vec<&str> = t.split(", ").collect();
+        if parts.len() < 2 {
+            return None;
+        }
+        let mut out = vec![self.inner(parts[0]).unwrap_or_else(|| parts[0].to_string())];
+        for part in &parts[1..] {
+            out.push(self.inner(part)?);
+        }
+        Some(out.join(", "))
+    }
+
+    /// "+0.01 Attack Rate (+0.5%)" and "-4,733.7 Average Damage": a change of
+    /// a known stat, as POB lists them in its comparison tooltips.
+    fn delta(&self, t: &str) -> Option<String> {
+        let num = t.find(' ')?;
+        let (value, rest) = (&t[..num], &t[num + 1..]);
+        let digits = value.get(1..).unwrap_or("");
+        if !value.starts_with(['+', '-'])
+            || !digits.starts_with(|c: char| c.is_ascii_digit())
+            || !digits.bytes().all(|c| c.is_ascii_digit() || b".,%".contains(&c))
+        {
+            return None;
+        }
+        let (stat, tail) = match rest.rfind(" (") {
+            Some(i) if rest.ends_with(')') => (&rest[..i], &rest[i..]),
+            _ => (rest, ""),
+        };
+        let stat = self
+            .exact
+            .get(stat)
+            .cloned()
+            .or_else(|| Some(self.exact.get(&format!("{stat}:"))?.trim_end_matches([':', '：']).trim_end().to_string()))?;
+        Some(format!("{value} {stat}{tail}"))
     }
 
     /// "(Guard)" and "[3.27] Default": a known word in brackets, or after them.
@@ -321,7 +364,7 @@ fn fill(text: &str, nums: &[&str]) -> String {
                 continue;
             }
         }
-        if c == '#' {
+        if c == '#' && !text[i + 1..].starts_with('{') {
             out.push_str(nums.get(next).copied().unwrap_or("#"));
             next += 1;
             continue;
@@ -395,6 +438,25 @@ mod tests {
         assert_eq!(d.translate("1 Mirage Archers using Tornado Shot").as_deref(), Some("1 个幻影射手使用龙卷射击"));
         assert_eq!(d.translate("Convert all trees to 3.30").as_deref(), Some("全部转换为 3.30"));
         assert_eq!(d.translate("Level:").as_deref(), Some("等级:"));
+    }
+
+    /// The Items and Calcs tabs and the tree's tooltips: item names, lists, slots and stat changes.
+    #[test]
+    fn items_lists_and_changes() {
+        let d = Dictionary::load("zh-rCN");
+        assert_eq!(d.translate("^xAF6025Hyrri's Truth, Jade Amulet").as_deref(), Some("^xAF6025西里的真相, 翠玉护身符"));
+        assert_eq!(d.translate("My Rare, Imperial Bow").as_deref(), Some("My Rare, 帝国之弓"));
+        assert_eq!(d.translate("Arctic Armour, Grace, Precision, Steelskin").as_deref(), Some("极地装甲, 优雅, 精准, 钢铁之肤"));
+        assert_eq!(d.translate("Flask 1:").as_deref(), Some("药剂 1:"));
+        assert_eq!(d.translate("Socket #1:").as_deref(), Some("插槽 #1:"));
+        assert_eq!(d.translate("+0.01 Attack Rate (+0.5%)").as_deref(), Some("+0.01 攻击速率 (+0.5%)"));
+        assert_eq!(d.translate("-4,733.7 Average Damage (-6.2%)").as_deref(), Some("-4,733.7 平均伤害 (-6.2%)"));
+        assert_eq!(d.translate("+1% Phys. Damage Reduction").as_deref(), Some("+1% 物理伤害减免"));
+        assert_eq!(d.translate("Double click an item, or copy one from the game"), None);
+        // A bullet of a list of tips, known without its "- ".
+        assert_eq!(d.translate("- Ctrl + Click to enable/disable socket groups.").as_deref(), Some("- Ctrl+单击以启用/禁用插槽组。"));
+        assert_eq!(d.translate("- Frenzy"), Some("- 狂怒".into()));
+        assert_eq!(d.translate("-Frenzy"), None);
     }
 
     #[test]
@@ -485,3 +547,5 @@ mod tests {
         assert_eq!(d.translate("Mana"), None);
     }
 }
+
+

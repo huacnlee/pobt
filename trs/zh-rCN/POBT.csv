@@ -9,3 +9,40 @@
 "Combined Average Projectiles",平均合计投射物
 "PoB Community Fork",PoB 社区版
 Immune,免疫
+"Socket #{0}",插槽 #{0}
+Sockets,插槽
+"Any Loadout",任意配装
+"Del Unused",删除未使用
+"Del All",全部删除
+Head,头部
+Body,身体
+Arm,手臂
+Leg,腿部
+Requires,需求
+Str,力量
+Dex,敏捷
+Int,智慧
+"Tip: Hold Shift to display a tooltip for the granted skill.","提示: 按住 Shift 显示所给技能的提示"
+"Tip: Press Ctrl+C to copy this node's text.","提示: 按 Ctrl+C 复制此天赋点的文本"
+"Distance Ramp",距离递增
+"{0}% per Frenzy Charge","每个狂怒球 {0}%"
+"{0}% per Power Charge","每个暴击球 {0}%"
+"{0}% per Endurance Charge","每个耐力球 {0}%"
+"{0}% per {1} Mana Cost","每 {1} 点魔力消耗 {0}%"
+Active,主动
+"Forced Active",强制主动
+"Item sockets",物品插槽
+"Optimise Sockets",优化插槽
+"Imbued Support",灌注辅助
+"Show legacy gems",显示旧版宝石
+Cost,消耗
+"{0} Mana","{0} 魔力"
+"{0} Life","{0} 生命"
+"{0} Energy Shield","{0} 能量护盾"
+"{0}% of base","基础值的 {0}%"
+"Effectiveness of Added Damage",附加伤害效用
+"{0} (Max)","{0} (最大)"
+"+{0}% Quality from Socket Colour","+{0}% 品质 (来自插槽颜色)"
+"(Not supported in PoB yet)","(PoB 尚未支持)"
+"{0} (Tier {1}): {2}%","{0} (T{1}): {2}%"
+"Act {0} ({1}%)","第 {0} 章 ({1}%)"
