@@ -559,6 +559,7 @@ fn register(l: Lua) {
         ("DrawStringCursorIndex", n_draw_string_cursor_index),
         ("StripEscapes", n_strip_escapes),
         ("SetRawText", n_set_raw_text),
+        ("Translate", n_translate),
         ("GetScreenSize", n_get_screen_size),
         ("GetCursorPos", n_get_cursor_pos),
         ("IsKeyDown", n_is_key_down),
@@ -888,6 +889,22 @@ native!(n_set_raw_text, |l| {
     let raw = l.bool(1);
     with_host(|h| h.raw_text = raw);
     0
+});
+
+/// `s` as it is shown, raw text or not: for the labels of edit boxes, which draw raw.
+native!(n_translate, |l| {
+    let Some(s) = l.string(1) else { return 0 };
+    let t = with_host(|h| {
+        let raw = std::mem::replace(&mut h.raw_text, false);
+        let t = shown(h, &s);
+        h.raw_text = raw;
+        t
+    });
+    match t {
+        Some(t) => l.push_str(&t),
+        None => l.push_str(&s),
+    }
+    1
 });
 
 native!(n_get_screen_size, |l| {
