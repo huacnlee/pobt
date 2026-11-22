@@ -1,0 +1,43 @@
+# Checks pull requests and main: the Rust crate and the TSX type check (`nsh check`), then the Rust tests.
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  # The NSH CLI of the crates Cargo.toml takes from crates.io.
+  NSH_VERSION: v0.6.1
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ext/pobt-native
+          key: ci-windows
+
+      - name: Install the NSH CLI
+        shell: pwsh
+        run: |
+          irm https://nsh.dev/install.ps1 | iex
+          Add-Content $env:GITHUB_PATH (Join-Path $env:LOCALAPPDATA 'nsh\bin')
+
+      - name: Check
+        run: nsh check
+
+      - name: Test
+        run: cargo test --lib --manifest-path ext/pobt-native/Cargo.toml

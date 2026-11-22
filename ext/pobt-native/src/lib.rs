@@ -26,6 +26,7 @@ use nsh_core::{
     desktop::WindowAttributes,
     element::desktop::current_window,
     geometry::ScaledPixels,
+    element::input,
     keymap::Modifiers,
     prelude::*,
 };
@@ -561,41 +562,78 @@ fn pob_view(shared: Arc<Shared>) -> impl IntoElement {
         s.poke.store(true, Ordering::SeqCst);
     };
     let s = shared.clone();
-    let on_key_down = move |e: &KeyEvent| {
-        sync_modifiers(&s, &e.modifiers);
-        // Ctrl+Shift+T switches the translation on and off.
-        if e.modifiers.ctrl && e.modifiers.shift && e.key.eq_ignore_ascii_case("t") {
-            let on = !s.translate.load(Ordering::SeqCst);
-            s.translate.store(on, Ordering::SeqCst);
-            s.poke.store(true, Ordering::SeqCst);
-            return;
+    let on_key_down = move |e: &KeyEvent| key_down(&s, e, true);
+    let s = shared.clone();
+    let on_key_up = move |e: &KeyEvent| key_up(&s, e);
+
+    // POB's focused edit box takes text from an input method through a native input over it (a sink, as NSH's
+    // editor has): the canvas has no input method. The sink is there while a box has the focus, and takes it.
+    let canvas_ref = element_ref();
+    let sink_ref = element_ref();
+    let composing = signal(String::new());
+    let s = shared.clone();
+    let sink = move |rect: [f32; 4]| {
+        let (down, up) = (s.clone(), s.clone());
+        let typed = s.clone();
+        // What the sink holds: what changes in it is what was typed (deletions are the keys').
+        let held = std::rc::Rc::new(std::cell::RefCell::new(String::new()));
+        input()
+            .element_ref(&sink_ref)
+            .absolute()
+            .left(px(rect[0]))
+            .top(px(rect[1]))
+            .w(px(1.0))
+            .h(px(rect[3]))
+            .p_0()
+            .border(px(0.0))
+            .opacity(0.02)
+            .pointer_events(PointerEvents::None)
+            .caret(false)
+            .auto_focus(true)
+            .auto_correct(false)
+            .auto_capitalize(AutoCapitalize::None)
+            // POB pastes with Ctrl+V itself.
+            .paste_behavior(PasteBehavior::Report)
+            .capture_keys(KeyCapture::All)
+            .on_key_down(move |e: &KeyEvent| key_down(&down, e, false))
+            .on_key_up(move |e: &KeyEvent| key_up(&up, e))
+            .on_composition_change(move |c: &Composition| composing.set(if c.composing { c.text.clone() } else { String::new() }))
+            .on_change(move |text: &str| {
+                if !composing.get_untracked().is_empty() {
+                    return;
+                }
+                let mut held = held.borrow_mut();
+                for c in inserted(&held, text).chars().filter(|c| !c.is_control()) {
+                    typed.send(Input::Char(c.to_string()));
+                }
+                *held = text.to_owned();
+                typed.poke.store(true, Ordering::SeqCst);
+            })
+    };
+    // Back to the canvas once no box has the focus; back to the sink after a click while one has.
+    let editing = std::cell::Cell::new(false);
+    effect(move || {
+        let now = frame.with(|f| f.text_input.is_some());
+        if editing.replace(now) && !now {
+            composing.set(String::new());
+            canvas_ref.focus();
         }
-        if let Some(name) = key_name(&e.key) {
-            s.set_key(&name, true);
-            s.send(Input::KeyDown(name, false));
-        }
-        let mut chars = e.key.chars();
-        if let (Some(c), None) = (chars.next(), chars.next()) {
-            if !e.modifiers.ctrl && !e.modifiers.alt && !c.is_control() {
-                s.send(Input::Char(c.to_string()));
+    });
+    let on_mouse_up = {
+        let up = on_mouse_up;
+        move |e: &MouseEvent| {
+            up(e);
+            if frame.with_untracked(|f| f.text_input.is_some()) {
+                sink_ref.focus();
             }
         }
-        s.poke.store(true, Ordering::SeqCst);
-    };
-    let s = shared.clone();
-    let on_key_up = move |e: &KeyEvent| {
-        sync_modifiers(&s, &e.modifiers);
-        if let Some(name) = key_name(&e.key) {
-            s.set_key(&name, false);
-            s.send(Input::KeyUp(name));
-        }
-        s.poke.store(true, Ordering::SeqCst);
     };
 
     view()
         .flex_1()
         .child(
             canvas(move || frame.with(|f| paint(f)))
+                .element_ref(&canvas_ref)
                 .flex_1()
                 .focusable(true)
                 .capture_keys(KeyCapture::All)
@@ -612,6 +650,25 @@ fn pob_view(shared: Arc<Shared>) -> impl IntoElement {
                 .on_key_down(on_key_down)
                 .on_key_up(on_key_up),
         )
+        // Keyed by the box, so the sink stays while it keeps the focus.
+        .child(dynamic(move || frame.with(|f| f.text_input.map(|r| r.map(f32::to_bits))).map(|r| sink(r.map(f32::from_bits)))))
+        // What the input method composes, under the box, as POB cannot show it.
+        .child(dynamic(move || {
+            let text_ = composing.get();
+            let rect = frame.with_untracked(|f| f.text_input)?;
+            (!text_.is_empty()).then(|| {
+                view()
+                    .absolute()
+                    .left(px(rect[0]))
+                    .top(px(rect[1] + rect[3] + 2.0))
+                    .px_2()
+                    .py_1()
+                    .bg(rgb(0x000000))
+                    .border(px(1.0))
+                    .border_color(rgb(0xb18d4e))
+                    .child(text(text_).text_size(px(14.0)).text_color(rgb(0xffffff)))
+            })
+        }))
         .child(dynamic(move || {
             error.get().map(|e| {
                 view()
@@ -627,9 +684,60 @@ fn pob_view(shared: Arc<Shared>) -> impl IntoElement {
         }))
 }
 
+/// A key pressed on the canvas or the input method's sink; `chars` sends the
+/// character it types too (the sink's come from its text).
+fn key_down(s: &Shared, e: &KeyEvent, chars: bool) {
+    sync_modifiers(s, &e.modifiers);
+    // Ctrl+Shift+T switches the translation on and off.
+    if e.modifiers.ctrl && e.modifiers.shift && e.key.eq_ignore_ascii_case("t") {
+        let on = !s.translate.load(Ordering::SeqCst);
+        s.translate.store(on, Ordering::SeqCst);
+        s.poke.store(true, Ordering::SeqCst);
+        return;
+    }
+    if let Some(name) = key_name(&e.key) {
+        s.set_key(&name, true);
+        s.send(Input::KeyDown(name, false));
+    }
+    let mut cs = e.key.chars();
+    if let (true, Some(c), None) = (chars, cs.next(), cs.next()) {
+        if !e.modifiers.ctrl && !e.modifiers.alt && !c.is_control() {
+            s.send(Input::Char(c.to_string()));
+        }
+    }
+    s.poke.store(true, Ordering::SeqCst);
+}
+
+fn key_up(s: &Shared, e: &KeyEvent) {
+    sync_modifiers(s, &e.modifiers);
+    if let Some(name) = key_name(&e.key) {
+        s.set_key(&name, false);
+        s.send(Input::KeyUp(name));
+    }
+    s.poke.store(true, Ordering::SeqCst);
+}
+
+/// What `now` has that `before` had not, between their common start and end.
+fn inserted<'a>(before: &str, now: &'a str) -> &'a str {
+    let start = before.char_indices().zip(now.chars()).take_while(|((_, a), b)| a == b).last().map_or(0, |((i, a), _)| i + a.len_utf8());
+    let (b, n) = (&before[start..], &now[start..]);
+    let end = b.chars().rev().zip(n.chars().rev()).take_while(|(a, b)| a == b).map(|(c, _)| c.len_utf8()).sum::<usize>();
+    &n[..n.len() - end.min(n.len())]
+}
+
 #[cfg(test)]
 mod tests {
-    use super::manifest_version;
+    use super::{inserted, manifest_version};
+
+    #[test]
+    fn sink_insertions() {
+        assert_eq!(inserted("", "a"), "a");
+        assert_eq!(inserted("ab", "abc"), "c");
+        assert_eq!(inserted("abc", "abxc"), "x");
+        assert_eq!(inserted("ab", "ab腾讯"), "腾讯");
+        assert_eq!(inserted("abc", "ab"), "");
+        assert_eq!(inserted("aa", "aaa"), "a");
+    }
 
     #[test]
     fn manifest_versions() {

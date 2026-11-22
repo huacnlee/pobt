@@ -420,6 +420,12 @@ function __pobt_hookClasses()
 		if gem then
 			self.buf = sg.Translate(buf)
 		end
+		-- The focused box: where text typed with an input method goes.
+		if self.hasFocus and self.GetPos and self.GetSize then
+			local x, y = self:GetPos()
+			local w, h = self:GetSize()
+			sg.SetTextInput(x, y, w, h)
+		end
 		sg.SetRawText(true)
 		local r = pack(pcall(draw, self, ...))
 		sg.SetRawText(false)

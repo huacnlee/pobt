@@ -35,4 +35,7 @@ pub struct Frame {
     /// leaves out, so each drawing names them all first: they stay loaded
     /// when POB stops drawing one for a while.
     pub images: Arc<[Arc<str>]>,
+    /// The screen rectangle of the edit box that has the keyboard focus, if
+    /// one has: text typed with an input method goes there.
+    pub text_input: Option<[f32; 4]>,
 }

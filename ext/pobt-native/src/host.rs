@@ -138,6 +138,8 @@ struct Host {
     clear: Color,
     screen: (f32, f32),
     raw_text: bool,
+    /// The focused edit box this frame drew (`SetTextInput`).
+    text_input: Option<[f32; 4]>,
     tr: translate::Cache,
     subs: HashMap<u32, Sub>,
     next_sub: u32,
@@ -223,6 +225,7 @@ fn run_once(pob_dir: &Path, shared: &Arc<Shared>, rx: mpsc::Receiver<Input>) -> 
             clear: [0.0, 0.0, 0.0, 1.0],
             screen: *shared.screen.lock().unwrap(),
             raw_text: false,
+            text_input: None,
             tr: translate::Cache::new(),
             subs: HashMap::new(),
             next_sub: 1,
@@ -297,6 +300,7 @@ fn run_once(pob_dir: &Path, shared: &Arc<Shared>, rx: mpsc::Receiver<Input>) -> 
         let screen = *shared.screen.lock().unwrap();
         with_host(|h| {
             h.items.clear();
+            h.text_input = None;
             h.seq = 0;
             h.layer = (0, 0);
             h.screen = screen;
@@ -396,7 +400,14 @@ fn publish(shared: &Shared) {
         if fresh > 0 || h.images.len() != h.introduced_order.len() {
             h.images = Arc::from(h.introduced_order.as_slice());
         }
-        Frame { width: h.screen.0, height: h.screen.1, clear: h.clear, items, images: h.images.clone() }
+        Frame {
+            width: h.screen.0,
+            height: h.screen.1,
+            clear: h.clear,
+            items,
+            images: h.images.clone(),
+            text_input: h.text_input,
+        }
     });
     let Some(frame) = frame else { return };
     let mut current = shared.frame.lock().unwrap();
@@ -559,6 +570,7 @@ fn register(l: Lua) {
         ("DrawStringCursorIndex", n_draw_string_cursor_index),
         ("StripEscapes", n_strip_escapes),
         ("SetRawText", n_set_raw_text),
+        ("SetTextInput", n_set_text_input),
         ("Translate", n_translate),
         ("GetScreenSize", n_get_screen_size),
         ("GetCursorPos", n_get_cursor_pos),
@@ -905,6 +917,13 @@ native!(n_translate, |l| {
         None => l.push_str(&s),
     }
     1
+});
+
+// The focused edit box, in the current viewport: where input methods put their text.
+native!(n_set_text_input, |l| {
+    let r = [l.num(1) as f32, l.num(2) as f32, l.num(3) as f32, l.num(4) as f32];
+    with_host(|h| h.text_input = Some([h.viewport[0] + r[0], h.viewport[1] + r[1], r[2], r[3]]));
+    0
 });
 
 native!(n_get_screen_size, |l| {
