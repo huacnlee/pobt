@@ -68,6 +68,32 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}">
       <feComposite in="spec" in2="SourceAlpha" operator="in" result="specIn"/>
       <feComposite in="SourceGraphic" in2="specIn" operator="arithmetic" k1="0" k2="1" k3=".75" k4="0"/>
     </filter>
+    <!-- Relief, lit from the top left as the plaques are: the shape's alpha, blurred, as a height. -->
+    <filter id="emboss" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="9" result="h"/>
+      <feDiffuseLighting in="h" surfaceScale="10" diffuseConstant="1.25" lighting-color="#fff" result="d">
+        <feDistantLight azimuth="235" elevation="38"/>
+      </feDiffuseLighting>
+      <feComposite in="SourceGraphic" in2="d" operator="arithmetic" k1="1.0" result="lit"/>
+      <feSpecularLighting in="h" surfaceScale="10" specularConstant="1.1" specularExponent="20" lighting-color="#fff3d0" result="s">
+        <feDistantLight azimuth="235" elevation="38"/>
+      </feSpecularLighting>
+      <feComposite in="lit" in2="s" operator="arithmetic" k2="1" k3=".45" result="all"/>
+      <feComposite in="all" in2="SourceAlpha" operator="in"/>
+    </filter>
+    <!-- The face swells: a broad, low height. -->
+    <filter id="dome" x="0" y="0" width="100%" height="100%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="70" result="h"/>
+      <feDiffuseLighting in="h" surfaceScale="14" diffuseConstant="1.35" lighting-color="#fff" result="d">
+        <feDistantLight azimuth="235" elevation="45"/>
+      </feDiffuseLighting>
+      <feComposite in="SourceGraphic" in2="d" operator="arithmetic" k1="1.2" result="lit"/>
+      <feComposite in="lit" in2="SourceAlpha" operator="in"/>
+    </filter>
+    <radialGradient id="gleam" cx="38%" cy="30%" r="40%">
+      <stop offset="0" stop-color="#ffd7c8" stop-opacity=".38"/>
+      <stop offset="1" stop-color="#ffd7c8" stop-opacity="0"/>
+    </radialGradient>
     <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="12"/></filter>
     <clipPath id="plate"><rect x="32" y="32" width="${S - 64}" height="${S - 64}" rx="196"/></clipPath>
     <clipPath id="face"><circle cx="${C}" cy="${C}" r="${R}"/></clipPath>
@@ -78,26 +104,35 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}">
   <rect x="32" y="32" width="${S - 64}" height="${S - 64}" rx="196" fill="url(#stone)"/>
   <g clip-path="url(#plate)"><rect width="100%" height="100%" filter="url(#grime)" opacity=".45"/></g>
   <rect x="48" y="48" width="${S - 96}" height="${S - 96}" rx="182" fill="none" stroke="#000" stroke-opacity=".7" stroke-width="10"/>
+  <!-- The plate's edge, bevelled: light along the top left, dark along the bottom right -->
+  <rect x="40" y="40" width="${S - 80}" height="${S - 80}" rx="188" fill="none" stroke="#3a352d" stroke-width="14" filter="url(#emboss)"/>
+  <!-- The medallion's shadow on the stone -->
+  <circle cx="${C + 14}" cy="${C + 30}" r="${R + 70}" fill="#000" opacity=".75" filter="url(#shadow)"/>
 
   <!-- The points at the compass -->
+  <g filter="url(#emboss)">
   <g transform="translate(${C} ${C - R - 70})">${point}</g>
   <g transform="translate(${C} ${C + R + 70}) rotate(180)">${point}</g>
   <g transform="translate(${C - R - 70} ${C}) rotate(-90)">${point}</g>
   <g transform="translate(${C + R + 70} ${C}) rotate(90)">${point}</g>
+  </g>
 
   <!-- The rim: a dark outline, tarnished gold, grimed and rubbed, a thin inner line -->
   <circle cx="${C}" cy="${C}" r="${R + 34}" fill="none" stroke="#000" stroke-width="62" opacity=".85"/>
-  <circle cx="${C}" cy="${C}" r="${R + 34}" fill="none" stroke="url(#gold)" stroke-width="44"/>
+  <circle cx="${C}" cy="${C}" r="${R + 34}" fill="none" stroke="url(#gold)" stroke-width="44" filter="url(#emboss)"/>
   <g mask="url(#rimMask)" opacity=".9"><rect width="100%" height="100%" filter="url(#grime)"/></g>
   <g mask="url(#rimMask)" opacity=".6"><rect width="100%" height="100%" filter="url(#rub)"/></g>
   <circle cx="${C}" cy="${C}" r="${R + 6}" fill="none" stroke="url(#gold)" stroke-width="5" opacity=".7"/>
 
   <!-- The face: brushed crimson, darker at its rim -->
   <g clip-path="url(#face)">
-    <rect width="100%" height="100%" fill="url(#crimson)"/>
+    <circle cx="${C}" cy="${C}" r="${R}" fill="url(#crimson)" filter="url(#dome)"/>
     <rect width="100%" height="100%" filter="url(#brushed)"/>
     <rect width="100%" height="100%" filter="url(#grime)" opacity=".5"/>
     <circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="#000" stroke-width="60" opacity=".55" filter="url(#soft)"/>
+    <!-- Sunk into the rim: a shadow under its upper edge, a lit lower lip -->
+    <circle cx="${C}" cy="${C + 10}" r="${R + 4}" fill="none" stroke="#000" stroke-width="26" opacity=".8" filter="url(#soft)"/>
+    <circle cx="${C}" cy="${C}" r="${R}" fill="url(#gleam)"/>
   </g>
   <circle cx="${C}" cy="${C}" r="${R}" fill="none" stroke="#000" stroke-width="6"/>
 
