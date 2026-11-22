@@ -295,6 +295,63 @@ impl Align {
     }
 }
 
+/// One line laid out from its start: its width and its runs, each at an
+/// offset, in the colour of an escape before it (`None`: the colour the
+/// line starts in).
+struct LineLayout {
+    width: f32,
+    runs: Vec<(f32, Arc<str>, Option<Color>)>,
+    /// The colour the line leaves current, if it set one.
+    end: Option<Color>,
+}
+
+fn layout_line(kind: FontKind, height: f32, line: &str) -> Arc<LineLayout> {
+    thread_local! {
+        static CACHE: RefCell<HashMap<(FontKind, u32, Box<str>), Arc<LineLayout>>> = RefCell::new(HashMap::new());
+    }
+    let key = (kind, height.to_bits(), Box::<str>::from(line));
+    if let Some(hit) = CACHE.with(|c| c.borrow().get(&key).cloned()) {
+        return hit;
+    }
+    let size = em_size(height);
+    let bytes = line.as_bytes();
+    let mut runs = Vec::new();
+    let mut color: Option<Color> = None;
+    let (mut x, mut run_x) = (0.0f32, 0.0f32);
+    let mut run = String::new();
+    let mut i = 0;
+    let flush = |run: &mut String, run_x: f32, color: Option<Color>, runs: &mut Vec<(f32, Arc<str>, Option<Color>)>| {
+        if !run.trim().is_empty() {
+            runs.push((run_x, Arc::from(run.replace('\t', "    ").as_str()), color));
+        }
+        run.clear();
+    };
+    while i < bytes.len() {
+        let e = escape_len(&bytes[i..]);
+        if e > 0 {
+            flush(&mut run, run_x, color, &mut runs);
+            color = Some(escape_color(&bytes[i..]));
+            i += e;
+            run_x = x;
+            continue;
+        }
+        let ch = line[i..].chars().next().unwrap();
+        run.push(ch);
+        x += advance(kind, size, ch);
+        i += ch.len_utf8();
+    }
+    flush(&mut run, run_x, color, &mut runs);
+    let layout = Arc::new(LineLayout { width: line_width(kind, height, line), runs, end: color });
+    CACHE.with(|c| {
+        let mut c = c.borrow_mut();
+        if c.len() > 50_000 {
+            c.clear();
+        }
+        c.insert(key, layout.clone());
+    });
+    layout
+}
+
 /// Splits `s` into coloured runs placed as SimpleGraphic places them,
 /// starting in `color`; returns the runs and the colour left current.
 pub fn layout(
@@ -307,45 +364,25 @@ pub fn layout(
     screen_w: f32,
     mut color: Color,
 ) -> (Vec<TextRun>, Color) {
-    let size = em_size(height);
     let mut runs = Vec::new();
     let mut line_y = y.floor();
     for line in s.split('\n') {
         if !line.is_empty() {
-            let width = line_width(kind, height, line);
-            let mut cx = match align {
+            let l = layout_line(kind, height, line);
+            let start = match align {
                 Align::Left => x,
-                Align::Center => ((screen_w - width) / 2.0 + x).floor(),
-                Align::Right => (screen_w - width - x).floor(),
-                Align::CenterX => (x - width / 2.0).floor(),
-                Align::RightX => (x - width).floor(),
+                Align::Center => ((screen_w - l.width) / 2.0 + x).floor(),
+                Align::Right => (screen_w - l.width - x).floor(),
+                Align::CenterX => (x - l.width / 2.0).floor(),
+                Align::RightX => (x - l.width).floor(),
             }
             .round();
-            let bytes = line.as_bytes();
-            let mut i = 0;
-            let mut run = String::new();
-            let mut run_x = cx;
-            let flush = |run: &mut String, run_x: f32, color: Color, runs: &mut Vec<TextRun>| {
-                if !run.trim().is_empty() {
-                    runs.push(TextRun { x: run_x, y: line_y, text: Arc::from(run.replace('\t', "    ").as_str()), color });
-                }
-                run.clear();
-            };
-            while i < bytes.len() {
-                let e = escape_len(&bytes[i..]);
-                if e > 0 {
-                    flush(&mut run, run_x, color, &mut runs);
-                    color = escape_color(&bytes[i..]);
-                    i += e;
-                    run_x = cx;
-                    continue;
-                }
-                let ch = line[i..].chars().next().unwrap();
-                run.push(ch);
-                cx += advance(kind, size, ch);
-                i += ch.len_utf8();
+            for (offset, text, c) in &l.runs {
+                runs.push(TextRun { x: start + offset, y: line_y, text: text.clone(), color: c.unwrap_or(color) });
             }
-            flush(&mut run, run_x, color, &mut runs);
+            if let Some(end) = l.end {
+                color = end;
+            }
         }
         line_y += height;
     }

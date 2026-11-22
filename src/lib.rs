@@ -170,6 +170,11 @@ fn paint(frame: &Frame) -> Painter {
         .fill_color(rgba(frame.clear))
         .fill_rect(0.0, 0.0, frame.width, frame.height)
         .text_baseline(CanvasTextBaseline::Alphabetic);
+    // Every image drawn so far, first and out of sight: the canvas keeps
+    // only the images a drawing names, and finds them early in the list.
+    for uri in frame.images.iter() {
+        p = p.draw_image(uri, rect(-8.0, -8.0, 1.0, 1.0));
+    }
     let mut viewport: Option<[f32; 4]> = None;
     let mut alpha = 1.0f32;
     let mut font: Option<&str> = None;

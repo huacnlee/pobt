@@ -31,4 +31,8 @@ pub struct Frame {
     pub height: f32,
     pub clear: Color,
     pub items: Vec<Item>,
+    /// Every image drawn so far. A canvas lets go of the images a drawing
+    /// leaves out, so each drawing names them all first: they stay loaded
+    /// when POB stops drawing one for a while.
+    pub images: Arc<[Arc<str>]>,
 }
