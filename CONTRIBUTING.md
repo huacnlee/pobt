@@ -16,25 +16,26 @@ SimpleGraphic API POB is written against.
 
 | File | What it does |
 | --- | --- |
-| `src/host.rs` | Runs POB on its own thread: SimpleGraphic's functions (`DrawImage`, `DrawString`, `LaunchSubScript`, …), its callbacks, sub scripts, and the frames it draws |
-| `src/prelude.lua` | The Lua half of the API: image handles, file searches, modules, `PCall` |
-| `src/lua.rs` | A small binding to `lua51.dll`, loaded at run time so POB's native modules share the VM |
-| `src/translate.rs` | The dictionary: exact matches and number templates, colour codes kept |
-| `src/text.rs` | Colour escapes, measuring and laying out text with Microsoft YaHei / Consolas |
-| `src/images.rs`, `src/dds.rs` | Images for the canvas: tinted copies, art slices, POB2's `.dds.zst` textures |
-| `src/lib.rs` | The `PobCanvas` component (an NSH canvas, mouse and keys) and the `Pob` module |
-| `src/trs.rs` | The translation data, built in or from a `trs` folder |
-| `App.tsx` | The launcher and the update check |
+| `ext/pobt-native/src/host.rs` | Runs POB on its own thread: SimpleGraphic's functions (`DrawImage`, `DrawString`, `LaunchSubScript`, …), its callbacks, sub scripts, and the frames it draws |
+| `ext/pobt-native/src/prelude.lua` | The Lua half of the API: image handles, file searches, modules, `PCall` |
+| `ext/pobt-native/src/lua.rs` | A small binding to `lua51.dll`, loaded at run time so POB's native modules share the VM |
+| `ext/pobt-native/src/translate.rs` | The dictionary: exact matches and number templates, colour codes kept |
+| `ext/pobt-native/src/text.rs` | Colour escapes, measuring and laying out text with Segoe UI, Microsoft YaHei UI and Consolas |
+| `ext/pobt-native/src/images.rs`, `dds.rs` | Images for the canvas: tinted copies, art slices, POB2's `.dds.zst` textures |
+| `ext/pobt-native/src/lib.rs` | The `PobCanvas` component (an NSH canvas, mouse and keys) and the `Pob` module |
+| `ext/pobt-native/src/trs.rs` | The translations: the `trs` folder beside the program |
+| `ext/pobt-native/src/install.rs`, `loading.rs` | Installing Path of Building from its release and its runtime updates; how far it has loaded |
+| `src/App.tsx`, `src/gate.ts` | The launcher, its backdrop shader and the update check (`App.tsx` mounts it) |
 
 ## Developing
 
 You need Windows, Rust and the [nsh CLI](https://nsh.dev/docs/installation), at the version of the `nsh-*` crates in
-`Cargo.toml`, and Path of Building Community installed.
+`ext/pobt-native/Cargo.toml`, and Path of Building Community installed.
 
 ```sh
 nsh run                       # the app, rebuilt as you edit
 nsh check                     # cargo check, then type checks App.tsx
-cargo test --lib              # the dictionary and translation file tests
+cargo test --lib --manifest-path ext/pobt-native/Cargo.toml  # the Rust tests (dictionary, installs)
 nsh package --target windows  # POBT.zip
 ```
 

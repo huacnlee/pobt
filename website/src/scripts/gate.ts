@@ -1,7 +1,7 @@
 // The launcher's backdrop on the site: the same WGSL (../../../gate.ts) on WebGPU, as NSH's Shader element runs it.
 // The doorway draws once (and again on a resize) and its motion over it at 24 frames a second, as in the app.
 // Without WebGPU the page keeps its CSS doorway.
-import { GATE, GATE_MOTION } from '../../../gate';
+import { GATE, GATE_MOTION } from '../../../src/gate';
 
 // What NSH gives a shader: `nsh.size` in pixels and `nsh.time`; the motion's own `uniforms.time`. `shade(uv)` is
 // called with uv across the view, 0..1; its colour is straight alpha.

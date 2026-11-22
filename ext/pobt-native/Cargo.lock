@@ -1201,7 +1201,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "pobt"
+name = "pobt-native"
 version = "0.1.2"
 dependencies = [
  "ab_glyph",

@@ -16,7 +16,7 @@ pub fn root() -> Option<PathBuf> {
         .find(|d| d.join("languages.json").is_file())
         .or_else(|| {
             // Tests run from cargo's target folder, wherever it is.
-            let source = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("trs");
+            let source = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../trs");
             (cfg!(test) && source.is_dir()).then_some(source)
         })
 }

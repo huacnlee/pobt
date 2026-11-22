@@ -34,6 +34,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
+          workspaces: ext/pobt-native
+        with:
           key: release-windows
 
       - name: Install the NSH CLI
@@ -43,7 +45,7 @@ jobs:
           Add-Content $env:GITHUB_PATH (Join-Path $env:LOCALAPPDATA 'nsh\bin')
 
       - name: Test
-        run: cargo test --lib
+        run: cargo test --lib --manifest-path ext/pobt-native/Cargo.toml
 
       - name: Package
         run: |

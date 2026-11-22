@@ -1,5 +1,4 @@
 {
   "extends": "./.nsh/tsconfig.json",
-  "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["website", "node_modules", ".nsh/rust"]
+  "include": ["App.tsx", "src/**/*.ts", "src/**/*.tsx", "tests/**/*.tsx"]
 }
