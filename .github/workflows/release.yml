@@ -54,8 +54,6 @@ jobs:
           nsh package --target windows -o "$out" "${args[@]}"
           # The translations go beside POBT.exe, not into it, so anyone can edit them.
           cp -r trs "$out/POBT/trs"
-          # Which translations these are, so the app fetches newer ones only (trs.yml).
-          git rev-parse HEAD:trs > "$out/POBT/trs/.hash"
           (cd "$out" && for z in POBT.zip POBT-*.zip; do 7z a -tzip "$z" POBT/trs > /dev/null; done)
           ls -l "$out"
           mkdir -p dist

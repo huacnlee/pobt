@@ -785,8 +785,6 @@ function Loading(props: { t: () => Strings; progress: () => LoadProgress }) {
 }
 
 export function App() {
-  // The latest translations, fetched in the background for POB's next start.
-  Pob.updateTranslations();
   // No system title bar: the app draws its own (TitleBar).
   currentWindow().set({ titleBar: { style: "hidden", height: TITLE_BAR } });
   const running = signal(false);
