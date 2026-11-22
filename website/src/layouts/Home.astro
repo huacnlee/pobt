@@ -50,6 +50,7 @@ const otherName = other === 'en' ? 'English' : '简体中文';
 
     <main id="main">
       <section class="hero" id="download">
+        <div class="backdrop" id="backdrop" aria-hidden="true"><canvas></canvas><canvas></canvas></div>
         <div class="gate" aria-hidden="true"></div>
         <div class="beam" aria-hidden="true"></div>
         <div class="shell hero-text">
@@ -181,6 +182,11 @@ const otherName = other === 'en' ? 'English' : '简体中文';
       <p class="shell trademark">{t.trademark}</p>
     </footer>
 
+    <script>
+      import { startGate } from '../scripts/gate';
+      const backdrop = document.getElementById('backdrop');
+      if (backdrop) startGate(backdrop).catch((e) => { backdrop.dataset.error = String(e); console.warn('backdrop:', e); });
+    </script>
     <script>
       for (const button of document.querySelectorAll<HTMLButtonElement>('[data-copy]')) {
         button.addEventListener('click', async () => {

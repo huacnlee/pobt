@@ -215,3 +215,12 @@ footer { margin-top: 96px; padding: 24px 0 40px; background: linear-gradient(#07
 /* Sponsor, in the red of the start button. */
 nav a.sponsor-link { color: #e0604a; }
 nav a.sponsor-link:hover { color: #ff9a7e; text-shadow: 0 0 10px rgba(224, 96, 74, .85); }
+
+/* The launcher's own backdrop (src/scripts/gate.ts, WebGPU): the doorway, the light and the land beyond it. Where it
+   runs, the CSS doorway steps aside; it fades into the page at its foot. */
+.backdrop { position: absolute; z-index: -3; inset: -64px 0 0; pointer-events: none; }
+.backdrop canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity .6s; }
+.backdrop.gpu canvas { opacity: 1; }
+.backdrop.gpu { -webkit-mask: linear-gradient(#000 82%, transparent); mask: linear-gradient(#000 82%, transparent); }
+.backdrop.gpu ~ .gate, .backdrop.gpu ~ .beam { display: none; }
+.hero:has(.backdrop.gpu) { padding-bottom: 140px; }
