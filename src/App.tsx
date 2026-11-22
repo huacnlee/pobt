@@ -603,8 +603,6 @@ function GameCard(props: {
                 gap: 8,
                 paddingHorizontal: 12,
                 paddingVertical: 4,
-                borderWidth: 1,
-                borderColor: selected() ? C.trimHi : C.trim,
                 borderRadius: 12,
                 backgroundColor: "rgba(177,141,78,0.08)",
               }}
