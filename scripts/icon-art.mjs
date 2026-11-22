@@ -13,7 +13,9 @@ const out = process.env.ICON_OUT ?? join(root, "icon.png");
 
 const S = 1024;
 const C = S / 2;
-const R = 330; // the face
+const R = 288; // the face
+const RIM = R + 42; // the rim's middle: it is 64 wide
+const AT = R + 104; // where the points stand
 
 // A jewelled point, as the plaques end in, pointing up from (0, 0).
 const point = `
@@ -40,7 +42,7 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}">
       <stop offset=".45" stop-color="#7a1112"/>
       <stop offset="1" stop-color="#2a0405"/>
     </radialGradient>
-    <linearGradient id="letters" x1="0" y1="${C - 120}" x2="0" y2="${C + 90}" gradientUnits="userSpaceOnUse">
+    <linearGradient id="letters" x1="0" y1="${C - 96}" x2="0" y2="${C + 72}" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#fbf0c8"/>
       <stop offset=".38" stop-color="#e3c98a"/>
       <stop offset=".52" stop-color="#a7853f"/>
@@ -97,32 +99,37 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}">
     <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="12"/></filter>
     <clipPath id="plate"><rect x="32" y="32" width="${S - 64}" height="${S - 64}" rx="196"/></clipPath>
     <clipPath id="face"><circle cx="${C}" cy="${C}" r="${R}"/></clipPath>
-    <mask id="rimMask"><circle cx="${C}" cy="${C}" r="${R + 34}" fill="none" stroke="#fff" stroke-width="44"/></mask>
+    <mask id="rimMask"><circle cx="${C}" cy="${C}" r="${RIM}" fill="none" stroke="#fff" stroke-width="64"/></mask>
+    <mask id="railMask"><rect x="54" y="54" width="${S - 108}" height="${S - 108}" rx="176" fill="none" stroke="#fff" stroke-width="28"/></mask>
   </defs>
 
   <!-- Dark stone -->
   <rect x="32" y="32" width="${S - 64}" height="${S - 64}" rx="196" fill="url(#stone)"/>
   <g clip-path="url(#plate)"><rect width="100%" height="100%" filter="url(#grime)" opacity=".45"/></g>
-  <rect x="48" y="48" width="${S - 96}" height="${S - 96}" rx="182" fill="none" stroke="#000" stroke-opacity=".7" stroke-width="10"/>
-  <!-- The plate's edge, bevelled: light along the top left, dark along the bottom right -->
-  <rect x="40" y="40" width="${S - 80}" height="${S - 80}" rx="188" fill="none" stroke="#3a352d" stroke-width="14" filter="url(#emboss)"/>
+  <!-- The plate's edge, railed as the plaques are: black, tarnished gold in relief, grimed and rubbed, and a thin
+       gold line inside -->
+  <rect x="54" y="54" width="${S - 108}" height="${S - 108}" rx="176" fill="none" stroke="#000" stroke-width="44" opacity=".9"/>
+  <rect x="54" y="54" width="${S - 108}" height="${S - 108}" rx="176" fill="none" stroke="url(#gold)" stroke-width="28" filter="url(#emboss)"/>
+  <g mask="url(#railMask)" opacity=".9"><rect width="100%" height="100%" filter="url(#grime)"/></g>
+  <g mask="url(#railMask)" opacity=".6"><rect width="100%" height="100%" filter="url(#rub)"/></g>
+  <rect x="86" y="86" width="${S - 172}" height="${S - 172}" rx="146" fill="none" stroke="url(#gold)" stroke-width="4" opacity=".6"/>
   <!-- The medallion's shadow on the stone -->
-  <circle cx="${C + 14}" cy="${C + 30}" r="${R + 70}" fill="#000" opacity=".75" filter="url(#shadow)"/>
+  <circle cx="${C + 14}" cy="${C + 30}" r="${RIM + 40}" fill="#000" opacity=".75" filter="url(#shadow)"/>
 
   <!-- The points at the compass -->
   <g filter="url(#emboss)">
-  <g transform="translate(${C} ${C - R - 70})">${point}</g>
-  <g transform="translate(${C} ${C + R + 70}) rotate(180)">${point}</g>
-  <g transform="translate(${C - R - 70} ${C}) rotate(-90)">${point}</g>
-  <g transform="translate(${C + R + 70} ${C}) rotate(90)">${point}</g>
+  <g transform="translate(${C} ${C - AT}) scale(.78)">${point}</g>
+  <g transform="translate(${C} ${C + AT}) rotate(180) scale(.78)">${point}</g>
+  <g transform="translate(${C - AT} ${C}) rotate(-90) scale(.78)">${point}</g>
+  <g transform="translate(${C + AT} ${C}) rotate(90) scale(.78)">${point}</g>
   </g>
 
   <!-- The rim: a dark outline, tarnished gold, grimed and rubbed, a thin inner line -->
-  <circle cx="${C}" cy="${C}" r="${R + 34}" fill="none" stroke="#000" stroke-width="62" opacity=".85"/>
-  <circle cx="${C}" cy="${C}" r="${R + 34}" fill="none" stroke="url(#gold)" stroke-width="44" filter="url(#emboss)"/>
+  <circle cx="${C}" cy="${C}" r="${RIM}" fill="none" stroke="#000" stroke-width="86" opacity=".85"/>
+  <circle cx="${C}" cy="${C}" r="${RIM}" fill="none" stroke="url(#gold)" stroke-width="64" filter="url(#emboss)"/>
   <g mask="url(#rimMask)" opacity=".9"><rect width="100%" height="100%" filter="url(#grime)"/></g>
   <g mask="url(#rimMask)" opacity=".6"><rect width="100%" height="100%" filter="url(#rub)"/></g>
-  <circle cx="${C}" cy="${C}" r="${R + 6}" fill="none" stroke="url(#gold)" stroke-width="5" opacity=".7"/>
+  <circle cx="${C}" cy="${C}" r="${R + 6}" fill="none" stroke="url(#gold)" stroke-width="6" opacity=".7"/>
 
   <!-- The face: brushed crimson, darker at its rim -->
   <g clip-path="url(#face)">
@@ -138,10 +145,10 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}">
 
   <!-- POB in bevelled gold -->
   <g font-family="Cinzel" font-weight="700" text-anchor="middle">
-    <text x="${C}" y="${C + 82}" font-size="250" letter-spacing="-6" fill="#000" stroke="#000" stroke-width="16" opacity=".85" filter="url(#shadow)">POB</text>
-    <text x="${C}" y="${C + 70}" font-size="250" letter-spacing="-6" fill="none" stroke="#0c0803" stroke-width="22" stroke-linejoin="round">POB</text>
-    <text x="${C}" y="${C + 70}" font-size="250" letter-spacing="-6" fill="none" stroke="#5b4420" stroke-width="12" stroke-linejoin="round">POB</text>
-    <text x="${C}" y="${C + 70}" font-size="250" letter-spacing="-6" fill="url(#letters)" stroke="url(#letters)" stroke-width="8" stroke-linejoin="round" filter="url(#bevel)">POB</text>
+    <text x="${C}" y="${C + 68}" font-size="196" letter-spacing="-4" fill="#000" stroke="#000" stroke-width="16" opacity=".85" filter="url(#shadow)">POB</text>
+    <text x="${C}" y="${C + 58}" font-size="196" letter-spacing="-4" fill="none" stroke="#0c0803" stroke-width="22" stroke-linejoin="round">POB</text>
+    <text x="${C}" y="${C + 58}" font-size="196" letter-spacing="-4" fill="none" stroke="#5b4420" stroke-width="12" stroke-linejoin="round">POB</text>
+    <text x="${C}" y="${C + 58}" font-size="196" letter-spacing="-4" fill="url(#letters)" stroke="url(#letters)" stroke-width="8" stroke-linejoin="round" filter="url(#bevel)">POB</text>
   </g>
 </svg>`;
 
