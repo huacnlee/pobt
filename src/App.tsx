@@ -47,6 +47,7 @@ interface Strings {
   notFound: string;
   pick: string;
   install: string;
+  reset: string;
   installing: (done: number, total: number) => string;
   unpacking: (percent: number) => string;
   installFailed: string;
@@ -76,6 +77,7 @@ const UI: Record<string, Strings> = {
     notFound: "Path of Building not found: choose its folder",
     pick: "Choose folder…",
     install: "Install",
+    reset: "Reset",
     installing: (d, t) => `Downloading ${d} / ${t} MB`,
     unpacking: (p) => `Unpacking ${p}%`,
     installFailed: "Install failed",
@@ -102,6 +104,7 @@ const UI: Record<string, Strings> = {
     notFound: "未找到 Path of Building，请选择它的安装目录",
     pick: "选择目录…",
     install: "安装",
+    reset: "重置",
     installing: (d, t) => `下载中 ${d} / ${t} MB`,
     unpacking: (p) => `解压中 ${p}%`,
     installFailed: "安装失败",
@@ -128,6 +131,7 @@ const UI: Record<string, Strings> = {
     notFound: "找不到 Path of Building，請選擇它的安裝目錄",
     pick: "選擇目錄…",
     install: "安裝",
+    reset: "重置",
     installing: (d, t) => `下載中 ${d} / ${t} MB`,
     unpacking: (p) => `解壓中 ${p}%`,
     installFailed: "安裝失敗",
@@ -154,6 +158,7 @@ const UI: Record<string, Strings> = {
     notFound: "Path of Building을 찾을 수 없습니다. 폴더를 선택하세요",
     pick: "폴더 선택…",
     install: "설치",
+    reset: "초기화",
     installing: (d, t) => `다운로드 중 ${d} / ${t} MB`,
     unpacking: (p) => `압축 해제 중 ${p}%`,
     installFailed: "설치 실패",
@@ -482,6 +487,7 @@ function GameCard(props: {
   onSelect: () => void;
   onPick: () => void;
   onInstall: () => void;
+  onReset: () => void;
 }) {
   const selected = () => props.settings().game === props.game;
   const dir = () => dirOf(props.settings(), props.game);
@@ -543,6 +549,10 @@ function GameCard(props: {
             <Button label={props.t().install} onPress={() => !busy() && props.onInstall()} />
           </If>
           <Button label={props.t().pick} onPress={() => !busy() && props.onPick()} />
+          {/* Back to no folder, as on a first run */}
+          <If when={dir()}>
+            <Button label={props.t().reset} onPress={() => !busy() && props.onReset()} />
+          </If>
         </View>
       </View>
       {/* Its title plaque, set over the top edge */}
@@ -664,6 +674,13 @@ function Launcher(props: { onStart: () => void }) {
     update(game.id === "Poe1" ? { poe1_dir: dir, game: game.id } : { poe2_dir: dir, game: game.id });
   };
 
+  // Forgets the game's folder: the card is as on a first run, until one is chosen or found again.
+  const reset = (game: (typeof GAMES)[number]) => {
+    error.set("");
+    update(game.id === "Poe1" ? { poe1_dir: null } : { poe2_dir: null });
+    Pob.saveSettings(JSON.stringify(settings()));
+  };
+
   // Installing Path of Building: its progress, polled while it runs; done, its folder is the game's.
   const installing = signal<InstallProgress | null>(null);
   const watchInstall = () => {
@@ -736,6 +753,7 @@ function Launcher(props: { onStart: () => void }) {
                 onSelect={() => update({ game: g().id })}
                 onPick={() => pick(g())}
                 onInstall={() => install(g())}
+                onReset={() => reset(g())}
               />
             )}
           </Each>
