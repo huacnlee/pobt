@@ -35,7 +35,6 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: ext/pobt-native
-        with:
           key: release-windows
 
       - name: Install the NSH CLI
