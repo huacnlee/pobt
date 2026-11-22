@@ -81,3 +81,85 @@ pub fn languages() -> Vec<Language> {
     }
     list
 }
+
+/// Where the latest translations are published: `trs.json` (`{ "hash": … }`,
+/// the git tree of `trs/`) and `trs.zip`, on the `trs` release.
+const LATEST: &str = "https://github.com/huacnlee/pobt/releases/download/trs";
+
+/// Brings the `trs` folder beside the program up to the latest published, in
+/// the background: it takes effect the next time Path of Building starts. Not
+/// in a development run, whose `trs` is the source tree's.
+pub fn update_in_background() {
+    if cfg!(debug_assertions) {
+        return;
+    }
+    std::thread::spawn(|| match update() {
+        Ok(true) => log::info!("translations updated"),
+        Ok(false) => {}
+        Err(e) => log::warn!("updating translations: {e}"),
+    });
+}
+
+fn update() -> Result<bool, String> {
+    let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+    update_in(exe.parent().ok_or("no program folder")?)
+}
+
+/// Brings `dir`/trs up to the latest; true when it changed.
+fn update_in(dir: &std::path::Path) -> Result<bool, String> {
+    let trs = dir.join("trs");
+    let latest: serde_json::Value = ureq::get(&format!("{LATEST}/trs.json"))
+        .call()
+        .map_err(|e| e.to_string())?
+        .into_string()
+        .ok()
+        .and_then(|s| serde_json::from_str(&s).ok())
+        .ok_or("trs.json is not JSON")?;
+    let hash = latest["hash"].as_str().ok_or("trs.json has no hash")?;
+    let ours = std::fs::read_to_string(trs.join(".hash")).unwrap_or_default();
+    if ours.trim() == hash {
+        return Ok(false);
+    }
+
+    let mut zip = Vec::new();
+    std::io::Read::read_to_end(
+        &mut ureq::get(&format!("{LATEST}/trs.zip")).call().map_err(|e| e.to_string())?.into_reader(),
+        &mut zip,
+    )
+    .map_err(|e| e.to_string())?;
+    // Unpacked beside it, then swapped in: a failed download or unpack leaves the old one.
+    let staging = dir.join("trs.new");
+    let _ = std::fs::remove_dir_all(&staging);
+    let mut archive = zip::ZipArchive::new(std::io::Cursor::new(zip)).map_err(|e| e.to_string())?;
+    archive.extract(&staging).map_err(|e| e.to_string())?;
+    if !staging.join("languages.json").is_file() {
+        let _ = std::fs::remove_dir_all(&staging);
+        return Err("trs.zip has no languages.json".into());
+    }
+    std::fs::write(staging.join(".hash"), hash).map_err(|e| e.to_string())?;
+    let old = dir.join("trs.old");
+    let _ = std::fs::remove_dir_all(&old);
+    if trs.exists() {
+        std::fs::rename(&trs, &old).map_err(|e| format!("{}: {e}", trs.display()))?;
+    }
+    std::fs::rename(&staging, &trs).map_err(|e| format!("{}: {e}", trs.display()))?;
+    let _ = std::fs::remove_dir_all(&old);
+    Ok(true)
+}
+
+#[cfg(test)]
+mod tests {
+    /// Fetches the published translations into a new folder, then finds them current:
+    /// `cargo test --lib fetches_translations -- --ignored`.
+    #[test]
+    #[ignore]
+    fn fetches_translations() {
+        let dir = std::env::temp_dir().join(format!("pobt-trs-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        assert_eq!(super::update_in(&dir), Ok(true));
+        assert!(dir.join("trs/languages.json").is_file());
+        assert!(dir.join("trs/zh-rCN").is_dir());
+        assert_eq!(super::update_in(&dir), Ok(false));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+}

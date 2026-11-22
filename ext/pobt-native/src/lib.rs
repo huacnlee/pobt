@@ -163,6 +163,12 @@ impl Pob {
         });
     }
 
+    /// Brings the translations up to the latest published, in the background
+    /// (not in a development run); they apply as Path of Building next starts.
+    pub fn update_translations() {
+        trs::update_in_background();
+    }
+
     /// Installs a game's Path of Building ("poe1" or "poe2") from its latest
     /// release beside POBT.exe, in the background; false while one installs.
     pub fn install(game: String) -> bool {
