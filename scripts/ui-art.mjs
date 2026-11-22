@@ -15,10 +15,13 @@ const CAP = 64;
 const MID = 512; // wide, so stretching it barely smears the grime
 
 // Each face: its gradient from top to bottom, how much grime darkens it, and a glow at its heart.
+// The gold of the trim, unless a face has its own.
+const RAIL = ["#cdb882", "#8f7646", "#45361d", "#977f50"];
+
 const faces = {
   red: { stops: ["#941d1a", "#6a0e0f", "#3c0707", "#2a0505"], grime: 0.18, glow: "#b82a24" },
   dark: { stops: ["#1d1a16", "#110f0d", "#090807", "#0e0c0a"], grime: 0.12, glow: null },
-  brass: { stops: ["#c4ae7a", "#a08654", "#755e36", "#937b4c"], grime: 0.2, glow: null },
+  brass: { stops: ["#ebdfb2", "#dccb93", "#c8b077", "#d6c088"], grime: 0.22, glow: "#fff4d0", rail: ["#8a6c3a", "#5e4622", "#2e210f", "#6b5129"] },
 };
 
 const defs = (face, seed) => `
@@ -34,10 +37,10 @@ const defs = (face, seed) => `
       <stop offset="1" stop-color="${face.glow ?? "#000"}" stop-opacity="0"/>
     </radialGradient>
     <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#cdb882"/>
-      <stop offset=".3" stop-color="#8f7646"/>
-      <stop offset=".62" stop-color="#45361d"/>
-      <stop offset="1" stop-color="#977f50"/>
+      <stop offset="0" stop-color="${(face.rail ?? RAIL)[0]}"/>
+      <stop offset=".3" stop-color="${(face.rail ?? RAIL)[1]}"/>
+      <stop offset=".62" stop-color="${(face.rail ?? RAIL)[2]}"/>
+      <stop offset="1" stop-color="${(face.rail ?? RAIL)[3]}"/>
     </linearGradient>
     <filter id="grime" x="0" y="0" width="100%" height="100%">
       <feTurbulence type="fractalNoise" baseFrequency=".09 .22" numOctaves="3" seed="${seed}"/>

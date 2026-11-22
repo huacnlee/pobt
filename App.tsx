@@ -139,7 +139,7 @@ function strings(language: string | null): Strings {
 // Path of Exile 2's look: aged gold trim, plaques with pointed ends, cold light through a gothic door.
 const C = {
   bg: "#07080a",
-  panel: "rgba(9,9,10,0.82)",
+  panel: "rgba(5,6,9,0.9)",
   trim: "#6b522c",
   trimHi: "#b18d4e",
   gold: "#d8bd85",
@@ -435,7 +435,7 @@ function Launcher(props: { onStart: () => void }) {
             PATH OF BUILDING
           </Text>
           <Image src={rule} style={{ width: 560, height: 19 }} />
-          <Text style={{ fontFamily: BODY, fontSize: 14, color: C.text, textShadow: "0 1px 2px #000" }}>{t().subtitle}</Text>
+          <Text style={{ fontFamily: BODY, fontSize: 14, color: C.text, textShadow: "0 0 3px #000, 0 0 8px #000, 0 0 14px #000, 0 1px 2px #000" }}>{t().subtitle}</Text>
         </View>
 
         {/* Games */}
