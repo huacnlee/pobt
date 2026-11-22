@@ -159,7 +159,7 @@ impl Pob {
     }
 
     /// Installs a game's Path of Building ("poe1" or "poe2") from its latest
-    /// release into POBT's folder, in the background; false while one installs.
+    /// release beside POBT.exe, in the background; false while one installs.
     pub fn install(game: String) -> bool {
         install::start(game_of(&game))
     }

@@ -1,5 +1,5 @@
 //! Path of Building where there is none: its portable release from GitHub,
-//! downloaded and unpacked into POBT's own folder; and the part of POB's
+//! downloaded and unpacked beside POBT.exe; and the part of POB's
 //! updates that replaces its runtime (its DLLs), which POB leaves to its
 //! `Update.exe` and POBT applies before it loads them.
 
@@ -14,9 +14,10 @@ use serde::Serialize;
 
 use crate::settings::Game;
 
-/// Where a game's Path of Building is installed by POBT.
+/// Where POBT installs a game's Path of Building: beside its program.
 pub fn install_dir(game: Game) -> Option<PathBuf> {
-    let base = dirs::data_local_dir()?.join("pobt");
+    let exe = std::env::current_exe().ok()?;
+    let base = exe.parent()?;
     Some(base.join(match game {
         Game::Poe1 => "PathOfBuildingCommunity",
         Game::Poe2 => "PathOfBuildingCommunity-PoE2",
