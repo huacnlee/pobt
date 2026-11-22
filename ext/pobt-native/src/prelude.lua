@@ -397,7 +397,8 @@ function print(...)
 	log(table.concat(parts, " "))
 end
 
--- Text in edit boxes is what the user typed: never translate it.
+-- Text in edit boxes is what the user typed: never translate it. Their labels ("Level", "Search") and
+-- placeholders are POB's: translated before the box draws.
 function __pobt_hookClasses()
 	local classes = common and common.classes
 	if not classes or not classes.EditControl or classes.EditControl.__pobt or type(classes.EditControl.Draw) ~= "function" then
@@ -405,10 +406,18 @@ function __pobt_hookClasses()
 	end
 	local edit = classes.EditControl
 	local draw = edit.Draw
-	edit.Draw = function(...)
+	edit.Draw = function(self, ...)
+		local prompt, placeholder = self.prompt, self.placeholder
+		if type(prompt) == "string" then
+			self.prompt = sg.Translate(prompt)
+		end
+		if type(placeholder) == "string" then
+			self.placeholder = sg.Translate(placeholder)
+		end
 		sg.SetRawText(true)
-		local r = pack(pcall(draw, ...))
+		local r = pack(pcall(draw, self, ...))
 		sg.SetRawText(false)
+		self.prompt, self.placeholder = prompt, placeholder
 		if not r[1] then
 			error(r[2], 0)
 		end

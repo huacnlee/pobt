@@ -11,3 +11,6 @@
 The translation data in this directory comes from the `Data/Translate` directory of
 [PoeCharm2](https://github.com/Chuanhsing/PoeCharm2) and remains the work of its authors
 and contributors.
+
+`*/POBT.csv` 是 POBT 自己补充的词条（上游没有的界面文字），不来自 PoeCharm2。
+`*/POBT.csv` holds POBT's own entries, for text upstream lacks; it does not come from PoeCharm2.
