@@ -47,3 +47,38 @@ The art in `assets/ui` and `icon.png` is drawn by scripts (`bun add @resvg/resvg
 
 Bump `version` in `nsh.json` and `Cargo.toml`, then push a tag `vX.Y.Z`. The Release workflow packages Windows,
 writes the updater's `latest.json` and publishes the GitHub release; installed apps update from it.
+
+## Commits and pull requests
+
+Submit **one pull request that does one thing**, and keep the diff as small as practical. Pull requests are squash
+merged, so the title becomes the commit on `main` and GitHub appends its number.
+
+Commit subjects and pull request titles name the area first, then say what changed as an imperative sentence:
+
+```
+<area>: <What the change does>
+```
+
+- The area is the part of POBT the change is about, in lower case: `canvas` (drawing POB's frames), `input` (mouse
+  and keys), `text`, `images`, `host` (the SimpleGraphic API and POB's thread), `translate` (the dictionary), `trs`
+  (the translations), `install` (installing and updating Path of Building), `updates` (POBT's own updates),
+  `launcher`, `website`, `scripts`, `ci`, `docs`. Name one area only: when a change spans several, name the part it
+  is mostly about.
+- The sentence starts with a capital letter, uses the imperative mood, has no trailing period and fits in about 72
+  characters with its area. It says what the change does for a user of POBT, not which files moved:
+  `input: Zoom the passive tree in when the wheel scrolls up`, not `input: Update lib.rs`.
+- Do not use conventional prefixes (`fix:`, `feat:`, `chore:`).
+- The body (optional for small changes) explains why, wrapped at 72 columns: the problem, the approach and what it
+  costs.
+
+A pull request's description follows the template: what it changes and why, screenshots before and after for a
+change you can see, and how you tested it (`nsh check`, the Rust tests, and a run of the app for anything visible).
+
+Examples:
+
+```
+input: Zoom the passive tree in when the wheel scrolls up
+text: Set POB's text on whole device pixels
+trs: Translate the Calcs tab's section headers
+install: Resume a Path of Building download that was cut off
+```
