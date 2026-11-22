@@ -76,7 +76,7 @@ const UI: Record<string, Strings> = {
   },
   "zh-rCN": {
     games: { Poe1: "流放之路", Poe2: "流放之路 2" },
-    subtitle: "运行你的 Path of Building，界面换成你的语言",
+    subtitle: "POB 构筑的多语言翻译",
     pobFolder: "PATH OF BUILDING",
     notFound: "未找到 Path of Building，请选择它的安装目录",
     pick: "选择目录…",
@@ -92,7 +92,7 @@ const UI: Record<string, Strings> = {
   },
   "zh-rTW": {
     games: { Poe1: "流亡黯道", Poe2: "流亡黯道 2" },
-    subtitle: "執行你的 Path of Building，介面換成你的語言",
+    subtitle: "POB 構築的多語言翻譯",
     pobFolder: "PATH OF BUILDING",
     notFound: "找不到 Path of Building，請選擇它的安裝目錄",
     pick: "選擇目錄…",
