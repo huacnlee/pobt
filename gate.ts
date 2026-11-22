@@ -42,7 +42,8 @@ fn fbm(p: vec2f) -> f32 {
 const DOOR_HW = 0.38;
 const DOOR_RISE = 0.32;
 const DOOR_SPRING = 0.44;
-const FLOOR = 0.95;
+// The doorway runs down past the bottom of the view.
+const FLOOR = 1.1;
 const FRAME = 0.12;
 
 // Distance-ish to the doorway: negative inside.
@@ -126,18 +127,21 @@ fn shade(uv: vec2f) -> vec4f {
 
   // Light through the door: walk from p towards the sun; where the way passes through the doorway, p is in the
   // beam. Parallel rays make the beam the door's shape, cast down and to the left into the room.
+  // Three ways a little apart make the beam fan out; its edges soften the further it travels (a penumbra), and it
+  // fades as it goes.
   var beam = 0.0;
-  var reach = 0.0;
-  for (var i = 1; i <= 28; i++) {
-    let s = f32(i) * 0.03;
-    if (doorway(p + toSun * s, cx) < 0.0) {
-      beam = 1.0;
-      reach = s;
-      break;
+  for (var k = -1.0; k <= 1.0; k += 1.0) {
+    let a = k * 0.07;
+    let dir = vec2f(toSun.x * cos(a) - toSun.y * sin(a), toSun.x * sin(a) + toSun.y * cos(a));
+    var hit = 0.0;
+    for (var i = 1; i <= 24; i++) {
+      let s = f32(i) * 0.035;
+      let pen = 0.015 + 0.11 * s;
+      hit = max(hit, smoothstep(pen, -pen, doorway(p + dir * s, cx)) * exp(-s * 1.1));
     }
+    beam += hit / 3.0;
   }
-  // The beam fades as it travels from the door, and its edges soften with it.
-  let beamFall = beam * exp(-reach * 1.6) * (1.0 - open);
+  let beamFall = beam * (1.0 - open);
 
   // The wall around the door, seen from inside: in shadow, but for light thrown back from the floor near the door.
   let m = masonry(p);
@@ -176,14 +180,13 @@ fn shade(uv: vec2f) -> vec4f {
   if (open > 0.5) {
     let haze = fbm(p * vec2f(2.5, 1.8) + vec2f(-t * 0.02, t * 0.008));
     let sun = smoothstep(1.1, -0.1, distance(p, vec2f(cx + 0.35, DOOR_SPRING - DOOR_RISE - 0.05)));
-    let sky = mix(dusk * 0.42, dusk * 1.05, clamp(sun * (0.6 + 0.5 * haze), 0.0, 1.0));
+    // White at the sun, cold blue away from it.
+    let sky = mix(vec3f(0.36, 0.46, 0.62), vec3f(1.03, 1.04, 1.06), clamp(sun * (0.6 + 0.5 * haze), 0.0, 1.0));
     // The land outside below the horizon: grey, darker near, a lit path running off into the haze.
     let horizon = 0.62;
     let depth = clamp((p.y - horizon) / (FLOOR - horizon), 0.0, 1.0);
-    let ground = dusk * mix(0.36, 0.1, depth) * (0.75 + 0.35 * fbm(vec2f(p.x * 6.0 / (0.2 + depth), depth * 8.0)));
-    let path = smoothstep(0.05 + depth * 0.2, 0.0, abs(p.x - cx - 0.04 * (1.0 - depth))) * (1.0 - depth * 0.5);
-    let land = ground + dusk * 0.18 * path;
-    col = mix(sky, land, smoothstep(horizon - 0.01, horizon + 0.02, p.y));
+    let ground = vec3f(0.62, 0.7, 0.82) * mix(0.55, 0.3, depth) * (0.8 + 0.3 * fbm(vec2f(p.x * 5.0 / (0.3 + depth), depth * 6.0 + t * 0.01)));
+    col = mix(sky, ground, smoothstep(horizon - 0.04, horizon + 0.08, p.y));
   }
   // A thin edge of light round the opening, where it spills past the stone.
   col += dusk * 0.35 * smoothstep(0.012, 0.0, max(dd, 0.0)) * (1.0 - open);
@@ -197,9 +200,11 @@ fn shade(uv: vec2f) -> vec4f {
   let layerNear = 0.45 + 0.55 * noise(vec2f(across * 2.4 + t * 0.018, along2 * 0.9 + 3.0));
   let mist = fbm(p * 2.2 + vec2f(t * 0.03, -t * 0.01));
   let shafts = beamFall * (0.18 * layerFar + 0.24 * layerMid + 0.3 * layerNear) * (0.6 + 0.7 * mist);
-  col += dusk * shafts;
+  // The beam itself: white where it is thick, cold blue where the mist thins it.
+  let beamCol = mix(vec3f(0.55, 0.7, 1.0), vec3f(1.0, 1.0, 1.0), clamp(layerNear * mist, 0.0, 1.0));
+  col += beamCol * shafts;
   // Where the beam meets the floor, a pool of light shaped like the door.
-  col += dusk * 0.22 * beamFall * smoothstep(0.78, 0.98, p.y);
+  col += vec3f(0.8, 0.88, 1.0) * 0.14 * beamFall * smoothstep(0.6, 1.05, p.y);
 
   // Ash drifting down through the light.
   var ash = 0.0;

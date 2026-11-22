@@ -484,7 +484,9 @@ function Launcher(props: { onStart: () => void }) {
         <View style={{ alignItems: "center", gap: 4 }}>
           <Image src={title} style={{ width: 760, height: 104.5 }} accessibilityLabel="Path of Building" />
           <Rule width={560} />
-          <Text style={{ fontFamily: BODY, fontSize: 14, color: C.text, textShadow: "0 0 3px #000, 0 0 8px #000, 0 0 14px #000, 0 1px 2px #000" }}>{t().subtitle}</Text>
+          <View style={{ paddingHorizontal: 14, paddingVertical: 3, backgroundImage: "linear-gradient(90deg, rgba(0,0,0,0), rgba(0,0,0,0.6) 18%, rgba(0,0,0,0.6) 82%, rgba(0,0,0,0))" }}>
+            <Text style={{ fontFamily: BODY, fontSize: 14, color: C.text, textShadow: "0 0 3px #000, 0 0 8px #000, 0 0 14px #000, 0 1px 2px #000" }}>{t().subtitle}</Text>
+          </View>
         </View>
 
         {/* Games */}
