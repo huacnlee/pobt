@@ -9,3 +9,23 @@
 "Combined Average Projectiles",平均合计投射物
 "PoB Community Fork",PoB 社区版
 Immune,免疫
+"Socket #{0}",插槽 #{0}
+Sockets,插槽
+"Any Loadout",任意配装
+"Del Unused",删除未使用
+"Del All",全部删除
+Head,头部
+Body,身体
+Arm,手臂
+Leg,腿部
+Requires,需求
+Str,力量
+Dex,敏捷
+Int,智慧
+"Tip: Hold Shift to display a tooltip for the granted skill.","提示: 按住 Shift 显示所给技能的提示"
+"Tip: Press Ctrl+C to copy this node's text.","提示: 按 Ctrl+C 复制此天赋点的文本"
+"Distance Ramp",距离递增
+"{0}% per Frenzy Charge","每个狂怒球 {0}%"
+"{0}% per Power Charge","每个暴击球 {0}%"
+"{0}% per Endurance Charge","每个耐力球 {0}%"
+"{0}% per {1} Mana Cost","每 {1} 点魔力消耗 {0}%"
