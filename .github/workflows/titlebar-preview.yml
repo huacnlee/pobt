@@ -1,0 +1,44 @@
+name: macOS title bar preview
+on:
+  push:
+    branches: [agent/T-10864-screenshot]
+permissions:
+  contents: read
+jobs:
+  preview:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build POBT
+        run: |
+          curl -fsSL https://nsh.dev/install.sh | sh
+          "$HOME/.nsh/bin/nsh" package --target macos --arch aarch64 -o "$RUNNER_TEMP/out"
+          cp -r trs "$RUNNER_TEMP/out/POBT.app/Contents/Resources/trs"
+          codesign --force --sign - --timestamp=none "$RUNNER_TEMP/out/POBT.app"
+      - name: Capture the launcher window
+        run: |
+          cat > "$RUNNER_TEMP/window.swift" <<'SWIFT'
+          import CoreGraphics
+          import Foundation
+          let pid = Int(CommandLine.arguments[1])!
+          for _ in 0..<60 {
+              let windows = CGWindowListCopyWindowInfo(.optionOnScreenOnly, kCGNullWindowID) as? [[String: Any]] ?? []
+              if let window = windows.first(where: { $0[kCGWindowOwnerPID as String] as? Int == pid && $0[kCGWindowLayer as String] as? Int == 0 }),
+                 let id = window[kCGWindowNumber as String] as? Int {
+                  print(id)
+                  exit(0)
+              }
+              Thread.sleep(forTimeInterval: 1)
+          }
+          exit(1)
+          SWIFT
+          "$RUNNER_TEMP/out/POBT.app/Contents/MacOS/POBT" &
+          pid=$!
+          trap 'kill "$pid" || true' EXIT
+          window=$(swift "$RUNNER_TEMP/window.swift" "$pid")
+          sleep 3
+          screencapture -x -o -l "$window" launcher.png
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macOS-launcher
+          path: launcher.png
