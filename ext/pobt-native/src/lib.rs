@@ -3,6 +3,7 @@
 //! `PobCanvas` component draws its frames and sends it the mouse and keys.
 //! The rest of the UI is `App.tsx`, over the `Pob` module.
 
+pub mod account;
 pub mod dds;
 pub mod frame;
 pub mod host;
@@ -12,6 +13,7 @@ pub mod loading;
 pub mod lua;
 #[cfg(not(windows))]
 pub mod modules;
+pub mod reverse;
 pub mod settings;
 pub mod text;
 pub mod translate;
@@ -264,6 +266,63 @@ impl Pob {
         } else {
             "stayed".into()
         }
+    }
+
+    /// The accounts used before, the last first, as JSON `[{ realm, name,
+    /// sessid }]` (`realm`: "pc", "xbox", "sony" or "tencent").
+    pub fn accounts() -> String {
+        serde_json::to_string(&account::accounts()).unwrap_or_default()
+    }
+
+    /// Keeps the accounts given as the JSON `accounts()` returns.
+    pub fn save_accounts(json: String) {
+        if let Ok(list) = serde_json::from_str::<Vec<account::Account>>(&json) {
+            account::save_accounts(&list);
+        }
+    }
+
+    /// Starts a job on an account in the background: `kind` "characters"
+    /// lists its characters, "export" makes one a build (`json`: `{ account,
+    /// character, pob_dir }`; then `save_build` saves it where the user
+    /// chose in `builds`). False while
+    /// one runs; `account_progress` says how it goes.
+    pub fn account_start(kind: String, json: String) -> bool {
+        let Ok(request) = serde_json::from_str::<account::Request>(&json) else { return false };
+        if kind == "export" {
+            // A POB of its own, beside the one running if one is, on POB's LuaJIT, which a process keeps: the same
+            // POB's only.
+            let busy = lua::loaded_from().is_some_and(|d| d != std::path::Path::new(&request.pob_dir));
+            if busy {
+                return account::fail(&kind, "restart");
+            }
+        }
+        account::start(&kind, request)
+    }
+
+    /// POB's builds folder, where the last export's build would go, as JSON
+    /// `{ root, tree }`: `tree` its folders and builds, `[{ name, path, dir,
+    /// children? }]`, `path` from `root`. "" before an export.
+    pub fn builds() -> String {
+        match account::builds() {
+            Some((root, tree)) => serde_json::json!({ "root": root.display().to_string(), "tree": tree }).to_string(),
+            None => String::new(),
+        }
+    }
+
+    /// Saves the last export's build at `path` in POB's builds folder (as
+    /// `builds` gives paths): a build there replaced, or a new one. The path
+    /// it was saved at, or "error: …".
+    pub fn save_build(path: String) -> String {
+        match account::save_build(&path) {
+            Ok(file) => file.display().to_string(),
+            Err(e) => format!("error: {e}"),
+        }
+    }
+
+    /// The account job running or last run, as JSON `{ kind, state, step,
+    /// error, result }` (`state`: "running", "done", "failed"); "" for none.
+    pub fn account_progress() -> String {
+        account::progress().map(|p| serde_json::to_string(&p).unwrap_or_default()).unwrap_or_default()
     }
 
     /// Switches the translation on or off while POB runs.
