@@ -69,6 +69,14 @@ POBT 可以代替 Path of Building 自带的程序使用：它运行的是 Path 
 irm https://huacnlee.github.io/pobt/install.ps1 | iex
 ```
 
+macOS（Apple 芯片）或 Linux（x86_64、arm64）用下面的命令安装或更新：
+
+```bash
+curl -fsSL https://huacnlee.github.io/pobt/install.sh | bash
+```
+
+脚本会校验 checksum；macOS 把 `POBT.app` 放进「应用程序」，Linux 安装到 `~/.local/share/pobt`，并添加 `pobt` 命令和启动器入口。
+
 ## 运行需要
 
 - 64 位 Windows 10 或 11
