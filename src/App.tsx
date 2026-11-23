@@ -637,7 +637,7 @@ motionTime.timing(86400, { duration: 86400 * 1000, easing: Easing.linear, frameR
 const TITLE_BAR = 44;
 
 /** The window's title bar, drawn by the app: POBT at the left (a link to the site); the system draws the window's
- * buttons at its right end. Dragging it moves the window. Over the launcher's backdrop it is clear, with the version
+ * buttons in the reserved title bar area. Dragging it moves the window. Over the launcher's backdrop it is clear, with the version
  * and the update check; over Path of Building, `solid`, with only a way back to the launcher (`onBack`). */
 function TitleBar(props: { t: () => Strings; solid?: boolean; onBack?: () => void }) {
   const brandHover = signal(false);
@@ -651,7 +651,7 @@ function TitleBar(props: { t: () => Strings; solid?: boolean; onBack?: () => voi
         flexDirection: "row",
         alignItems: "center",
         gap: 10,
-        paddingLeft: 20,
+        paddingLeft: win.titleBar().left + 20,
         paddingRight: win.titleBar().right + 12,
         backgroundColor: props.solid ? "#07080a" : "transparent",
         borderBottomWidth: props.solid ? 1 : 0,
