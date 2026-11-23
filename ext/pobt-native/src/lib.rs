@@ -10,6 +10,8 @@ pub mod images;
 pub mod install;
 pub mod loading;
 pub mod lua;
+#[cfg(not(windows))]
+pub mod modules;
 pub mod settings;
 pub mod text;
 pub mod translate;

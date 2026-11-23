@@ -12,14 +12,16 @@ They are not built into the app: the release puts the `trs` folder beside `POBT.
 ## How it works
 
 POBT changes no file of Path of Building. It runs POB's Lua on the LuaJIT POB ships (`lua51.dll`) and implements the
-SimpleGraphic API POB is written against.
+SimpleGraphic API POB is written against. POB ships its LuaJIT and native modules for Windows only: on macOS and Linux
+POBT links its own LuaJIT and stands in for the modules POB uses (lcurl, lzip, lua-utf8).
 
 | File | What it does |
 | --- | --- |
 | `ext/pobt-native/src/host.rs` | Runs POB on its own thread: SimpleGraphic's functions (`DrawImage`, `DrawString`, `LaunchSubScript`, …), its callbacks, sub scripts, and the frames it draws |
 | `ext/pobt-native/src/prelude.lua` | The Lua half of the API: image handles, file searches, modules, `PCall` |
 | `ext/pobt-native/src/demo.lua` | A few of POB's edit boxes on their own, for the tests and to try typing by hand |
-| `ext/pobt-native/src/lua.rs` | A small binding to `lua51.dll`, loaded at run time so POB's native modules share the VM |
+| `ext/pobt-native/src/lua.rs` | A small binding to LuaJIT: `lua51.dll`, loaded at run time so POB's native modules share the VM; elsewhere the one linked in |
+| `ext/pobt-native/src/modules.rs`, `modules.lua` | Outside Windows, stand-ins for POB's native modules: lcurl (over `ureq`), lzip and lua-utf8 |
 | `ext/pobt-native/src/translate.rs` | The dictionary: exact matches and number templates, colour codes kept |
 | `ext/pobt-native/src/text.rs` | Colour escapes, measuring and laying out text with Segoe UI, Microsoft YaHei UI and Consolas |
 | `ext/pobt-native/src/images.rs`, `dds.rs` | Images for the canvas: tinted copies, art slices, POB2's `.dds.zst` textures |

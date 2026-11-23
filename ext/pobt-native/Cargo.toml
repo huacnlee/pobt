@@ -11,7 +11,6 @@ publish = false
 [dependencies]
 nsh-core = "0.6.1"
 log = "0.4"
-libloading = "0.8"
 ab_glyph = "0.2"
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp", "bmp", "gif"] }
 flate2 = "1"
@@ -24,6 +23,13 @@ zstd = "0.13"
 texture2ddecoder = "0.1"
 ureq = "2"
 zip = { version = "2", default-features = false, features = ["deflate"] }
+
+# POB ships its LuaJIT for Windows only (`lua51.dll`): elsewhere POBT builds its own in.
+[target.'cfg(windows)'.dependencies]
+libloading = "0.8"
+
+[target.'cfg(not(windows))'.dependencies]
+mlua-sys = { version = "0.14", features = ["luajit", "vendored"] }
 
 [profile.dev.package."*"]
 opt-level = 2

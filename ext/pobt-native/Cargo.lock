@@ -910,6 +910,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5d15f86d12da44cd8d4ec3c73984537eb7f4cadcb9776a575a0a8a05ca11005c"
 
 [[package]]
+name = "lua-src"
+version = "551.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc850974ab58b3b4bb65ac2415a077861a1c16b087629ee01cd04ccb9c82be61"
+dependencies = [
+ "cc",
+]
+
+[[package]]
+name = "luajit-src"
+version = "210.7.5+63c8f1a"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a98fb6f037124098f4c2283286a0431a4bb0b1d243b90ca1a4d34dd268ea5b96"
+dependencies = [
+ "cc",
+ "which",
+]
+
+[[package]]
 name = "maybe-owned"
 version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -950,6 +969,20 @@ dependencies = [
  "libc",
  "wasi",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "mlua-sys"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8db86de232224cf3909104dd1a2b46eaf94f0f31e137dd15f1ff185a1e54a31f"
+dependencies = [
+ "cc",
+ "cfg-if",
+ "libc",
+ "lua-src",
+ "luajit-src",
+ "pkg-config",
 ]
 
 [[package]]
@@ -1212,6 +1245,7 @@ dependencies = [
  "image",
  "libloading",
  "log",
+ "mlua-sys",
  "nsh-core",
  "serde",
  "serde_json",
@@ -1919,6 +1953,15 @@ name = "weezl"
 version = "0.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a28ac98ddc8b9274cb41bb4d9d4d5c425b6020c50c46f25559911905610b4a88"
+
+[[package]]
+name = "which"
+version = "8.0.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bae2f2b2b816647a1cab1acc91f5bd20812d53cb344382635ec2181940c8034f"
+dependencies = [
+ "libc",
+]
 
 [[package]]
 name = "winapi-util"

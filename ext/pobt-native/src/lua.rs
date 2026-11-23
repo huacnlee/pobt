@@ -1,6 +1,8 @@
-//! A minimal binding to the LuaJIT shipped with Path of Building
-//! (`lua51.dll`), loaded at run time so POB's own native modules (lcurl,
-//! lzip, lua-utf8) share the one VM.
+//! A minimal binding to LuaJIT. On Windows it is the one shipped with Path of
+//! Building (`lua51.dll`), loaded at run time so POB's own native modules
+//! (lcurl, lzip, lua-utf8) share the one VM. POB ships no LuaJIT for other
+//! systems: there POBT links its own and stands in for those modules
+//! (`modules.lua`).
 //!
 //! Native functions never raise Lua errors: `lua_error` unwinds with SEH
 //! across Rust frames. Argument checks that must raise live in the Lua
@@ -35,10 +37,30 @@ pub const LUA_TTABLE: c_int = 5;
 macro_rules! lua_api {
     ($($name:ident: fn($($arg:ty),*) $(-> $ret:ty)?;)*) => {
         pub struct Api {
+            #[cfg(windows)]
             _lib: libloading::Library,
             $(pub $name: unsafe extern "C" fn($($arg),*) $(-> $ret)?,)*
         }
 
+        /// The LuaJIT linked in (built by `mlua-sys`).
+        #[cfg(not(windows))]
+        mod linked {
+            use super::*;
+            use mlua_sys as _;
+
+            unsafe extern "C" {
+                $(pub fn $name($(_: $arg),*) $(-> $ret)?;)*
+            }
+        }
+
+        #[cfg(not(windows))]
+        impl Api {
+            fn linked() -> Self {
+                Self { $($name: linked::$name,)* }
+            }
+        }
+
+        #[cfg(windows)]
         impl Api {
             unsafe fn load(lib: libloading::Library) -> Result<Self, libloading::Error> {
                 unsafe {
@@ -96,6 +118,7 @@ pub fn loaded_from() -> Option<&'static Path> {
 }
 
 /// Loads `lua51.dll` from POB's directory. Called once, before any state.
+#[cfg(windows)]
 pub fn init(pob_dir: &Path) -> Result<(), String> {
     if API.get().is_some() {
         return Ok(());
@@ -109,9 +132,17 @@ pub fn init(pob_dir: &Path) -> Result<(), String> {
     Ok(())
 }
 
+/// Takes the LuaJIT linked in: POB's `lua51.dll` is for Windows only.
+#[cfg(not(windows))]
+pub fn init(pob_dir: &Path) -> Result<(), String> {
+    let _ = API.set(Api::linked());
+    let _ = LOADED_FROM.set(pob_dir.to_path_buf());
+    Ok(())
+}
+
 #[inline]
 pub fn api() -> &'static Api {
-    API.get().expect("lua51.dll is not loaded")
+    API.get().expect("LuaJIT is not loaded")
 }
 
 /// A borrowed Lua state with safe-ish helpers over the raw API.
@@ -127,6 +158,8 @@ impl Lua {
             return None;
         }
         unsafe { (api().luaL_openlibs)(l) };
+        #[cfg(not(windows))]
+        crate::modules::open(Self(l));
         Some(Self(l))
     }
 
@@ -277,7 +310,16 @@ impl Lua {
     }
 
     /// Loads a chunk; on failure the error message is returned (and popped).
+    /// A first line starting with `#` (POB's `#@` header) is skipped, as POB's
+    /// LuaJIT does: a newer one takes only `#!`.
     pub fn load(self, code: &[u8], name: &str) -> Result<(), String> {
+        let commented;
+        let code = if code.starts_with(b"#") {
+            commented = [b"--".as_slice(), code].concat();
+            &commented[..]
+        } else {
+            code
+        };
         let chunk = CString::new(format!("@{name}")).unwrap();
         let rc = unsafe {
             (api().luaL_loadbuffer)(self.0, code.as_ptr() as *const c_char, code.len(), chunk.as_ptr())
