@@ -73,6 +73,14 @@ Or install it with PowerShell, which adds Start menu and desktop shortcuts and u
 irm https://huacnlee.github.io/pobt/install.ps1 | iex
 ```
 
+On macOS (Apple silicon) or Linux (x86_64, arm64), install or update it with:
+
+```bash
+curl -fsSL https://huacnlee.github.io/pobt/install.sh | bash
+```
+
+It verifies the checksum, puts `POBT.app` in Applications on macOS, and on Linux installs to `~/.local/share/pobt` with a `pobt` command and an app launcher entry.
+
 ## Requirements
 
 - 64-bit Windows 10 or 11
