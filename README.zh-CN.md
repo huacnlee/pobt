@@ -22,6 +22,7 @@ POBT 直接运行你电脑上已有的 [Path of Building Community](https://path
 - 随时按 **Ctrl+Shift+T** 切换中文 / 英文。
 - 翻译是 `POBT.exe` 旁边 `trs` 文件夹里的 CSV 文件，可以自己修改或补充（POBT 更新时会覆盖这个文件夹，改过的内容请自己备份）。
 - 有新版本时自动更新。
+- **角色导入**：在启动器里填写国际服账号（私密资料加 POESESSID）或腾讯服的 POESESSID，列出角色，一键复制 POB 代码或保存到 POB 的构筑列表；腾讯服的中文物品会翻译回英文再导入。
 
 ## 性能
 

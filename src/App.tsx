@@ -1,13 +1,25 @@
-import { createAnimatedValue, Easing, Image, Shader, signal, Text, View, type ViewStyle } from "nsh";
+import { Clipboard, createAnimatedValue, Easing, Image, Scroll, Shader, signal, Text, View, type ViewStyle } from "nsh";
 import { currentWindow } from "nsh/desktop";
 import { checkForUpdate, downloadUpdate, installAndRestart, installOnQuit, shellInfo, type AppUpdate } from "nsh/updater";
-import { Menu, MenuItem, MenuSeparator } from "nsh/base";
+import { Input, Menu, MenuItem, MenuSeparator } from "nsh/base";
 import { Pob, PobCanvas } from "pobt/native";
 import Cinzel from "../assets/fonts/Cinzel-Bold.woff2";
 import "../assets/fonts/Cinzel-SemiBold.woff2";
 import plaques from "../assets/ui/plaques.png";
 import title from "../assets/ui/title.png";
 import { GATE, GATE_MOTION } from "./gate";
+import {
+  accountStrings,
+  errorText,
+  PC_SITE,
+  REALMS,
+  TENCENT_SITE,
+  watchJob,
+  type Account,
+  type AccountProgress,
+  type Character,
+  type Realm,
+} from "./accounts";
 // The icon at the size the launcher shows it (icon.png is the app's, 1024 square).
 import icon from "../assets/ui/icon-64.png";
 type Game = "Poe1" | "Poe2";
@@ -716,7 +728,7 @@ function TitleBar(props: { t: () => Strings; solid?: boolean; onBack?: () => voi
   );
 }
 
-function Launcher(props: { onStart: () => void }) {
+function Launcher(props: { onStart: () => void; onCharacters: () => void }) {
   const settings = signal<Settings>(JSON.parse(Pob.settings()));
   const available = new Set<string>(JSON.parse(Pob.languages()).map((l: { value: string }) => l.value));
   const languages = LANGUAGES.filter((l) => l.value === null || available.has(l.value));
@@ -845,9 +857,18 @@ function Launcher(props: { onStart: () => void }) {
           <Text style={{ fontFamily: BODY, fontSize: 13, color: C.red, textAlign: "center", textShadow: "0 1px 2px #000" }}>{error()}</Text>
         </If>
 
-        {/* Start */}
-        <View style={{ alignItems: "center" }}>
+        {/* Start; and characters from an account, made builds (Path of Exile's only: its sites have no others) */}
+        <View style={{ alignItems: "center", gap: 12 }}>
           <PrimaryButton label={t().start} onPress={start} />
+          <If when={settings().game === "Poe1"}>
+            <SmallButton
+              label={accountStrings(settings().language).open}
+              onPress={() => {
+                Pob.saveSettings(JSON.stringify(settings()));
+                props.onCharacters();
+              }}
+            />
+          </If>
         </View>
       </View>
 
@@ -862,6 +883,280 @@ function Launcher(props: { onStart: () => void }) {
         <Link label="POBT" url={SITE} />
         <Dot />
         <Link label="GitHub" url={REPO} />
+      </View>
+    </View>
+  );
+}
+
+/** A small framed button, as the update badge: a character's actions, an account's. */
+function SmallButton(props: { label: string; onPress: () => void; disabled?: boolean; accent?: boolean }) {
+  const hover = signal(false);
+  const lit = () => hover() && !props.disabled;
+  return (
+    <View
+      role="button"
+      onPress={() => !props.disabled && props.onPress()}
+      onMouseEnter={() => hover.set(true)}
+      onMouseLeave={() => hover.set(false)}
+      style={{
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderWidth: 1,
+        borderColor: lit() ? C.trimHi : C.trim,
+        backgroundColor: props.accent ? "rgba(142,34,24,0.55)" : "rgba(0,0,0,0.55)",
+        opacity: props.disabled ? 0.45 : 1,
+      }}
+    >
+      <Text style={{ fontFamily: BODY, fontSize: 12, color: lit() ? "#fff3d0" : C.gold }}>{props.label}</Text>
+    </View>
+  );
+}
+
+/** A choice among a few, as the language buttons: framed, the chosen one lit. */
+function Chip(props: { label: string; selected: boolean; onPress: () => void }) {
+  const hover = signal(false);
+  return (
+    <View
+      role="button"
+      onPress={props.onPress}
+      onMouseEnter={() => hover.set(true)}
+      onMouseLeave={() => hover.set(false)}
+      style={{
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderWidth: 1,
+        borderColor: props.selected ? C.trimHi : hover() ? C.trim : "rgba(107,82,44,0.45)",
+        backgroundColor: props.selected ? "rgba(177,141,78,0.22)" : "rgba(0,0,0,0.45)",
+      }}
+    >
+      <Text style={{ fontFamily: BODY, fontSize: 12, color: props.selected ? "#fff3d0" : C.muted }}>{props.label}</Text>
+    </View>
+  );
+}
+
+function Field(props: { label: string; hint?: string; value: () => string; onChange: (v: string) => void; masked?: boolean; placeholder?: string; onSubmit?: () => void }) {
+  return (
+    <View style={{ gap: 5 }}>
+      <Text style={{ fontFamily: BODY, fontSize: 12, color: C.gold }}>{props.label}</Text>
+      <Input
+        value={props.value()}
+        onChange={(e) => props.onChange(e.value)}
+        onSubmit={() => props.onSubmit?.()}
+        masked={props.masked}
+        placeholder={props.placeholder}
+        autoCapitalize="none"
+        autoCorrect={false}
+        style={{
+          height: 32,
+          paddingHorizontal: 10,
+          fontFamily: BODY,
+          fontSize: 13,
+          color: C.text,
+          placeholderColor: C.dim,
+          caretColor: C.goldHi,
+          backgroundColor: "rgba(0,0,0,0.6)",
+          borderWidth: 1,
+          borderColor: C.trim,
+        }}
+      />
+      <If when={props.hint}>
+        <Text style={{ fontFamily: BODY, fontSize: 11, color: C.dim }}>{props.hint}</Text>
+      </If>
+    </View>
+  );
+}
+
+const PANEL: ViewStyle = {
+  backgroundColor: "rgba(5,6,9,0.86)",
+  borderWidth: 1,
+  borderColor: C.trim,
+  boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.8), 0 10px 30px rgba(0,0,0,0.6)",
+  padding: 20,
+  gap: 14,
+};
+
+/** Characters from an account, on Path of Exile's site or Tencent's, made builds: the account (kept for next time,
+ * with the others used), its characters by league, and for each a build code to copy or a build saved among POB's. */
+function Characters(props: { settings: Settings; t: () => Strings; onBack: () => void }) {
+  const a = () => accountStrings(props.settings.language);
+  const accounts = signal<Account[]>(JSON.parse(Pob.accounts() || "[]"));
+  const last = accounts()[0];
+  const realm = signal<Realm>(last?.realm ?? (props.settings.language === "zh-rCN" ? "tencent" : "pc"));
+  const name = signal(last?.name ?? "");
+  const sessid = signal(last?.sessid ?? "");
+  // The account whose characters show, and them.
+  const shown = signal<Account | null>(null);
+  const characters = signal<Character[]>([]);
+  const league = signal<string | null>(null);
+  const job = signal<AccountProgress | null>(null);
+  // Which character's action runs: its name and the action.
+  const working = signal<string | null>(null);
+  const notice = signal<{ text: string; error: boolean } | null>(null);
+  const running = () => job()?.state === "running";
+
+  const leagues = () => [...new Set(characters().map((c) => c.league))];
+  const listed = () =>
+    characters()
+      .filter((c) => league() === null || c.league === league())
+      .sort((x, y) => y.level - x.level || x.name.localeCompare(y.name));
+
+  const choose = (acc: Account) => {
+    realm.set(acc.realm);
+    name.set(acc.name);
+    sessid.set(acc.sessid);
+  };
+
+  const fetchCharacters = () => {
+    if (running()) return;
+    const acc: Account = { realm: realm(), name: name().trim(), sessid: sessid().trim() };
+    notice.set(null);
+    if (!Pob.accountStart("characters", JSON.stringify({ account: acc }))) return;
+    watchJob(Pob.accountProgress, job.set, (p) => {
+      if (p.state === "failed") {
+        notice.set({ text: errorText(a(), acc.realm, p.error), error: true });
+        return;
+      }
+      acc.name = p.result.account;
+      name.set(acc.name);
+      shown.set(acc);
+      characters.set(p.result.characters);
+      league.set(null);
+      accounts.set(JSON.parse(Pob.accounts() || "[]"));
+    });
+  };
+
+  const forget = (acc: Account) => {
+    accounts.set(accounts().filter((x) => !(x.realm === acc.realm && x.name === acc.name)));
+    Pob.saveAccounts(JSON.stringify(accounts()));
+  };
+
+  const exportCharacter = (c: Character, action: "code" | "save") => {
+    const acc = shown();
+    if (running() || !acc) return;
+    notice.set(null);
+    const sent = Pob.accountStart("export", JSON.stringify({ account: acc, character: c, action, pob_dir: props.settings.poe1_dir ?? "" }));
+    if (!sent) return;
+    working.set(`${c.name}\n${action}`);
+    watchJob(Pob.accountProgress, job.set, async (p) => {
+      working.set(null);
+      if (p.state === "failed") {
+        notice.set({ text: errorText(a(), acc.realm, p.error), error: true });
+        return;
+      }
+      let text = action === "save" ? a().savedTo(p.result.path) : a().copied;
+      if (action === "code") await Clipboard.writeText(p.result.code);
+      if (p.result.untranslated > 0) text += ` · ${a().untranslated(p.result.untranslated)}`;
+      notice.set({ text, error: false });
+    });
+  };
+
+  const stepText = () => (running() ? a().steps[job()!.step] ?? "…" : "");
+
+  return (
+    <View style={{ flex: 1, backgroundColor: C.bg }}>
+      <Shader source={GATE} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
+      <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.45)" }} />
+      <TitleBar t={props.t} onBack={props.onBack} />
+
+      <View style={{ flex: 1, flexDirection: "row", gap: 20, paddingHorizontal: 32, paddingTop: 12, paddingBottom: 24 }}>
+        {/* The account */}
+        <View style={{ width: 340, gap: 20 }}>
+          <View style={PANEL}>
+            <Text style={{ fontFamily: DISPLAY, fontSize: 16, fontWeight: "700", letterSpacing: 3, color: C.goldHi }}>{a().title}</Text>
+            <Rule width={300} />
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+              <Each of={REALMS}>
+                {(r) => <Chip label={a().realms[r()]} selected={realm() === r()} onPress={() => realm.set(r())} />}
+              </Each>
+            </View>
+            <Field label={a().accountName} placeholder={a().accountHint(realm())} value={name} onChange={name.set} onSubmit={fetchCharacters} />
+            <Field label={a().sessid} hint={a().sessidHint(realm())} value={sessid} onChange={sessid.set} masked onSubmit={fetchCharacters} />
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <Button label={a().fetch} onPress={fetchCharacters} />
+              <SmallButton label={a().signIn} onPress={() => Pob.openUrl(realm() === "tencent" ? TENCENT_SITE : PC_SITE)} />
+            </View>
+          </View>
+
+          {/* The accounts used before */}
+          <View style={{ ...PANEL, flex: 1, gap: 8 }}>
+            <Text style={{ fontFamily: DISPLAY, fontSize: 12, fontWeight: "600", letterSpacing: 2, color: C.gold }}>{a().saved}</Text>
+            <If when={accounts().length > 0} else={<Text style={{ fontFamily: BODY, fontSize: 12, color: C.dim }}>{a().none}</Text>}>
+              <Scroll style={{ flex: 1 }}>
+                <View style={{ gap: 4 }}>
+                  <Each of={accounts()}>
+                    {(acc) => (
+                      <View
+                        role="button"
+                        onPress={() => {
+                          choose(acc());
+                          fetchCharacters();
+                        }}
+                        hoverStyle={{ backgroundColor: "rgba(177,141,78,0.14)" }}
+                        style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 8, paddingVertical: 6 }}
+                      >
+                        <Text style={{ fontFamily: BODY, fontSize: 11, color: C.unique, width: 70 }}>{a().realms[acc().realm]}</Text>
+                        <Text style={{ fontFamily: BODY, fontSize: 13, color: C.text, flex: 1, numberOfLines: 1 }}>{acc().name}</Text>
+                        <SmallButton label={a().remove} onPress={() => forget(acc())} />
+                      </View>
+                    )}
+                  </Each>
+                </View>
+              </Scroll>
+            </If>
+          </View>
+        </View>
+
+        {/* Its characters */}
+        <View style={{ ...PANEL, flex: 1 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <Text style={{ fontFamily: DISPLAY, fontSize: 16, fontWeight: "700", color: C.goldHi, flex: 1, numberOfLines: 1 }}>
+              {shown() ? `${a().realms[shown()!.realm]} · ${shown()!.name}` : a().title}
+            </Text>
+            <Text style={{ fontFamily: BODY, fontSize: 12, color: C.muted }}>{stepText()}</Text>
+          </View>
+          <If when={notice()}>
+            {(n) => <Text style={{ fontFamily: BODY, fontSize: 12, color: n().error ? C.red : C.gold }}>{n().text}</Text>}
+          </If>
+          <If when={leagues().length > 1}>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+              <Chip label={a().all} selected={league() === null} onPress={() => league.set(null)} />
+              <Each of={leagues()}>{(l) => <Chip label={l()} selected={league() === l()} onPress={() => league.set(l())} />}</Each>
+            </View>
+          </If>
+          <If
+            when={characters().length > 0}
+            else={
+              <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+                <Text style={{ fontFamily: BODY, fontSize: 13, color: C.dim }}>{a().empty}</Text>
+              </View>
+            }
+          >
+            <Scroll style={{ flex: 1 }}>
+              <View style={{ gap: 2 }}>
+                <Each of={listed()}>
+                  {(c) => {
+                    const busy = (action: string) => working() === `${c().name}\n${action}`;
+                    return (
+                      <View
+                        hoverStyle={{ backgroundColor: "rgba(177,141,78,0.1)" }}
+                        style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 10, paddingVertical: 8, borderBottomWidth: 1, borderColor: "rgba(107,82,44,0.25)" }}
+                      >
+                        <View style={{ flex: 1, gap: 2 }}>
+                          <Text style={{ fontFamily: BODY, fontSize: 14, fontWeight: "700", color: C.text, numberOfLines: 1 }}>{c().name}</Text>
+                          <Text style={{ fontFamily: BODY, fontSize: 12, color: C.muted, numberOfLines: 1 }}>
+                            {c().class} · {a().level(c().level)} · {c().league}
+                          </Text>
+                        </View>
+                        <SmallButton label={busy("code") ? stepText() || "…" : a().copyCode} disabled={running()} accent onPress={() => exportCharacter(c(), "code")} />
+                        <SmallButton label={busy("save") ? stepText() || "…" : a().saveToPob} disabled={running()} onPress={() => exportCharacter(c(), "save")} />
+                      </View>
+                    );
+                  }}
+                </Each>
+              </View>
+            </Scroll>
+          </If>
+        </View>
       </View>
     </View>
   );
@@ -948,8 +1243,16 @@ export function App() {
     };
     poll();
   };
+  // The Characters page, over the launcher.
+  const characters = signal(false);
+  const launcher = () =>
+    characters() ? (
+      <Characters settings={JSON.parse(Pob.settings()) as Settings} t={t} onBack={() => characters.set(false)} />
+    ) : (
+      <Launcher onStart={start} onCharacters={() => characters.set(true)} />
+    );
   return (
-    <If when={running()} else={<Launcher onStart={start} />}>
+    <If when={running()} else={launcher()}>
       <View style={{ flex: 1 }}>
         <TitleBar t={t} solid onBack={back} />
         <View style={{ flex: 1 }}>

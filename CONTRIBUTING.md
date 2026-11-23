@@ -28,7 +28,9 @@ POBT links its own LuaJIT and stands in for the modules POB uses (lcurl, lzip, l
 | `ext/pobt-native/src/lib.rs` | The `PobCanvas` component (an NSH canvas, mouse and keys) and the `Pob` module |
 | `ext/pobt-native/src/trs.rs` | The translations: the `trs` folder beside the program |
 | `ext/pobt-native/src/install.rs`, `loading.rs` | Installing Path of Building from its release and its runtime updates; how far it has loaded |
-| `src/App.tsx`, `src/gate.ts` | The launcher, its backdrop shader and the update check (`App.tsx` mounts it) |
+| `ext/pobt-native/src/account.rs`, `export.lua` | Characters from an account on Path of Exile's site or Tencent's (with its `POESESSID`), made builds by POB's own Import tab on a POB with no window (`host::export`) |
+| `ext/pobt-native/src/reverse.rs` | The dictionary the other way: Tencent's Chinese items back to the English POB reads |
+| `src/App.tsx`, `src/gate.ts`, `src/accounts.ts` | The launcher, its backdrop shader, the update check and the Characters page (`App.tsx` mounts it) |
 
 ## Developing
 

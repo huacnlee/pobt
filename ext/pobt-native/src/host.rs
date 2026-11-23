@@ -326,6 +326,100 @@ fn launch(l: Lua, pob_dir: &Path) -> Result<(), String> {
     l.pcall(0, 0)
 }
 
+const EXPORT: &str = include_str!("export.lua");
+
+/// A character made a build by POB's own import.
+pub struct Exported {
+    /// The build code, as POB's Import/Export tab gives it.
+    pub code: String,
+    /// The build's XML, as POB saves it.
+    pub xml: String,
+    /// Where POB keeps its builds.
+    pub build_path: String,
+}
+
+/// Has the POB in `pob_dir` import a character from the JSON an account's
+/// site gives (`char`: its entry in the character list; `items`:
+/// `get-items`; `passives`: `get-passive-skills`), and save the build. A POB
+/// of its own, with no window, on a new thread: it loads as the launcher's
+/// does, a few seconds; `step` hears how far it is. Not while POB runs.
+pub fn export(
+    pob_dir: PathBuf,
+    name: String,
+    char: String,
+    items: String,
+    passives: String,
+    step: impl Fn(&str) + Send + 'static,
+) -> Result<Exported, String> {
+    lua::init(&pob_dir)?;
+    set_dll_directory(&pob_dir);
+    std::env::set_current_dir(&pob_dir).map_err(|e| format!("{}: {e}", pob_dir.display()))?;
+    std::thread::Builder::new()
+        .name("pobt-export".into())
+        .stack_size(64 << 20)
+        .spawn(move || {
+            let shared = Shared::new();
+            shared.translate.store(false, Ordering::SeqCst);
+            let l = Lua::new().ok_or("cannot create a Lua state")?;
+            enter(l, &pob_dir, &shared);
+            let out = export_in(l, &pob_dir, &shared, &[name, char, items, passives], &step);
+            HOST.with(|h| *h.borrow_mut() = None);
+            l.close();
+            out
+        })
+        .map_err(|e| e.to_string())?
+        .join()
+        .map_err(|_| "Path of Building stopped".to_string())?
+}
+
+fn export_in(l: Lua, pob_dir: &Path, shared: &Arc<Shared>, args: &[String; 4], step: &dyn Fn(&str)) -> Result<Exported, String> {
+    let [name, char, items, passives] = args;
+    let failed = |what: &str| shared.error.lock().unwrap().take().map(|e| format!("{what}: {e}"));
+    step("loading");
+    l.load(PRELUDE.as_bytes(), "pobt/prelude.lua").and_then(|_| l.pcall(0, 0))?;
+    launch(l, pob_dir)?;
+    l.get_global("__pobt_hookLaunch");
+    let _ = l.pcall(0, 0);
+    callback(l, "OnInit", &[])?;
+    let run = |stage: &str, args: &[&String]| -> Result<Vec<Value>, String> {
+        let base = l.top();
+        l.load(EXPORT.as_bytes(), "pobt/export.lua")?;
+        l.push_str(stage);
+        for a in args {
+            l.push_value_of(&Value::Str(a.as_bytes().to_vec()));
+        }
+        l.pcall(args.len() as i32 + 1, lua::LUA_MULTRET)?;
+        let out = l.values_from(base + 1);
+        l.set_top(base);
+        Ok(out)
+    };
+    // A build opens in a frame.
+    run("new", &[name])?;
+    frame(l, shared);
+    if let Some(e) = failed("opening a build") {
+        return Err(e);
+    }
+    step("importing");
+    run("import", &[char, items, passives])?;
+    // Its calculations, which the build's XML holds, in the next frames.
+    for _ in 0..2 {
+        frame(l, shared);
+    }
+    if let Some(e) = failed("importing") {
+        return Err(e);
+    }
+    let out = run("save", &[])?;
+    let text = |i: usize| match out.get(i) {
+        Some(Value::Str(s)) => String::from_utf8_lossy(s).into_owned(),
+        _ => String::new(),
+    };
+    let code = text(0);
+    if code.is_empty() {
+        return Err("Path of Building made no build code".into());
+    }
+    Ok(Exported { code, xml: text(1), build_path: text(2) })
+}
+
 /// A few of POB's edit boxes on their own, to try typing in them by hand
 /// (`POBT_DEMO=1 nsh run`, then play) and for the tests below.
 const DEMO: &str = include_str!("demo.lua");

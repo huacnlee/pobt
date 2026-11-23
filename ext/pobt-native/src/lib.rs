@@ -3,6 +3,7 @@
 //! `PobCanvas` component draws its frames and sends it the mouse and keys.
 //! The rest of the UI is `App.tsx`, over the `Pob` module.
 
+pub mod account;
 pub mod dds;
 pub mod frame;
 pub mod host;
@@ -12,6 +13,7 @@ pub mod loading;
 pub mod lua;
 #[cfg(not(windows))]
 pub mod modules;
+pub mod reverse;
 pub mod settings;
 pub mod text;
 pub mod translate;
@@ -264,6 +266,42 @@ impl Pob {
         } else {
             "stayed".into()
         }
+    }
+
+    /// The accounts used before, the last first, as JSON `[{ realm, name,
+    /// sessid }]` (`realm`: "pc", "xbox", "sony" or "tencent").
+    pub fn accounts() -> String {
+        serde_json::to_string(&account::accounts()).unwrap_or_default()
+    }
+
+    /// Keeps the accounts given as the JSON `accounts()` returns.
+    pub fn save_accounts(json: String) {
+        if let Ok(list) = serde_json::from_str::<Vec<account::Account>>(&json) {
+            account::save_accounts(&list);
+        }
+    }
+
+    /// Starts a job on an account in the background: `kind` "characters"
+    /// lists its characters, "export" makes one a build (`json`: `{ account,
+    /// character, action, pob_dir }`, `action` "code" or "save"). False while
+    /// one runs; `account_progress` says how it goes.
+    pub fn account_start(kind: String, json: String) -> bool {
+        let Ok(request) = serde_json::from_str::<account::Request>(&json) else { return false };
+        if kind == "export" {
+            // A POB of its own loads POB's LuaJIT, which a process keeps: the same POB's only, and not beside a running one.
+            let busy = session().is_some()
+                || lua::loaded_from().is_some_and(|d| d != std::path::Path::new(&request.pob_dir));
+            if busy {
+                return account::fail(&kind, "restart");
+            }
+        }
+        account::start(&kind, request)
+    }
+
+    /// The account job running or last run, as JSON `{ kind, state, step,
+    /// error, result }` (`state`: "running", "done", "failed"); "" for none.
+    pub fn account_progress() -> String {
+        account::progress().map(|p| serde_json::to_string(&p).unwrap_or_default()).unwrap_or_default()
     }
 
     /// Switches the translation on or off while POB runs.
