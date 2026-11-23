@@ -37,6 +37,9 @@ export interface Copy {
   copy: string;
   copied: string;
   readScript: string;
+  unixTitle: string;
+  unixIntro: string;
+  unixNote: string;
   requireTitle: string;
   requirements: string[];
   faqTitle: string;
@@ -54,7 +57,7 @@ export const copy: Record<Language, Copy> = {
   en: {
     title: "POBT — Path of Building in your language",
     description:
-      "POBT runs Path of Building Community with its interface translated to Simplified Chinese, Traditional Chinese or Korean. Free, open source, for Windows.",
+      "POBT runs Path of Building Community with its interface translated to Simplified Chinese, Traditional Chinese or Korean. Free, open source, for Windows, macOS and Linux.",
     skip: "Skip to content",
     nav: { github: "GitHub", sponsor: "Sponsor", language: "Language" },
     subtitle: "Your Path of Building, in your language",
@@ -62,7 +65,7 @@ export const copy: Record<Language, Copy> = {
       "POBT runs the Path of Building Community you already have, with its whole interface translated: skills, items, passives, calculations. Simplified Chinese, Traditional Chinese and Korean, switchable any time.",
     download: "Download for Windows",
     downloadNote: "Free · .zip · 64-bit Windows 10 / 11 · no installer needed",
-    scriptLink: "or install with PowerShell",
+    scriptLink: "or install with a script · macOS and Linux",
     shotAlt: "The POBT launcher: pick Path of Exile or Path of Exile 2 and a language, then Start.",
     shotTreeAlt: "The passive tree in Path of Building, translated",
     shotPobAlt: "Path of Building's calculations, translated",
@@ -104,9 +107,12 @@ export const copy: Record<Language, Copy> = {
     copy: "Copy",
     copied: "Copied",
     readScript: "Read the script",
+    unixTitle: "macOS and Linux",
+    unixIntro: "On macOS (Apple silicon) or Linux (x86_64, arm64), run this in a terminal to install POBT, and again to update it.",
+    unixNote: "It checks the download's checksum, then puts POBT.app in Applications on macOS; on Linux it installs to ~/.local/share/pobt with a pobt command and an app launcher entry.",
     requireTitle: "What you need",
     requirements: [
-      "64-bit Windows 10 or 11",
+      "64-bit Windows 10 or 11, macOS on Apple silicon, or Linux (x86_64, arm64)",
       "Path of Building Community for Path of Exile 1, 2 or both: POBT installs it if you have none",
       "Microsoft YaHei, which Windows includes, for the text",
     ],
@@ -144,7 +150,7 @@ export const copy: Record<Language, Copy> = {
   },
   "zh-CN": {
     title: "POBT — 中文版 Path of Building",
-    description: "POBT 让 Path of Building Community 显示简体中文、繁體中文或한국어界面。免费、开源，适用于 Windows。",
+    description: "POBT 让 Path of Building Community 显示简体中文、繁體中文或한국어界面。免费、开源，适用于 Windows、macOS 和 Linux。",
     skip: "跳到正文",
     nav: { github: "GitHub", sponsor: "赞助", language: "语言" },
     subtitle: "POB 构筑的多语言翻译",
@@ -152,7 +158,7 @@ export const copy: Record<Language, Copy> = {
       "POBT 直接运行你电脑上已有的 Path of Building Community，并把整个界面翻译成中文：技能、物品、天赋、计算结果，一应俱全。支持简体中文、繁體中文和한국어，随时切换。",
     download: "下载 Windows 版",
     downloadNote: "免费 · zip 压缩包 · 64 位 Windows 10 / 11 · 无需安装",
-    scriptLink: "或用 PowerShell 安装",
+    scriptLink: "或用脚本安装 · macOS 与 Linux",
     shotAlt: "POBT 启动界面：选择流放之路或流放之路 2 和语言，然后启动。",
     shotTreeAlt: "翻译后的 Path of Building 天赋树",
     shotPobAlt: "翻译后的 Path of Building 计算页",
@@ -194,8 +200,11 @@ export const copy: Record<Language, Copy> = {
     copy: "复制",
     copied: "已复制",
     readScript: "查看脚本",
+    unixTitle: "macOS 与 Linux",
+    unixIntro: "在 macOS（Apple 芯片）或 Linux（x86_64、arm64）的终端里运行这条命令即可安装 POBT；再次运行即可更新。",
+    unixNote: "脚本会先校验下载文件，再把 POBT.app 放进 macOS 的“应用程序”；Linux 上安装到 ~/.local/share/pobt，并添加 pobt 命令和应用启动器入口。",
     requireTitle: "运行需要",
-    requirements: ["64 位 Windows 10 或 11", "Path of Building Community（流放之路 1、2 任一或全部）：没有的话 POBT 可以帮你安装", "系统自带的微软雅黑字体"],
+    requirements: ["64 位 Windows 10 或 11、Apple 芯片的 macOS，或 Linux（x86_64、arm64）", "Path of Building Community（流放之路 1、2 任一或全部）：没有的话 POBT 可以帮你安装", "系统自带的微软雅黑字体"],
     faqTitle: "常见问题",
     faq: [
       [
