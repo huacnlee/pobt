@@ -321,16 +321,7 @@ fn enter(l: Lua, pob_dir: &Path, shared: &Arc<Shared>) {
 /// Runs POB's `Launch.lua`.
 fn launch(l: Lua, pob_dir: &Path) -> Result<(), String> {
     let code = std::fs::read(pob_dir.join("Launch.lua")).map_err(|e| format!("Launch.lua: {e}"))?;
-    let code = match code.strip_prefix(b"#@".as_slice()) {
-        // SimpleGraphic's "#@ SimpleGraphic" first line is not Lua.
-        Some(c) => {
-            let nl = c.iter().position(|&b| b == b'\n').unwrap_or(c.len());
-            let mut v = b"--".to_vec();
-            v.extend_from_slice(&c[nl..]);
-            v
-        }
-        None => code,
-    };
+    // Its "#@ SimpleGraphic" first line is not Lua: `load` skips it.
     l.load(&code, "Launch.lua")?;
     l.pcall(0, 0)
 }
@@ -1112,7 +1103,11 @@ pub fn open_url(url: &str) -> std::io::Result<()> {
         use std::os::windows::process::CommandExt;
         std::process::Command::new("cmd").arg("/C").arg("start").arg("").raw_arg(format!("\"{url}\"")).spawn()?;
     }
-    #[cfg(not(windows))]
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open").arg(url).spawn()?;
+    }
+    #[cfg(not(any(windows, target_os = "macos")))]
     {
         std::process::Command::new("xdg-open").arg(url).spawn()?;
     }
@@ -1317,6 +1312,42 @@ b\"", "broken.lua");
         l.close();
         loaded.unwrap();
         assert!(broken.is_err(), "a string cut by a newline must not load");
+    }
+
+    /// The whole of POB from `POB_DIR` loads and draws its first screen, as
+    /// the launcher starts it; then quits. Ignored by default: it takes a few
+    /// seconds and changes the process's folder.
+    #[test]
+    #[ignore = "runs the whole of POB"]
+    fn pob_starts() {
+        let Some(dir) = std::env::var_os("POB_DIR").map(PathBuf::from) else {
+            eprintln!("POB_DIR not set: skipped");
+            return;
+        };
+        let shared = Shared::new();
+        let thread = super::start(dir, shared.clone()).unwrap();
+        let begin = std::time::Instant::now();
+        while !shared.loaded.load(std::sync::atomic::Ordering::SeqCst) && begin.elapsed().as_secs() < 120 {
+            std::thread::sleep(std::time::Duration::from_millis(100));
+        }
+        // Its update check (a sub script, over lcurl) runs as it starts.
+        std::thread::sleep(std::time::Duration::from_secs(8));
+        assert_eq!(shared.error.lock().unwrap().clone(), None);
+        assert!(shared.loaded.load(std::sync::atomic::Ordering::SeqCst), "POB did not load in 2 minutes");
+        let frame = shared.frame.lock().unwrap().clone();
+        let texts: Vec<_> = frame
+            .items
+            .iter()
+            .filter_map(|i| match &i.cmd {
+                Cmd::Text { text, .. } => Some(text.to_string()),
+                _ => None,
+            })
+            .collect();
+        eprintln!("loaded in {:?}; first screen: {texts:?}", begin.elapsed());
+        assert!(texts.iter().any(|t| t.contains("Build")), "{texts:?}");
+        assert!(!texts.iter().any(|t| t.starts_with("Error")), "{texts:?}");
+        shared.quit.store(true, std::sync::atomic::Ordering::SeqCst);
+        thread.join().unwrap();
     }
 
     use std::{path::PathBuf, sync::Arc};

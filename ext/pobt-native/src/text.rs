@@ -5,7 +5,8 @@
 //! what the canvas draws: both use the same font files, measured with ab_glyph
 //! and drawn by the platform under the same family names. Proportional text is
 //! Segoe UI, falling back to Microsoft YaHei UI for what it lacks (CJK);
-//! `FIXED` is Consolas, falling back the same way.
+//! `FIXED` is Consolas, falling back the same way. On macOS: Arial, Hiragino
+//! Sans GB and Menlo; on Linux: DejaVu Sans, Noto Sans CJK and DejaVu Sans Mono.
 
 use std::{
     cell::RefCell,
@@ -50,6 +51,8 @@ struct LoadedFont {
     font: FontArc,
     /// Pixels per font unit at an em of 1 px.
     unit: f32,
+    /// Read on Windows only, for YaHei's baseline.
+    #[cfg_attr(not(windows), allow(dead_code))]
     ascent: f32,
 }
 
@@ -83,17 +86,40 @@ pub struct Fonts {
 
 static FONTS: OnceLock<Fonts> = OnceLock::new();
 
-fn fonts_dir() -> PathBuf {
+#[cfg(windows)]
+fn fonts_dirs() -> Vec<PathBuf> {
     let windir = std::env::var_os("WINDIR").map(PathBuf::from).unwrap_or_else(|| "C:\\Windows".into());
-    windir.join("Fonts")
+    vec![windir.join("Fonts")]
+}
+
+#[cfg(target_os = "macos")]
+fn fonts_dirs() -> Vec<PathBuf> {
+    ["/System/Library/Fonts", "/System/Library/Fonts/Supplemental", "/Library/Fonts"].map(PathBuf::from).to_vec()
+}
+
+#[cfg(not(any(windows, target_os = "macos")))]
+fn fonts_dirs() -> Vec<PathBuf> {
+    [
+        "/usr/share/fonts/truetype/dejavu",
+        "/usr/share/fonts/TTF",
+        "/usr/share/fonts/dejavu",
+        "/usr/share/fonts/opentype/noto",
+        "/usr/share/fonts/noto-cjk",
+        "/usr/share/fonts/google-noto-cjk",
+    ]
+    .map(PathBuf::from)
+    .to_vec()
 }
 
 pub fn fonts() -> &'static Fonts {
     FONTS.get_or_init(|| {
-        let dir = fonts_dir();
-        let pick = |names: &[(&str, u32)]| names.iter().find_map(|(n, i)| LoadedFont::load(&dir.join(n), *i));
+        let dirs = fonts_dirs();
+        let pick = |names: &[(&str, u32)]| {
+            names.iter().find_map(|(n, i)| dirs.iter().find_map(|d| LoadedFont::load(&d.join(n), *i)))
+        };
+        #[cfg(windows)]
         // msyh.ttc's second face is Microsoft YaHei UI, YaHei with a UI's tighter lines.
-        Fonts {
+        let fonts = Fonts {
             latin: pick(&[("segoeui.ttf", 0)]),
             latin_bold: pick(&[("segoeuib.ttf", 0)]),
             cjk: pick(&[("msyh.ttc", 1), ("msyh.ttc", 0), ("simhei.ttf", 0)]),
@@ -103,7 +129,35 @@ pub fn fonts() -> &'static Fonts {
             latin_family: "Segoe UI".into(),
             cjk_family: "Microsoft YaHei UI".into(),
             mono_family: "Consolas".into(),
-        }
+        };
+        // Faces of a collection: Hiragino Sans GB W3 and W6; Menlo Regular.
+        #[cfg(target_os = "macos")]
+        let fonts = Fonts {
+            latin: pick(&[("Arial.ttf", 0)]),
+            latin_bold: pick(&[("Arial Bold.ttf", 0)]),
+            cjk: pick(&[("Hiragino Sans GB.ttc", 0)]),
+            cjk_bold: pick(&[("Hiragino Sans GB.ttc", 2)]),
+            mono: pick(&[("Menlo.ttc", 0)]),
+            // Text sits where it does on Windows: on YaHei's baseline.
+            ascent: 1.06,
+            latin_family: "Arial".into(),
+            cjk_family: "Hiragino Sans GB".into(),
+            mono_family: "Menlo".into(),
+        };
+        // Noto Sans CJK's third face is its Simplified Chinese.
+        #[cfg(not(any(windows, target_os = "macos")))]
+        let fonts = Fonts {
+            latin: pick(&[("DejaVuSans.ttf", 0)]),
+            latin_bold: pick(&[("DejaVuSans-Bold.ttf", 0)]),
+            cjk: pick(&[("NotoSansCJK-Regular.ttc", 2)]),
+            cjk_bold: pick(&[("NotoSansCJK-Bold.ttc", 2)]),
+            mono: pick(&[("DejaVuSansMono.ttf", 0)]),
+            ascent: 1.06,
+            latin_family: "DejaVu Sans".into(),
+            cjk_family: "Noto Sans CJK SC".into(),
+            mono_family: "DejaVu Sans Mono".into(),
+        };
+        fonts
     })
 }
 
