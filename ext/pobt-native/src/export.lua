@@ -43,6 +43,27 @@ if stage == "import" then
 	fixGems(items.items)
 	fixGems(passives.items)
 
+	-- A tattoo POB does not know by its name (Tencent's words for it): the one with its stats, or none, the node left
+	-- as the tree has it.
+	local tattoos = build.spec.tree.tattoo and build.spec.tree.tattoo.nodes or { }
+	for nodeId, override in pairs(passives.skill_overrides or { }) do
+		if not tattoos[override.name] then
+			local stats = table.concat(override.stats or { }, "\n")
+			local found
+			for name, node in pairs(tattoos) do
+				if node.sd and table.concat(node.sd, "\n") == stats then
+					found = name
+					break
+				end
+			end
+			if found then
+				override.name = found
+			else
+				ConPrintf("Unknown tattoo in imported tree: %s", tostring(override.name))
+				passives.skill_overrides[nodeId] = nil
+			end
+		end
+	end
 	passives.hashes = passives.hashes or { }
 	passives.hashes_ex = passives.hashes_ex or { }
 	-- As its Import tab does for an account's character.

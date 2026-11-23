@@ -283,19 +283,40 @@ impl Pob {
 
     /// Starts a job on an account in the background: `kind` "characters"
     /// lists its characters, "export" makes one a build (`json`: `{ account,
-    /// character, action, pob_dir }`, `action` "code" or "save"). False while
+    /// character, pob_dir }`; then `save_build` saves it where the user
+    /// chose in `builds`). False while
     /// one runs; `account_progress` says how it goes.
     pub fn account_start(kind: String, json: String) -> bool {
         let Ok(request) = serde_json::from_str::<account::Request>(&json) else { return false };
         if kind == "export" {
-            // A POB of its own loads POB's LuaJIT, which a process keeps: the same POB's only, and not beside a running one.
-            let busy = session().is_some()
-                || lua::loaded_from().is_some_and(|d| d != std::path::Path::new(&request.pob_dir));
+            // A POB of its own, beside the one running if one is, on POB's LuaJIT, which a process keeps: the same
+            // POB's only.
+            let busy = lua::loaded_from().is_some_and(|d| d != std::path::Path::new(&request.pob_dir));
             if busy {
                 return account::fail(&kind, "restart");
             }
         }
         account::start(&kind, request)
+    }
+
+    /// POB's builds folder, where the last export's build would go, as JSON
+    /// `{ root, tree }`: `tree` its folders and builds, `[{ name, path, dir,
+    /// children? }]`, `path` from `root`. "" before an export.
+    pub fn builds() -> String {
+        match account::builds() {
+            Some((root, tree)) => serde_json::json!({ "root": root.display().to_string(), "tree": tree }).to_string(),
+            None => String::new(),
+        }
+    }
+
+    /// Saves the last export's build at `path` in POB's builds folder (as
+    /// `builds` gives paths): a build there replaced, or a new one. The path
+    /// it was saved at, or "error: …".
+    pub fn save_build(path: String) -> String {
+        match account::save_build(&path) {
+            Ok(file) => file.display().to_string(),
+            Err(e) => format!("error: {e}"),
+        }
     }
 
     /// The account job running or last run, as JSON `{ kind, state, step,

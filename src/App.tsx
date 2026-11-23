@@ -9,14 +9,17 @@ import plaques from "../assets/ui/plaques.png";
 import title from "../assets/ui/title.png";
 import { GATE, GATE_MOTION } from "./gate";
 import {
+  accountLabel,
   accountStrings,
   errorText,
   PC_SITE,
   REALMS,
+  sameAccount,
   TENCENT_SITE,
   watchJob,
   type Account,
   type AccountProgress,
+  type AccountStrings,
   type Character,
   type Realm,
 } from "./accounts";
@@ -81,6 +84,7 @@ interface Strings {
   upToDate: string;
   manual: string;
   download: string;
+  tools: string;
 }
 
 // The launcher in each language it translates POB to.
@@ -113,6 +117,7 @@ const UI: Record<string, Strings> = {
     upToDate: "Up to date",
     manual: "Download it",
     download: "Download",
+    tools: "Tools",
   },
   "zh-rCN": {
     games: { Poe1: "流放之路", Poe2: "流放之路 2" },
@@ -142,6 +147,7 @@ const UI: Record<string, Strings> = {
     upToDate: "已是最新版本",
     manual: "手动下载",
     download: "下载",
+    tools: "工具",
   },
   "zh-rTW": {
     games: { Poe1: "流亡黯道", Poe2: "流亡黯道 2" },
@@ -171,6 +177,7 @@ const UI: Record<string, Strings> = {
     upToDate: "已是最新版本",
     manual: "手動下載",
     download: "下載",
+    tools: "工具",
   },
   "ko-KR": {
     games: { Poe1: "패스 오브 엑자일", Poe2: "패스 오브 엑자일 2" },
@@ -200,8 +207,14 @@ const UI: Record<string, Strings> = {
     upToDate: "최신 버전입니다",
     manual: "직접 다운로드",
     download: "다운로드",
+    tools: "도구",
   },
 };
+
+/** The language the launcher last saved: for what has no settings of its own to hand. */
+function currentLanguage(): string | null {
+  return (JSON.parse(Pob.settings()) as Settings).language;
+}
 
 function strings(language: string | null): Strings {
   return UI[language ?? "en"] ?? UI.en;
@@ -651,9 +664,11 @@ const TITLE_BAR = 44;
 /** The window's title bar, drawn by the app: POBT at the left (a link to the site); the system draws the window's
  * buttons in the reserved title bar area. Dragging it moves the window. Over the launcher's backdrop it is clear, with the version
  * and the update check; over Path of Building, `solid`, with only a way back to the launcher (`onBack`). */
-function TitleBar(props: { t: () => Strings; solid?: boolean; onBack?: () => void }) {
+function TitleBar(props: { t: () => Strings; solid?: boolean; onBack?: () => void; backLabel?: string; onCharacters?: () => void }) {
   const brandHover = signal(false);
   const backHover = signal(false);
+  const toolsHover = signal(false);
+  const toolsOpen = signal(false);
   const win = currentWindow();
   return (
     <View
@@ -711,9 +726,46 @@ function TitleBar(props: { t: () => Strings; solid?: boolean; onBack?: () => voi
                 textShadow: backHover() ? "0 0 10px rgba(240,220,170,0.8)" : "none",
               }}
             >
-              {props.t().back.toUpperCase()}
+              {(props.backLabel ?? props.t().back).toUpperCase()}
             </Text>
           </View>
+        )}
+      </If>
+      {/* Tools, wherever the app is: characters from an account, made builds */}
+      <If when={props.onCharacters}>
+        {(open) => (
+          <Menu
+            offset={6}
+            align="start"
+            open={toolsOpen()}
+            onOpenChange={(e) => toolsOpen.set(e.open)}
+            popupStyle={{ minWidth: 150, padding: 4, backgroundColor: C.panel, borderWidth: 1, borderColor: C.trim, boxShadow: "0 8px 24px rgba(0,0,0,0.7)" }}
+            trigger={
+              <View
+                role="button"
+                onPress={() => toolsOpen.set(true)}
+                onMouseEnter={() => toolsHover.set(true)}
+                onMouseLeave={() => toolsHover.set(false)}
+                style={{ flexDirection: "row", alignItems: "center", gap: 5, marginLeft: 18, paddingVertical: 4 }}
+              >
+                <Text
+                  style={{
+                    fontFamily: DISPLAY,
+                    fontSize: 12,
+                    fontWeight: "600",
+                    letterSpacing: 2,
+                    color: toolsHover() || toolsOpen() ? "#fff3d0" : C.gold,
+                    textShadow: toolsHover() ? "0 0 10px rgba(240,220,170,0.8)" : "none",
+                  }}
+                >
+                  {props.t().tools.toUpperCase()}
+                </Text>
+                <Text style={{ fontSize: 8, color: toolsHover() ? "#fff3d0" : C.trimHi }}>▼</Text>
+              </View>
+            }
+          >
+            <CardMenuItem label={accountStrings(currentLanguage()).open} onSelect={() => open()()} />
+          </Menu>
         )}
       </If>
       <View style={{ flex: 1 }} />
@@ -732,7 +784,6 @@ function Launcher(props: { onStart: () => void; onCharacters: () => void }) {
   const settings = signal<Settings>(JSON.parse(Pob.settings()));
   const available = new Set<string>(JSON.parse(Pob.languages()).map((l: { value: string }) => l.value));
   const languages = LANGUAGES.filter((l) => l.value === null || available.has(l.value));
-  const error = signal("");
   const t = () => strings(settings().language);
 
   const update = (change: Partial<Settings>) => settings.set({ ...settings(), ...change });
@@ -741,16 +792,14 @@ function Launcher(props: { onStart: () => void; onCharacters: () => void }) {
     const dir = await Pob.pickDir();
     if (!dir) return;
     if (!Pob.isPobDir(dir, game.key)) {
-      error.set(t().notPobDir(dir, t().games[game.id]));
+      say(t().notPobDir(dir, t().games[game.id]), true);
       return;
     }
-    error.set("");
     update(game.id === "Poe1" ? { poe1_dir: dir, game: game.id } : { poe2_dir: dir, game: game.id });
   };
 
   // Forgets the game's folder: the card is as on a first run, until one is chosen or found again.
   const reset = (game: (typeof GAMES)[number]) => {
-    error.set("");
     update(game.id === "Poe1" ? { poe1_dir: null } : { poe2_dir: null });
     Pob.saveSettings(JSON.stringify(settings()));
   };
@@ -768,7 +817,6 @@ function Launcher(props: { onStart: () => void; onCharacters: () => void }) {
     }
   };
   const install = (game: (typeof GAMES)[number]) => {
-    error.set("");
     Pob.install(game.key);
     update({ game: game.id });
     watchInstall();
@@ -779,13 +827,13 @@ function Launcher(props: { onStart: () => void; onCharacters: () => void }) {
     const s = settings();
     const dir = dirOf(s, s.game);
     if (!dir) {
-      error.set(t().needDir);
+      say(t().needDir, true);
       return;
     }
     Pob.saveSettings(JSON.stringify(s));
     const err = Pob.start(dir, s.language ?? "");
     if (err) {
-      error.set(err);
+      say(err, true);
       return;
     }
     props.onStart();
@@ -794,7 +842,6 @@ function Launcher(props: { onStart: () => void; onCharacters: () => void }) {
 
   const chooseLanguage = (value: string | null) => {
     update({ language: value });
-    error.set("");
     Pob.saveSettings(JSON.stringify(settings()));
   };
 
@@ -803,7 +850,7 @@ function Launcher(props: { onStart: () => void; onCharacters: () => void }) {
       <Shader source={GATE} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
       <Shader source={GATE_MOTION} uniforms={{ time: motionTime }} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
 
-      <TitleBar t={t} />
+      <TitleBar t={t} onCharacters={props.onCharacters} />
 
       <View style={{ flex: 1, paddingHorizontal: 72, paddingBottom: 16, gap: 24, justifyContent: "center" }}>
         {/* Title */}
@@ -853,22 +900,9 @@ function Launcher(props: { onStart: () => void; onCharacters: () => void }) {
           </Each>
         </View>
 
-        <If when={error()}>
-          <Text style={{ fontFamily: BODY, fontSize: 13, color: C.red, textAlign: "center", textShadow: "0 1px 2px #000" }}>{error()}</Text>
-        </If>
-
-        {/* Start; and characters from an account, made builds (Path of Exile's only: its sites have no others) */}
-        <View style={{ alignItems: "center", gap: 12 }}>
+        {/* Start */}
+        <View style={{ alignItems: "center" }}>
           <PrimaryButton label={t().start} onPress={start} />
-          <If when={settings().game === "Poe1"}>
-            <SmallButton
-              label={accountStrings(settings().language).open}
-              onPress={() => {
-                Pob.saveSettings(JSON.stringify(settings()));
-                props.onCharacters();
-              }}
-            />
-          </If>
         </View>
       </View>
 
@@ -885,6 +919,78 @@ function Launcher(props: { onStart: () => void; onCharacters: () => void }) {
         <Link label="GitHub" url={REPO} />
       </View>
     </View>
+  );
+}
+
+// What the app has to say, as a toast in the bottom right corner of every screen for a while (an error in red, for
+// longer): `say` shows one. It slides in and fades in, and fades out before it goes.
+const toast = signal<{ text: string; error: boolean } | null>(null);
+const toastShown = signal(false);
+let toastTimer: ReturnType<typeof setTimeout> | undefined;
+let toastGone: ReturnType<typeof setTimeout> | undefined;
+function say(text: string, error = false) {
+  clearTimeout(toastTimer);
+  clearTimeout(toastGone);
+  toast.set({ text, error });
+  // Shown a frame after it is there, so it moves in from where it was hidden.
+  setTimeout(() => toastShown.set(true), 16);
+  toastTimer = setTimeout(hideToast, error ? 6000 : 3500);
+}
+function hideToast() {
+  clearTimeout(toastTimer);
+  toastShown.set(false);
+  toastGone = setTimeout(() => toast.set(null), 260);
+}
+
+/** The toast: in the bottom right corner; a press closes it. */
+function Toast() {
+  return (
+    <If when={toast()}>
+      {(t) => (
+        <View
+          role="alert"
+          onPress={hideToast}
+          style={{
+            position: "absolute",
+            right: 24,
+            bottom: 24,
+            maxWidth: 460,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 10,
+            paddingHorizontal: 16,
+            paddingVertical: 12,
+            backgroundColor: "rgba(10,8,6,0.95)",
+            borderWidth: 1,
+            borderColor: t().error ? C.red : C.trimHi,
+            boxShadow: "0 10px 30px rgba(0,0,0,0.7)",
+            opacity: toastShown() ? 1 : 0,
+            transform: [{ translateX: toastShown() ? 0 : 40 }],
+            transitionProperty: "opacity, transform",
+            transitionDuration: 240,
+            transitionTimingFunction: "ease-out",
+          }}
+        >
+          {/* A check when it went well, a cross when it did not */}
+          <View
+            style={{
+              width: 20,
+              height: 20,
+              borderRadius: 10,
+              borderWidth: 1,
+              borderColor: t().error ? C.red : C.goldHi,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Text style={{ fontFamily: BODY, fontSize: 12, fontWeight: "700", lineHeight: 14, color: t().error ? C.red : C.goldHi }}>
+              {t().error ? "✕" : "✓"}
+            </Text>
+          </View>
+          <Text style={{ flexShrink: 1, fontFamily: BODY, fontSize: 13, color: C.text }}>{t().text}</Text>
+        </View>
+      )}
+    </If>
   );
 }
 
@@ -912,6 +1018,91 @@ function SmallButton(props: { label: string; onPress: () => void; disabled?: boo
   );
 }
 
+/** A link in the text, as a help: underlined, lit under the pointer. */
+function TextLink(props: { label: string; onPress: () => void; size?: number }) {
+  const hover = signal(false);
+  return (
+    <View role="link" onPress={props.onPress} onMouseEnter={() => hover.set(true)} onMouseLeave={() => hover.set(false)}>
+      <Text style={{ fontFamily: BODY, fontSize: props.size ?? 12, color: hover() ? "#fff3d0" : C.unique, textDecorationLine: "underline" }}>
+        {props.label}
+      </Text>
+    </View>
+  );
+}
+
+// The sites a guide's step names, and their addresses: a link where it names one.
+const SITES: [string, string][] = [
+  ["poe.game.qq.com", TENCENT_SITE],
+  ["pathofexile.com", PC_SITE],
+];
+
+/** A step of the POESESSID guide: its text, the site it names a link to it. */
+function GuideStep(props: { text: string }) {
+  const style = { fontFamily: BODY, fontSize: 14, color: C.text, lineHeight: 22 };
+  const site = () => SITES.find(([domain]) => props.text.includes(domain));
+  return (
+    <If when={site()} else={<Text style={{ ...style, flex: 1 }}>{props.text}</Text>}>
+      {(found) => {
+        const [before, after] = props.text.split(found()[0]);
+        return (
+          <View style={{ flex: 1, flexDirection: "row", flexWrap: "wrap", alignItems: "center" }}>
+            <Text style={style}>{before}</Text>
+            <TextLink label={found()[0]} size={14} onPress={() => Pob.openUrl(found()[1])} />
+            <Text style={style}>{after}</Text>
+          </View>
+        );
+      }}
+    </If>
+  );
+}
+
+/** One choice among a few, side by side in one frame (a segmented tab): the chosen segment filled with brass. */
+function Segmented(props: { items: { value: string; label: string }[]; value: string; onChange: (value: string) => void }) {
+  return (
+    <View
+      role="tablist"
+      style={{ flexDirection: "row", borderWidth: 1, borderColor: C.trim, backgroundColor: "rgba(0,0,0,0.55)", padding: 2, gap: 2 }}
+    >
+      <Each of={props.items}>
+        {(item) => {
+          const selected = () => props.value === item().value;
+          const hover = signal(false);
+          return (
+            <View
+              role="tab"
+              testID={`tab-${item().value}`}
+              onPress={() => props.onChange(item().value)}
+              onMouseEnter={() => hover.set(true)}
+              onMouseLeave={() => hover.set(false)}
+              style={{
+                flex: 1,
+                height: 30,
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundImage: selected() ? "linear-gradient(180deg, #d9b46c, #a57c3c 55%, #7a5826)" : "none",
+                backgroundColor: selected() ? "transparent" : hover() ? "rgba(177,141,78,0.14)" : "transparent",
+                boxShadow: selected() ? "inset 0 1px 0 rgba(255,236,190,0.45), 0 1px 3px rgba(0,0,0,0.6)" : "none",
+              }}
+            >
+              <Text
+                style={{
+                  fontFamily: BODY,
+                  fontSize: 12,
+                  fontWeight: selected() ? "700" : "400",
+                  color: selected() ? C.ink : hover() ? "#fff3d0" : C.muted,
+                  textShadow: selected() ? ENGRAVED : "none",
+                }}
+              >
+                {item().label}
+              </Text>
+            </View>
+          );
+        }}
+      </Each>
+    </View>
+  );
+}
+
 /** A choice among a few, as the language buttons: framed, the chosen one lit. */
 function Chip(props: { label: string; selected: boolean; onPress: () => void }) {
   const hover = signal(false);
@@ -934,31 +1125,67 @@ function Chip(props: { label: string; selected: boolean; onPress: () => void }) 
   );
 }
 
-function Field(props: { label: string; hint?: string; value: () => string; onChange: (v: string) => void; masked?: boolean; placeholder?: string; onSubmit?: () => void }) {
+/** A labelled input. `secret`: its text hidden, but for a press on its words for showing it (`[show, hide]`). */
+function Field(props: {
+  label: string;
+  hint?: string;
+  value: () => string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  onSubmit?: () => void;
+  link?: { label: string; onPress: () => void };
+  secret?: [string, string];
+}) {
+  const shown = signal(false);
+  const toggleHover = signal(false);
   return (
     <View style={{ gap: 5 }}>
-      <Text style={{ fontFamily: BODY, fontSize: 12, color: C.gold }}>{props.label}</Text>
-      <Input
-        value={props.value()}
-        onChange={(e) => props.onChange(e.value)}
-        onSubmit={() => props.onSubmit?.()}
-        masked={props.masked}
-        placeholder={props.placeholder}
-        autoCapitalize="none"
-        autoCorrect={false}
-        style={{
-          height: 32,
-          paddingHorizontal: 10,
-          fontFamily: BODY,
-          fontSize: 13,
-          color: C.text,
-          placeholderColor: C.dim,
-          caretColor: C.goldHi,
-          backgroundColor: "rgba(0,0,0,0.6)",
-          borderWidth: 1,
-          borderColor: C.trim,
-        }}
-      />
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+        <Text style={{ fontFamily: BODY, fontSize: 12, color: C.gold }}>{props.label}</Text>
+        <If when={props.link}>{(link) => <TextLink label={link().label} onPress={link().onPress} />}</If>
+      </View>
+      <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "rgba(0,0,0,0.6)", borderWidth: 1, borderColor: C.trim }}>
+        <Input
+          value={props.value()}
+          onChange={(e) => props.onChange(e.value)}
+          onSubmit={() => props.onSubmit?.()}
+          placeholder={props.placeholder}
+          masked={!!props.secret && !shown()}
+          autoCapitalize="none"
+          autoCorrect={false}
+          style={{
+            flex: 1,
+            height: 30,
+            paddingHorizontal: 10,
+            fontFamily: BODY,
+            fontSize: 13,
+            color: C.text,
+            placeholderColor: C.dim,
+            caretColor: C.goldHi,
+          }}
+        />
+        <If when={props.secret}>
+          {(words) => (
+            // The whole strip at the input's right end takes the press, not only its word: easy to hit.
+            <View
+              role="button"
+              onPress={() => shown.set(!shown())}
+              onMouseEnter={() => toggleHover.set(true)}
+              onMouseLeave={() => toggleHover.set(false)}
+              style={{
+                height: 30,
+                paddingHorizontal: 12,
+                justifyContent: "center",
+                borderLeftWidth: 1,
+                borderColor: C.trim,
+                backgroundColor: toggleHover() ? "rgba(177,141,78,0.18)" : "transparent",
+              }}
+            >
+              <Text style={{ fontFamily: BODY, fontSize: 12, color: toggleHover() ? "#fff3d0" : C.unique }}>{shown() ? words()[1] : words()[0]}</Text>
+            </View>
+          )}
+        </If>
+      </View>
       <If when={props.hint}>
         <Text style={{ fontFamily: BODY, fontSize: 11, color: C.dim }}>{props.hint}</Text>
       </If>
@@ -975,6 +1202,125 @@ const PANEL: ViewStyle = {
   gap: 14,
 };
 
+/** A folder or a build in POB's builds folder (`Pob.builds`). */
+interface BuildEntry {
+  name: string;
+  path: string;
+  dir: boolean;
+  children?: BuildEntry[];
+}
+
+/** Where to save the build just made, in POB's builds folder, shown as a tree: a folder for a new build (named
+ * after the character, to begin with), or a build there to replace. `onClose` hears where it was saved, or null. */
+function SaveTree(props: { s: AccountStrings; name: string; onClose: (saved: string | null) => void }) {
+  const data: { root: string; tree: BuildEntry[] } = JSON.parse(Pob.builds() || '{"root":"","tree":[]}');
+  const opened = signal<string[]>([]);
+  // The folder chosen ("": the builds folder itself), or the build to replace.
+  const folder = signal("");
+  const file = signal<string | null>(null);
+  const name = signal(props.name);
+
+  // The rows shown: the folders' contents under those opened, indented by depth.
+  const rows = () => {
+    const out: { entry: BuildEntry; depth: number }[] = [];
+    const walk = (list: BuildEntry[], depth: number) => {
+      for (const entry of list) {
+        out.push({ entry, depth });
+        if (entry.dir && opened().includes(entry.path)) walk(entry.children ?? [], depth + 1);
+      }
+    };
+    walk(data.tree, 1);
+    return out;
+  };
+  const press = (entry: BuildEntry) => {
+    if (!entry.dir) {
+      file.set(entry.path);
+      return;
+    }
+    file.set(null);
+    folder.set(entry.path);
+    opened.set(opened().includes(entry.path) ? opened().filter((x) => x !== entry.path) : [...opened(), entry.path]);
+  };
+  const target = () => file() ?? (folder() ? `${folder()}/${name().trim()}` : name().trim());
+  const save = () => {
+    if (!file() && !name().trim()) return;
+    const saved = Pob.saveBuild(target());
+    if (saved.startsWith("error: ")) say(saved.slice("error: ".length), true);
+    else props.onClose(saved);
+  };
+
+  const Row = (row: { label: string; kind: "open" | "closed" | "build"; depth: number; selected: boolean; onPress: () => void }) => {
+    const hover = signal(false);
+    return (
+      <View
+        role="button"
+        onPress={row.onPress}
+        onMouseEnter={() => hover.set(true)}
+        onMouseLeave={() => hover.set(false)}
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 8,
+          paddingLeft: 8 + row.depth * 18,
+          paddingRight: 8,
+          paddingVertical: 5,
+          backgroundColor: row.selected ? "rgba(177,141,78,0.28)" : hover() ? "rgba(177,141,78,0.12)" : "transparent",
+        }}
+      >
+        <View style={{ width: 16, height: 16, alignItems: "center", justifyContent: "center" }}>
+          <If when={row.kind !== "build"} else={<View style={{ width: 6, height: 6, backgroundColor: C.trimHi, transform: [{ rotate: "45deg" }] }} />}>
+            <View style={{ width: 15, height: 15, borderWidth: 1, borderColor: C.trimHi, backgroundColor: "rgba(0,0,0,0.6)", alignItems: "center", justifyContent: "center" }}>
+              <Text style={{ fontFamily: BODY, fontSize: 13, fontWeight: "700", lineHeight: 14, color: C.goldHi }}>{row.kind === "open" ? "−" : "+"}</Text>
+            </View>
+          </If>
+        </View>
+        <Text style={{ flex: 1, fontFamily: BODY, fontSize: 13, color: row.selected ? "#fff3d0" : C.text, numberOfLines: 1 }}>{row.label}</Text>
+      </View>
+    );
+  };
+
+  return (
+    <View
+      onPress={() => props.onClose(null)}
+      style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.6)", alignItems: "center", justifyContent: "center" }}
+    >
+      <View onPress={() => {}} style={{ ...PANEL, width: 560, gap: 12 }}>
+        <Text style={{ fontFamily: DISPLAY, fontSize: 18, fontWeight: "700", color: C.goldHi }}>{props.s.save.title}</Text>
+        <Text style={{ fontFamily: BODY, fontSize: 12, color: C.muted }}>{props.s.save.hint}</Text>
+        <View style={{ height: 300, borderWidth: 1, borderColor: C.trim, backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <Scroll style={{ flex: 1 }}>
+            <View style={{ paddingVertical: 4 }}>
+              <Row label={props.s.save.root} kind="open" depth={0} selected={!file() && folder() === ""} onPress={() => (file.set(null), folder.set(""))} />
+              <Each of={rows()}>
+                {(row) => (
+                  <Row
+                    label={row().entry.dir ? row().entry.name : row().entry.name.replace(/.xml$/i, "")}
+                    kind={row().entry.dir ? (opened().includes(row().entry.path) ? "open" : "closed") : "build"}
+                    depth={row().depth}
+                    selected={row().entry.dir ? !file() && folder() === row().entry.path : file() === row().entry.path}
+                    onPress={() => press(row().entry)}
+                  />
+                )}
+              </Each>
+            </View>
+          </Scroll>
+        </View>
+        <If
+          when={file()}
+          else={<Field label={props.s.save.name} value={name} onChange={name.set} onSubmit={save} />}
+        >
+          <Text style={{ fontFamily: BODY, fontSize: 13, color: C.unique }}>{props.s.save.replaces(file() ?? "")}</Text>
+        </If>
+        <Text style={{ fontFamily: BODY, fontSize: 11, color: C.dim, numberOfLines: 1, textOverflow: "ellipsis-middle" }}>{data.root}</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+          <SmallButton label={props.s.save.cancel} onPress={() => props.onClose(null)} />
+          <Button label={file() ? props.s.save.overwrite : props.s.save.save} onPress={save} />
+        </View>
+      </View>
+    </View>
+  );
+}
+
 /** Characters from an account, on Path of Exile's site or Tencent's, made builds: the account (kept for next time,
  * with the others used), its characters by league, and for each a build code to copy or a build saved among POB's. */
 function Characters(props: { settings: Settings; t: () => Strings; onBack: () => void }) {
@@ -984,69 +1330,84 @@ function Characters(props: { settings: Settings; t: () => Strings; onBack: () =>
   const realm = signal<Realm>(last?.realm ?? (props.settings.language === "zh-rCN" ? "tencent" : "pc"));
   const name = signal(last?.name ?? "");
   const sessid = signal(last?.sessid ?? "");
-  // The account whose characters show, and them.
-  const shown = signal<Account | null>(null);
-  const characters = signal<Character[]>([]);
+  // The account whose characters show, and them: the last one's, as they were last got.
+  const shown = signal<Account | null>(last?.characters ? last : null);
+  const characters = signal<Character[]>(last?.characters ?? []);
   const league = signal<string | null>(null);
   const job = signal<AccountProgress | null>(null);
   // Which character's action runs: its name and the action.
   const working = signal<string | null>(null);
-  const notice = signal<{ text: string; error: boolean } | null>(null);
   const running = () => job()?.state === "running";
+  // The game whose characters show: the launcher's, to begin with.
+  const game = signal<Game>(props.settings.game);
+  // The guide to the POESESSID, open.
+  const guide = signal(false);
+  // A build made, to save where the user says: its character's name, and what was left untranslated.
+  const saving = signal<{ name: string; untranslated: string } | null>(null);
+  const fail = (acc: Account, error: string) => say(errorText(a(), acc.realm, error), true);
 
   const leagues = () => [...new Set(characters().map((c) => c.league))];
+  // The last played first (Tencent says when); else in the site's order.
   const listed = () =>
     characters()
       .filter((c) => league() === null || c.league === league())
-      .sort((x, y) => y.level - x.level || x.name.localeCompare(y.name));
+      .sort((x, y) => (y.lastLoginTime ?? 0) - (x.lastLoginTime ?? 0));
 
+  // An account used before: its characters as they were last got, or got now.
   const choose = (acc: Account) => {
     realm.set(acc.realm);
     name.set(acc.name);
     sessid.set(acc.sessid);
+    if (!acc.characters) return fetchCharacters();
+    shown.set(acc);
+    characters.set(acc.characters);
+    league.set(null);
   };
 
   const fetchCharacters = () => {
     if (running()) return;
-    const acc: Account = { realm: realm(), name: name().trim(), sessid: sessid().trim() };
-    notice.set(null);
+    const acc: Account = { realm: realm(), name: realm() === "tencent" ? "" : name().trim(), sessid: sessid().trim() };
     if (!Pob.accountStart("characters", JSON.stringify({ account: acc }))) return;
     watchJob(Pob.accountProgress, job.set, (p) => {
       if (p.state === "failed") {
-        notice.set({ text: errorText(a(), acc.realm, p.error), error: true });
+        fail(acc, p.error);
         return;
       }
-      acc.name = p.result.account;
-      name.set(acc.name);
-      shown.set(acc);
-      characters.set(p.result.characters);
+      // The account as kept: named as the site spells it, with its characters.
+      const got: Account = p.result;
+      if (got.realm !== "tencent") name.set(got.name);
+      shown.set(got);
+      characters.set(got.characters ?? []);
       league.set(null);
       accounts.set(JSON.parse(Pob.accounts() || "[]"));
     });
   };
 
   const forget = (acc: Account) => {
-    accounts.set(accounts().filter((x) => !(x.realm === acc.realm && x.name === acc.name)));
+    accounts.set(accounts().filter((x) => !sameAccount(x, acc)));
     Pob.saveAccounts(JSON.stringify(accounts()));
   };
 
   const exportCharacter = (c: Character, action: "code" | "save") => {
     const acc = shown();
     if (running() || !acc) return;
-    notice.set(null);
-    const sent = Pob.accountStart("export", JSON.stringify({ account: acc, character: c, action, pob_dir: props.settings.poe1_dir ?? "" }));
+    const sent = Pob.accountStart("export", JSON.stringify({ account: acc, character: c, pob_dir: props.settings.poe1_dir ?? "" }));
     if (!sent) return;
     working.set(`${c.name}\n${action}`);
     watchJob(Pob.accountProgress, job.set, async (p) => {
       working.set(null);
       if (p.state === "failed") {
-        notice.set({ text: errorText(a(), acc.realm, p.error), error: true });
+        fail(acc, p.error);
         return;
       }
-      let text = action === "save" ? a().savedTo(p.result.path) : a().copied;
-      if (action === "code") await Clipboard.writeText(p.result.code);
-      if (p.result.untranslated > 0) text += ` · ${a().untranslated(p.result.untranslated)}`;
-      notice.set({ text, error: false });
+      const untranslated = p.result.untranslated > 0 ? ` · ${a().untranslated(p.result.untranslated)}` : "";
+      if (action === "code") {
+        await Clipboard.writeText(p.result.code);
+        say(a().copied + untranslated);
+      } else {
+        // Where in POB's builds folder: the user says, in the tree.
+        saving.set({ name: c.name, untranslated });
+      }
     });
   };
 
@@ -1056,22 +1417,39 @@ function Characters(props: { settings: Settings; t: () => Strings; onBack: () =>
     <View style={{ flex: 1, backgroundColor: C.bg }}>
       <Shader source={GATE} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
       <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.45)" }} />
-      <TitleBar t={props.t} onBack={props.onBack} />
+      <TitleBar t={props.t} onBack={props.onBack} backLabel={accountStrings(props.settings.language).back} />
 
+      {/* The game: Path of Exile's characters; Path of Exile 2's come from elsewhere, and not yet */}
+      <View style={{ paddingHorizontal: 32, paddingTop: 12 }}>
+        <View style={{ width: 340 }}>
+          <Segmented items={GAMES.map((g) => ({ value: g.id, label: props.t().games[g.id] }))} value={game()} onChange={(g) => game.set(g as Game)} />
+        </View>
+      </View>
+      <If
+        when={game() === "Poe1"}
+        else={
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingBottom: 60 }}>
+            <View style={{ ...PANEL, width: 560, alignItems: "center", gap: 12 }}>
+              <Text style={{ fontFamily: DISPLAY, fontSize: 18, fontWeight: "700", color: C.goldHi }}>{a().poe2.title}</Text>
+              <Rule width={480} />
+              <Text style={{ fontFamily: BODY, fontSize: 14, color: C.text, lineHeight: 22, textAlign: "center" }}>{a().poe2.body}</Text>
+            </View>
+          </View>
+        }
+      >
       <View style={{ flex: 1, flexDirection: "row", gap: 20, paddingHorizontal: 32, paddingTop: 12, paddingBottom: 24 }}>
         {/* The account */}
         <View style={{ width: 340, gap: 20 }}>
           <View style={PANEL}>
             <Text style={{ fontFamily: DISPLAY, fontSize: 16, fontWeight: "700", letterSpacing: 3, color: C.goldHi }}>{a().title}</Text>
             <Rule width={300} />
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-              <Each of={REALMS}>
-                {(r) => <Chip label={a().realms[r()]} selected={realm() === r()} onPress={() => realm.set(r())} />}
-              </Each>
-            </View>
-            <Field label={a().accountName} placeholder={a().accountHint(realm())} value={name} onChange={name.set} onSubmit={fetchCharacters} />
-            <Field label={a().sessid} hint={a().sessidHint(realm())} value={sessid} onChange={sessid.set} masked onSubmit={fetchCharacters} />
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <Segmented items={REALMS.map((r) => ({ value: r, label: a().realms[r] }))} value={realm()} onChange={(r) => realm.set(r as Realm)} />
+            {/* Tencent knows the account by its POESESSID alone */}
+            <If when={realm() !== "tencent"}>
+              <Field label={a().accountName} placeholder={a().accountHint} value={name} onChange={name.set} onSubmit={fetchCharacters} />
+            </If>
+            <Field label={a().sessid} hint={a().sessidHint(realm())} link={{ label: a().guide.link, onPress: () => guide.set(true) }} secret={[a().show, a().hide]} value={sessid} onChange={sessid.set} onSubmit={fetchCharacters} />
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
               <Button label={a().fetch} onPress={fetchCharacters} />
               <SmallButton label={a().signIn} onPress={() => Pob.openUrl(realm() === "tencent" ? TENCENT_SITE : PC_SITE)} />
             </View>
@@ -1089,13 +1467,12 @@ function Characters(props: { settings: Settings; t: () => Strings; onBack: () =>
                         role="button"
                         onPress={() => {
                           choose(acc());
-                          fetchCharacters();
                         }}
                         hoverStyle={{ backgroundColor: "rgba(177,141,78,0.14)" }}
                         style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 8, paddingVertical: 6 }}
                       >
                         <Text style={{ fontFamily: BODY, fontSize: 11, color: C.unique, width: 70 }}>{a().realms[acc().realm]}</Text>
-                        <Text style={{ fontFamily: BODY, fontSize: 13, color: C.text, flex: 1, numberOfLines: 1 }}>{acc().name}</Text>
+                        <Text style={{ fontFamily: BODY, fontSize: 13, color: C.text, flex: 1, numberOfLines: 1 }}>{accountLabel(acc())}</Text>
                         <SmallButton label={a().remove} onPress={() => forget(acc())} />
                       </View>
                     )}
@@ -1110,13 +1487,14 @@ function Characters(props: { settings: Settings; t: () => Strings; onBack: () =>
         <View style={{ ...PANEL, flex: 1 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
             <Text style={{ fontFamily: DISPLAY, fontSize: 16, fontWeight: "700", color: C.goldHi, flex: 1, numberOfLines: 1 }}>
-              {shown() ? `${a().realms[shown()!.realm]} · ${shown()!.name}` : a().title}
+              {/* The realm, and the account by its name: Tencent's, known by its POESESSID, has none to show */}
+              {shown() ? [a().realms[shown()!.realm], shown()!.name].filter(Boolean).join(" · ") : a().title}
             </Text>
-            <Text style={{ fontFamily: BODY, fontSize: 12, color: C.muted }}>{stepText()}</Text>
+            <Text style={{ fontFamily: BODY, fontSize: 12, color: C.muted }}>{stepText() || (shown()?.updated ? a().updated(shown()!.updated!) : "")}</Text>
+            <If when={shown()}>
+              {(acc) => <SmallButton label={a().refresh} disabled={running()} onPress={() => choose({ ...acc(), characters: undefined })} />}
+            </If>
           </View>
-          <If when={notice()}>
-            {(n) => <Text style={{ fontFamily: BODY, fontSize: 12, color: n().error ? C.red : C.gold }}>{n().text}</Text>}
-          </If>
           <If when={leagues().length > 1}>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
               <Chip label={a().all} selected={league() === null} onPress={() => league.set(null)} />
@@ -1158,6 +1536,55 @@ function Characters(props: { settings: Settings; t: () => Strings; onBack: () =>
           </If>
         </View>
       </View>
+      </If>
+
+
+      {/* How to get the POESESSID, over the page */}
+      <If when={guide()}>
+        <View
+          onPress={() => guide.set(false)}
+          style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.6)", alignItems: "center", justifyContent: "center" }}
+        >
+          {/* Its presses are its own: only one outside it closes it */}
+          <View onPress={() => {}} style={{ ...PANEL, width: 620, gap: 16 }}>
+            <Text style={{ fontFamily: DISPLAY, fontSize: 18, fontWeight: "700", color: C.goldHi }}>{a().guide.title}</Text>
+            <Rule width={580} />
+            <View style={{ gap: 12 }}>
+              <Each of={a().guide.steps(realm())}>
+                {(step, i) => (
+                  <View style={{ flexDirection: "row", gap: 12 }}>
+                    <View style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 1, borderColor: C.trimHi, alignItems: "center", justifyContent: "center" }}>
+                      <Text style={{ fontFamily: BODY, fontSize: 12, fontWeight: "700", color: C.goldHi }}>{i() + 1}</Text>
+                    </View>
+                    <GuideStep text={step()} />
+                  </View>
+                )}
+              </Each>
+            </View>
+            <Text style={{ fontFamily: BODY, fontSize: 12, color: C.unique, lineHeight: 18 }}>{a().guide.warn}</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              <SmallButton label={a().signIn} onPress={() => Pob.openUrl(realm() === "tencent" ? TENCENT_SITE : PC_SITE)} />
+              <Button label={a().guide.close} onPress={() => guide.set(false)} />
+            </View>
+          </View>
+        </View>
+      </If>
+      <If when={saving()}>
+        {(build) => (
+          <SaveTree
+            s={a()}
+            name={build().name}
+            onClose={(path) => {
+              // Read before the build goes: closing the tree drops it.
+              const untranslated = build().untranslated;
+              saving.set(null);
+              // The build's name: its file's, without ".xml".
+              if (path) say(a().savedTo(path.split(/[\\/]/).pop()!.replace(/\.xml$/i, "")) + untranslated);
+            }}
+          />
+        )}
+      </If>
+
     </View>
   );
 }
@@ -1243,25 +1670,28 @@ export function App() {
     };
     poll();
   };
-  // The Characters page, over the launcher.
+  // The Characters page, over whatever shows: the launcher, or Path of Building, which goes on under it.
   const characters = signal(false);
-  const launcher = () =>
-    characters() ? (
-      <Characters settings={JSON.parse(Pob.settings()) as Settings} t={t} onBack={() => characters.set(false)} />
-    ) : (
-      <Launcher onStart={start} onCharacters={() => characters.set(true)} />
-    );
+  const openCharacters = () => characters.set(true);
   return (
-    <If when={running()} else={launcher()}>
-      <View style={{ flex: 1 }}>
-        <TitleBar t={t} solid onBack={back} />
+    <View style={{ flex: 1 }}>
+      <If when={running()} else={<Launcher onStart={start} onCharacters={openCharacters} />}>
         <View style={{ flex: 1 }}>
-          <PobCanvas style={{ flex: 1 }} />
-          <If when={!progress().loaded}>
-            <Loading t={t} progress={progress} />
-          </If>
+          <TitleBar t={t} solid onBack={back} onCharacters={openCharacters} />
+          <View style={{ flex: 1 }}>
+            <PobCanvas style={{ flex: 1 }} />
+            <If when={!progress().loaded}>
+              <Loading t={t} progress={progress} />
+            </If>
+          </View>
         </View>
-      </View>
-    </If>
+      </If>
+      <If when={characters()}>
+        <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
+          <Characters settings={JSON.parse(Pob.settings()) as Settings} t={t} onBack={() => characters.set(false)} />
+        </View>
+      </If>
+      <Toast />
+    </View>
   );
 }

@@ -966,23 +966,59 @@ native!(n_draw_string, |l| {
     let kind = FontKind::parse(&l.string(5).unwrap_or_default());
     let Some(s) = l.string(6) else { return 0 };
     with_host(|h| {
-        let s = shown(h, &s);
-        let (runs, _) = text::layout(kind, height, &s, x, y, align, h.viewport[2].max(h.screen.0), h.color);
-        if runs.is_empty() {
+        if let Some((label, value, at)) = label_and_value(h, kind, height, align, &s) {
+            draw_text(h, kind, height, &label, x, y, align);
+            draw_text(h, kind, height, value, x + at, y, align);
             return;
         }
-        let size = text::em_size(height);
-        let font: Arc<str> = Arc::from(kind.css(size).as_str());
-        let baseline = text::baseline(kind, size, height);
-        for r in runs {
-            if r.color[3] <= 0.0 {
-                continue;
-            }
-            emit(h, Cmd::Text { x: r.x, y: r.y, baseline, font: font.clone(), text: r.text, color: r.color });
-        }
+        let s = shown(h, &s);
+        draw_text(h, kind, height, &s, x, y, align);
     });
     0
 });
+
+/// "Current build:  Name", drawn left: POB puts what follows the label where
+/// the English label ends (the name's box is drawn there). The label
+/// translated, the value as it is, and where the value goes from `x`: when
+/// the translation is the shorter, so the value stays where POB put it.
+fn label_and_value<'a>(h: &mut Host, kind: FontKind, height: f32, align: Align, s: &'a str) -> Option<(Arc<str>, &'a str, f32)> {
+    if !matches!(align, Align::Left) || h.raw_text || !h.shared.translate.load(Ordering::Relaxed) {
+        return None;
+    }
+    let (label, value) = s.split_once(":  ")?;
+    if label.is_empty() || value.is_empty() || label.contains(['\n', '^']) {
+        return None;
+    }
+    let english = format!("{label}:");
+    let translated = shown(h, &english);
+    if *translated == *english {
+        return None;
+    }
+    // Where POB put the value: in a box it draws at a place of its own for some (the build's name: `x + 91` in
+    // Build.lua, inside its border), else where the English ends.
+    let at = match label {
+        "Current build" => 95.0,
+        _ => text::string_width(kind, height, &format!("{english}  ")),
+    };
+    (text::string_width(kind, height, &translated) < at).then_some((translated, value, at))
+}
+
+/// Draws `s` (its colour escapes, its lines) at `x`, `y`, as `DrawString` does.
+fn draw_text(h: &mut Host, kind: FontKind, height: f32, s: &str, x: f32, y: f32, align: Align) {
+    let (runs, _) = text::layout(kind, height, s, x, y, align, h.viewport[2].max(h.screen.0), h.color);
+    if runs.is_empty() {
+        return;
+    }
+    let size = text::em_size(height);
+    let font: Arc<str> = Arc::from(kind.css(size).as_str());
+    let baseline = text::baseline(kind, size, height);
+    for r in runs {
+        if r.color[3] <= 0.0 {
+            continue;
+        }
+        emit(h, Cmd::Text { x: r.x, y: r.y, baseline, font: font.clone(), text: r.text, color: r.color });
+    }
+}
 
 native!(n_draw_string_width, |l| {
     let height = text_height(l.num(1));
