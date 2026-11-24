@@ -5,7 +5,8 @@ import { effect, resource, signal, untracked, View } from "nsh";
 import { Tree, type TreeEntry, type TreeItem } from "nsh/base";
 import { shellInfo } from "nsh/updater";
 import { Pob } from "pobt/native";
-import { Backdrop, Button, Icon, EmptyState, Framed, Rule, Select, Text, TextField } from "../ui";
+import { Button, EmptyState, Icon, Select, Text, TextField } from "../ui";
+import { BODY, BrassButton, C, DISPLAY, Gate, GoldRule, Plaque, PressButton, Subtitle, Title } from "../ui/launcher";
 import { WASH } from "../ui/motion";
 import { t, tr } from "./i18n";
 import { build, type BuildEntry, listBuilds, newBuild, openBuild, openFile, type SortMode } from "./session";
@@ -41,23 +42,32 @@ function Row(props: { entry?: BuildEntry; tree: TreeEntry }) {
   return (
     <View class="h-10 flex-1 flex-row items-center gap-3 pr-4" style={{ paddingLeft: 12 + props.tree.depth * 18 }}>
       <View class="w-4 items-center">
-        <If when={props.tree.folder} else={<Text tone="muted" class="text-xs">◆</Text>}>
+        <If when={props.tree.folder} else={<View style={{ width: 5, height: 5, backgroundColor: C.trim, transform: [{ rotate: "45deg" }] }} />}>
           <View class="transition-transform duration-180 group-aria-expanded:rotate-90 motion-reduce:transition-none">
-            <Icon name="chevron-right" size={14} class="tint-primary" />
+            <Icon name="chevron-right" size={14} color={C.trimHi} />
           </View>
         </If>
       </View>
-      <Text class="flex-1 truncate" tone={props.tree.folder ? "primary" : props.tree.disabled ? "muted" : "default"}>
+      <Text
+        class="flex-1 truncate"
+        style={{
+          fontFamily: props.tree.folder ? DISPLAY : BODY,
+          fontSize: 14,
+          fontWeight: props.tree.folder ? "700" : "400",
+          letterSpacing: props.tree.folder ? 1 : 0,
+          color: props.tree.folder ? C.goldHi : props.tree.disabled ? C.dim : C.text,
+        }}
+      >
         {props.tree.label}
       </Text>
       <If when={e() && !e()!.folder}>
-        <Text tone="muted" class="w-40 truncate">
+        <Text class="w-40 truncate" style={{ fontFamily: BODY, fontSize: 13, color: C.gold }}>
           {cls()}
         </Text>
-        <Text tone="muted" class="w-20 text-right font-mono">
+        <Text class="w-20 text-right" style={{ fontFamily: BODY, fontSize: 13, color: C.muted }}>
           {e()?.level ? `${t("level")} ${e()!.level}` : ""}
         </Text>
-        <Text variant="caption" tone="muted" class="w-36 text-right font-mono">
+        <Text class="w-36 text-right" style={{ fontFamily: BODY, fontSize: 12, color: C.dim }}>
           {ago(e()?.modified)}
         </Text>
       </If>
@@ -130,20 +140,21 @@ export function BuildList(props: { onImport: () => void; onOpened: () => void })
     { value: "EDITED", title: t("sortEdited") },
     { value: "LEVEL", title: t("sortLevel") },
   ];
+  const create = () => {
+    props.onOpened();
+    void newBuild().catch((err) => build.error.set(String((err as Error).message ?? err)));
+  };
   return (
-    <View class="flex-1 items-center bg-background">
-      <Backdrop />
-      <View class="w-full max-w-5xl flex-1 gap-4 px-6 pt-6 pb-4">
+    <View class="flex-1 items-center" style={{ backgroundColor: C.bg }}>
+      <Gate />
+      <View class="w-full max-w-5xl flex-1 gap-5 px-6 pt-4 pb-4">
+        {/* The launcher's title */}
         <View class="items-center gap-1">
-          <Text variant="display" tone="primary" class="text-3xl tracking-[0.3em]">
-            {t("builds")}
-          </Text>
-          <Rule class="w-96" />
-          <Text tone="muted" class="text-center">
-            {t("buildsHint")}
-          </Text>
+          <Title width={560} />
+          <GoldRule width={460} />
+          <Subtitle>{t("buildsHint")}</Subtitle>
         </View>
-        <View class="flex-row items-center gap-2">
+        <View class="flex-row items-center gap-3">
           <TextField value={typed()} onChange={search} placeholder={t("searchBuilds")} accessibilityLabel={t("searchBuilds")} class="w-72" />
           <Select
             accessibilityLabel={t("sortBy")}
@@ -153,53 +164,67 @@ export function BuildList(props: { onImport: () => void; onOpened: () => void })
             class="w-36"
           />
           <If when={filter()}>
-            <Text variant="caption" tone="muted">
-              {`${entries().length}`}
-            </Text>
+            <Text style={{ fontFamily: BODY, fontSize: 12, color: C.muted }}>{`${entries().length}`}</Text>
           </If>
           <View class="flex-1" />
-          <Button label={t("importCode")} onPress={props.onImport} />
-          <Button
-            label={t("create")}
-            variant="primary"
-            onPress={() => {
-              props.onOpened();
-              void newBuild().catch((err) => build.error.set(String((err as Error).message ?? err)));
-            }}
-          />
+          <BrassButton label={t("importCode")} onPress={props.onImport} />
+          {/* New: the launcher's red banner */}
+          <PressButton onPress={create} style={{ width: 200 }}>
+            {(down) => (
+              <Plaque kind={() => "red"} height={44} pressed={down}>
+                <Text style={{ fontFamily: DISPLAY, fontSize: 16, fontWeight: "700", letterSpacing: 2, color: "#f6e6c2" }}>{t("create")}</Text>
+              </Plaque>
+            )}
+          </PressButton>
         </View>
         <If when={error() || build.error() || top.error()}>
-          <Text tone="destructive" variant="caption">
-            {error() || build.error() || String(top.error())}
-          </Text>
+          <Text style={{ fontFamily: BODY, fontSize: 12, color: C.red }}>{error() || build.error() || String(top.error())}</Text>
         </If>
-        <Framed class="flex-1 overflow-hidden">
-          <Tree
-            items={items()}
-            expanded={expanded()}
-            onExpandedChange={(e) => expanded.set(e.expanded)}
-            onExpand={(e) => load(e.id)}
-            onAction={(e) => open(e.id)}
-            accessibilityLabel={t("builds")}
-            class="flex-1"
-            itemClass={`group border-b border-trim/25 ${WASH} hover:bg-accent/40 selected:bg-accent focus-visible:bg-accent/70 disabled:opacity-60`}
-            renderItem={(e) => <Row entry={byId.get(e.id)} tree={e} />}
-            empty={<EmptyState title={top.loading() ? "" : t("emptyFolder")} detail={top.loading() ? "" : t("emptyFolderHint")} />}
-          />
-        </Framed>
+        {/* The list, in a game card's double trim, its title plaque over the top edge */}
+        <View class="flex-1" style={{ paddingTop: 22 }}>
+          <View
+            class="flex-1 overflow-hidden"
+            style={{
+              borderWidth: 1,
+              borderColor: C.trimHi,
+              backgroundColor: C.panel,
+              boxShadow: "inset 0 0 0 3px rgba(0,0,0,0.7), inset 0 0 0 4px rgba(177,141,78,0.45), 0 0 36px rgba(140,170,220,0.12)",
+              paddingTop: 30,
+              paddingHorizontal: 4,
+              paddingBottom: 4,
+            }}
+          >
+            <Tree
+              items={items()}
+              expanded={expanded()}
+              onExpandedChange={(e) => expanded.set(e.expanded)}
+              onExpand={(e) => load(e.id)}
+              onAction={(e) => open(e.id)}
+              accessibilityLabel={t("builds")}
+              class="flex-1"
+              itemClass={`group ${WASH} hover:bg-[rgba(177,141,78,0.10)] selected:bg-[rgba(177,141,78,0.22)] focus-visible:bg-[rgba(177,141,78,0.16)] disabled:opacity-60`}
+              renderItem={(e) => <Row entry={byId.get(e.id)} tree={e} />}
+              empty={<EmptyState title={top.loading() ? "" : t("emptyFolder")} detail={top.loading() ? "" : t("emptyFolderHint")} />}
+            />
+          </View>
+          <View style={{ position: "absolute", top: 0, left: 0, right: 0, alignItems: "center", pointerEvents: "box-none" }}>
+            <View style={{ width: 260 }}>
+              <Plaque kind={() => "dark"} height={46}>
+                <Text style={{ fontFamily: DISPLAY, fontSize: 19, fontWeight: "700", letterSpacing: 3, color: C.goldHi }}>
+                  {devShown() ? t("devBuilds") : t("builds")}
+                </Text>
+              </Plaque>
+            </View>
+          </View>
+        </View>
         <View class="flex-row items-center gap-3">
-          <Text variant="caption" tone="muted" class="flex-1 truncate">
+          <Text class="flex-1 truncate" style={{ fontFamily: BODY, fontSize: 12, color: C.muted }}>
             {devShown() ? "assets/builds" : (top()?.buildPath ?? "")}
             {"  ·  "}
             {t("openHint")}
           </Text>
           <If when={DEV}>
-            <Button
-              label={devShown() ? t("allBuilds") : t("devBuilds")}
-              variant="ghost"
-              size="sm"
-              onPress={() => devShown.set(!devShown())}
-            />
+            <Button label={devShown() ? t("allBuilds") : t("devBuilds")} variant="ghost" size="sm" onPress={() => devShown.set(!devShown())} />
           </If>
         </View>
       </View>

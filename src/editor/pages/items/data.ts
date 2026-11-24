@@ -74,3 +74,44 @@ export async function addPasted(slot?: string): Promise<number> {
     build.busy.set(false);
   }
 }
+
+/** A control of a window POB has open (the craft and custom-item windows), in POB's layout order. */
+export type PopupControl = {
+  name: string;
+  kind: "list" | "edit" | "check" | "button";
+  shown: boolean;
+  enabled?: boolean;
+  caption?: string;
+  tip: boolean;
+  label?: string;
+  items?: string[];
+  sel?: number;
+  text?: string;
+  placeholder?: string;
+  checked?: boolean;
+};
+export type Popup = { title: string; controls: PopupControl[] };
+
+/** The item being made or edited (POB's display item), its tooltip, and the window POB has open for it. */
+export type Display = { popup: Popup | null; item?: ItemInfo; inBuild?: boolean; lines?: TipLine[] };
+
+export const readDisplay = () => pob<Display>("items.display");
+/** Opens POB's "Craft item..." ("craft"), "Create custom..." ("custom") or "Edit..." ("edit") window. */
+export const openWindow = (what: "craft" | "custom" | "edit") => pob<Popup | null>("items.open", { what });
+export const popupSet = (name: string, value: number | string | boolean) => pob<Popup | null>("items.popupSet", { name, value });
+export const popupPress = (name: string) => pob<{ popup: Popup | null }>("items.popupPress", { name });
+export const popupTip = (name: string, index?: number) => pob<{ lines: TipLine[] }>("items.popupTip", { name, index });
+export const popupClose = () => pob("items.popupClose").catch(() => {});
+
+/** Puts POB's display item in the build ("Save" / "Add to build"); its id. */
+export async function saveDisplay(): Promise<number> {
+  build.busy.set(true);
+  try {
+    const { id } = await pob<{ id: number }>("items.saveDisplay");
+    await pob("settle");
+    await reload();
+    return id;
+  } finally {
+    build.busy.set(false);
+  }
+}

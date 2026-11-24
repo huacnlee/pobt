@@ -211,5 +211,144 @@ return function(s)
 		return { }
 	end
 
+	-- Crafting and custom items: POB's own popups (ItemsTab:CraftItem, EditDisplayItemText), opened by the Items tab's
+	-- buttons and driven through their controls, so POB makes the item; it becomes POB's display item, which "Save"
+	-- (AddDisplayItem) puts in the build.
+
+	-- The popup POB has open: its title and its controls in the order POB lays them out (top to bottom, left to
+	-- right), each named: lists, edit boxes, check boxes as s.control reads them, and buttons ({ kind = "button", label,
+	-- enabled }), with POB's label beside each; nil when none is open.
+	local function popupInfo()
+		local popup = main.popups[1]
+		if not popup then
+			return nil
+		end
+		local controls = { }
+		for name, c in pairs(popup.controls) do
+			if type(name) == "string" and not name:match("Label$") then
+				local shown = not c.IsShown or c:IsShown()
+				local info
+				if c.onClick then
+					local label = type(c.label) == "function" and c.label() or c.label
+					local enabled = c.enabled == nil or (type(c.enabled) == "function" and c.enabled()) or c.enabled == true
+					info = { kind = "button", label = label, enabled = enabled and true or false }
+				else
+					info = s.control(c)
+					if info and info.kind == "other" then
+						info = nil
+					end
+				end
+				if info then
+					info.name = name
+					info.shown = shown and true or false
+					-- POB's label beside it ("Rarity:" for "rarity"), and whether POB has a tooltip for it (the item it
+					-- would make)
+					local label = popup.controls[name .. "Label"]
+					info.caption = label and (type(label.label) == "function" and label.label() or label.label) or nil
+					info.tip = c.tooltipFunc ~= nil
+					-- where POB draws it, for the order of the fields
+					local ok, x, y = pcall(c.GetPos, c)
+					info.x, info.y = ok and x or 0, ok and y or 0
+					controls[#controls + 1] = info
+				end
+			end
+		end
+		table.sort(controls, function(a, b)
+			if a.y ~= b.y then
+				return a.y < b.y
+			end
+			return a.x < b.x
+		end)
+		return { title = popup.title, controls = controls }
+	end
+
+	local function popupControl(name)
+		local popup = assert(main.popups[1], "Path of Building has no window open")
+		return assert(popup.controls[name], "no such control in Path of Building's window")
+	end
+
+	-- The display item (what is being crafted, pasted or edited), POB's tooltip of it, and the open popup.
+	function ops.display()
+		local t = tab()
+		local item = t.displayItem
+		local out = { popup = popupInfo() or s.json.null }
+		if item and item.base then
+			out.item = itemInfo(item)
+			out.inBuild = (item.id and t.items[item.id]) and true or false
+			out.lines = tooltipLines(function(tip)
+				t:AddItemTooltip(tip, item)
+			end)
+		end
+		return out
+	end
+
+	-- POB's "Craft item..." (a base of a type, at a rarity) and "Create custom..." (an item from its text); "edit"
+	-- opens the display item's text, as POB's "Edit..." does.
+	function ops.open(a)
+		local t = tab()
+		-- one window at a time, as POB shows them
+		while main.popups[1] do
+			main:ClosePopup()
+		end
+		if a.what == "craft" then
+			t:CraftItem()
+		elseif a.what == "edit" then
+			assert(t.displayItem, "no item to edit")
+			t:EditDisplayItemText()
+		else
+			t:SetDisplayItem()
+			t:EditDisplayItemText()
+		end
+		return popupInfo()
+	end
+
+	-- Sets a control of the open popup (a list's 1-based index, an edit box's text), as the user would.
+	function ops.popupSet(a)
+		s.act(popupControl(a.name), a.value)
+		return popupInfo() or s.json.null
+	end
+
+	-- Presses a button of the open popup ("save", "cancel"), when POB enables it.
+	function ops.popupPress(a)
+		local c = popupControl(a.name)
+		local enabled = c.enabled == nil or (type(c.enabled) == "function" and c.enabled()) or c.enabled == true
+		assert(enabled, "Path of Building does not allow that yet")
+		c.onClick()
+		return { popup = popupInfo() or s.json.null }
+	end
+
+	-- POB's tooltip of the open popup's control `name`: a list's entry `index` (the craft window's base, as POB shows
+	-- the item it would make), or a button's (the text window's "Create": the item, or why it is not one).
+	function ops.popupTip(a)
+		local c = popupControl(a.name)
+		assert(c.tooltipFunc, "no tooltip")
+		return { lines = tooltipLines(function(tip)
+			if a.index then
+				local index = tonumber(a.index)
+				c.tooltipFunc(tip, "HOVER", index, c.list[index])
+			else
+				c.tooltipFunc(tip)
+			end
+		end) }
+	end
+
+	-- Closes the open popup without its action (POB's "Cancel").
+	function ops.popupClose()
+		if main.popups[1] then
+			main:ClosePopup()
+		end
+		return { }
+	end
+
+	-- Puts the display item in the build, as POB's "Save" / "Add to build" does (AddDisplayItem, equipped in a free
+	-- slot it fits).
+	function ops.saveDisplay()
+		local t = tab()
+		assert(t.displayItem, "no item to save")
+		local item = t.displayItem
+		t:AddDisplayItem()
+		return { id = item.id }
+	end
+
 	return ops
 end

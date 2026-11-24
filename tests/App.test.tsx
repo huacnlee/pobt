@@ -4,25 +4,37 @@ import { expect, open, test } from "nsh/test";
 
 type App = Awaited<ReturnType<typeof open>>;
 
-/** The first screen: the build editor's build list where Path of Building is installed, else the launcher, which
- * sets it up. */
-async function home(app: App): Promise<"editor" | "launcher"> {
-  await app.waitUntil(() => app.texts().includes("新建 Build") || app.texts().includes("启动"));
-  return app.texts().includes("新建 Build") ? "editor" : "launcher";
+/** The first screen: the launcher, the way in to the build editor and the classic Path of Building. */
+async function home(app: App): Promise<void> {
+  await app.waitFor("text:启动");
 }
 
-test("opens on the build editor, or the launcher to set Path of Building up", async () => {
+/** The build editor's build list, by the launcher's Start; false where no Path of Building is set up (or the classic one
+ * is chosen), which Start does not open the editor for. */
+async function editor(app: App): Promise<boolean> {
+  await home(app);
+  await app.press("text:启动");
+  try {
+    await app.waitFor("text:新建 Build", { timeout: 5000 });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+test("opens on the launcher", async () => {
   const app = await open("../App.tsx", { width: 1280, height: 820 });
   expect(app.texts()).toContain("POBT");
   await home(app);
+  expect(app.texts()).toContain("使用经典版 Path of Building（旧版）");
 });
 
-test("goes from the build editor to the classic Path of Building's launcher", async () => {
+test("starts the build editor from the launcher, and back", async () => {
   const app = await open("../App.tsx", { width: 1280, height: 820 });
-  if ((await home(app)) !== "editor") return;
+  if (!(await editor(app))) return;
   await app.press("text:工具");
-  await app.press("text:经典版 Path of Building（旧版）");
-  await app.waitFor("text:启动");
+  await app.press("text:返回启动页");
+  await home(app);
 });
 
 test("opens the characters page from the Tools menu, and back", async () => {
@@ -92,7 +104,7 @@ test("opens the AI analysis page from the Tools menu, and back", async () => {
 
 test("in development, lists the project's test builds, and back", async () => {
   const app = await open("../App.tsx", { width: 1280, height: 820 });
-  if ((await home(app)) !== "editor") return;
+  if (!(await editor(app))) return;
   await app.press("text:测试 Build");
   await app.waitFor("text:Ascendant", { timeout: 10000 });
   expect(app.texts().some((t) => t.includes("assets/builds"))).toBe(true);

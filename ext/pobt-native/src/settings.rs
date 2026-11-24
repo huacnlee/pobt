@@ -34,6 +34,9 @@ pub struct Settings {
     pub game: Game,
     /// The translation directory's name (`zh-rCN`, ...), or none for English.
     pub language: Option<String>,
+    /// Start the classic Path of Building (its own Lua window) instead of POBT's build editor.
+    #[serde(default)]
+    pub legacy: bool,
 }
 
 fn file() -> Option<PathBuf> {
