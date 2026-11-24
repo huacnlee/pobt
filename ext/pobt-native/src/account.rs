@@ -4,7 +4,9 @@
 //! window (`host::export`), and given back as a build code or saved among
 //! POB's builds. Tencent's site needs the account's `POESESSID` cookie, and
 //! gives items in Chinese, which go back to English by `reverse`. The
-//! accounts used are kept in `%APPDATA%\pobt\accounts.json`.
+//! accounts used are kept in `%APPDATA%\pobt\accounts.json`. Path of Exile
+//! 2's characters come from its API instead, signed in to by OAuth (`oauth`),
+//! and are imported by Path of Building 2's Import tab.
 
 use std::{
     path::{Path, PathBuf},
@@ -16,8 +18,10 @@ use serde_json::Value;
 
 use crate::reverse::Reverse;
 
-/// An account: its realm (`pc`, `xbox`, `sony` or `tencent`), name, and
-/// `POESESSID`, which a private profile and Tencent need; and its characters
+/// An account: its realm (`pc`, `xbox`, `sony`, `tencent`, or `poe2` for Path
+/// of Exile 2's), name, and `POESESSID`, which a private profile and Tencent
+/// need, or Path of Exile 2's OAuth token, its refresh token and when it
+/// expires (seconds since 1970); and its characters
 /// as the site listed them last, and when (seconds since 1970), kept so as
 /// not to ask the site again.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -31,6 +35,16 @@ pub struct Account {
     pub characters: Option<Value>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub updated: Option<u64>,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub token: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub refresh: String,
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub expires: u64,
+}
+
+fn is_zero(n: &u64) -> bool {
+    *n == 0
 }
 
 impl Account {
@@ -44,11 +58,19 @@ impl Account {
         self.realm == "tencent"
     }
 
+    fn poe2(&self) -> bool {
+        self.realm == "poe2"
+    }
+
+    /// A Path of Exile 2 character of Tencent's, shared from WeGame: its share link in place of a POESESSID.
+    fn wegame(&self) -> bool {
+        self.realm == "wegame"
+    }
+
     fn host(&self) -> &'static str {
         if self.tencent() { "https://poe.game.qq.com/" } else { "https://www.pathofexile.com/" }
     }
 
-    /// The query of a `character-window` call for this account.
     /// The query of a `character-window` call for this account. Tencent's
     /// site knows the account by its `POESESSID`: the name may be left out.
     fn query(&self, character: Option<&str>) -> String {
@@ -95,6 +117,24 @@ fn remember(account: &Account) {
     list.insert(0, account.clone());
     list.truncate(20);
     save_accounts(&list);
+}
+
+/// The account's token as last kept: the launcher's copy may be older, renewed since.
+fn kept_token(account: &mut Account) {
+    if let Some(kept) = accounts().into_iter().find(|a| a.key() == account.key() && !a.token.is_empty()) {
+        (account.token, account.refresh, account.expires) = (kept.token, kept.refresh, kept.expires);
+    }
+}
+
+/// The account's new token kept, where it is among the accounts.
+fn keep_token(account: &Account) {
+    let mut list = accounts();
+    if let Some(kept) = list.iter_mut().find(|a| a.key() == account.key()) {
+        kept.token = account.token.clone();
+        kept.refresh = account.refresh.clone();
+        kept.expires = account.expires;
+        save_accounts(&list);
+    }
 }
 
 /// Percent-encodes `s` for a URL's query.
@@ -454,6 +494,12 @@ pub fn start(kind: &str, request: Request) -> bool {
 /// as the site spells it.
 fn characters(req: &Request) -> Result<Value, String> {
     let mut account = req.account.clone();
+    if account.poe2() {
+        return poe2_characters(account);
+    }
+    if account.wegame() {
+        return wegame_characters(account);
+    }
     if account.tencent() {
         // Its site knows the account by the POESESSID alone.
         account.name.clear();
@@ -475,6 +521,40 @@ fn characters(req: &Request) -> Result<Value, String> {
     // Their items are the site's again, from now.
     ITEMS.lock().unwrap().retain(|(who, _), _| *who != account.key());
     account.characters = Some(list);
+    account.updated = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).ok().map(|d| d.as_secs());
+    remember(&account);
+    Ok(serde_json::to_value(&account).unwrap_or_default())
+}
+
+/// Path of Exile 2's characters, from its API, signed in to first when need be.
+fn poe2_characters(mut account: Account) -> Result<Value, String> {
+    set_step("characters");
+    kept_token(&mut account);
+    let before = account.key();
+    let mut list = crate::oauth::api(&mut account, "/character/poe2", &|| set_step("signin"))?;
+    let list = list.get_mut("characters").map(Value::take).unwrap_or_default();
+    if list.as_array().is_none_or(Vec::is_empty) {
+        return Err("noCharacters".into());
+    }
+    // Signed in, the account has its name: as it was kept without, it goes.
+    if before != account.key() {
+        save_accounts(&accounts().into_iter().filter(|a| a.key() != before).collect::<Vec<_>>());
+    }
+    ITEMS.lock().unwrap().retain(|(who, _), _| *who != account.key());
+    account.characters = Some(list);
+    account.updated = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).ok().map(|d| d.as_secs());
+    remember(&account);
+    Ok(serde_json::to_value(&account).unwrap_or_default())
+}
+
+/// The character a WeGame share link shares, the account's only one, named after it.
+fn wegame_characters(mut account: Account) -> Result<Value, String> {
+    set_step("characters");
+    let code = crate::wegame::share_code(&account.sessid).ok_or("needShare")?;
+    let role = crate::wegame::role(&code)?;
+    account.sessid = code;
+    account.name = role["name"].as_str().unwrap_or_default().to_string();
+    account.characters = Some(Value::Array(vec![crate::wegame::listed(&role)]));
     account.updated = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).ok().map(|d| d.as_secs());
     remember(&account);
     Ok(serde_json::to_value(&account).unwrap_or_default())
@@ -589,6 +669,12 @@ fn export(req: &Request) -> Result<Value, String> {
     set_step("items");
     let key = (account.key(), name.clone());
     let kept = ITEMS.lock().unwrap().get(&key).cloned();
+    if account.poe2() {
+        return export_poe2(req, &name, key, kept.map(|(c, _)| c));
+    }
+    if account.wegame() {
+        return export_wegame(req, &name);
+    }
     let (mut items, mut passives) = match kept {
         Some(kept) => kept,
         None => {
@@ -627,10 +713,48 @@ fn export(req: &Request) -> Result<Value, String> {
         passives.to_string(),
         set_step,
     )?;
-    // Kept for `save_build`, which asks where: in POB's builds folder, to begin with.
+    Ok(serde_json::json!({ "code": keep_build(req, &name, out), "untranslated": missed }))
+}
+
+/// The build made kept for `save_build`, which asks where: in POB's builds
+/// folder, to begin with; its code.
+fn keep_build(req: &Request, name: &str, out: crate::host::Exported) -> String {
     let dir = if out.build_path.is_empty() { Path::new(&req.pob_dir).join("Builds") } else { PathBuf::from(&out.build_path) };
-    *BUILD.lock().unwrap() = Some(Build { file: free_path(&dir, &file_name(&name)), xml: out.xml });
-    Ok(serde_json::json!({ "code": out.code, "untranslated": missed }))
+    *BUILD.lock().unwrap() = Some(Build { file: free_path(&dir, &file_name(name)), xml: out.xml });
+    out.code
+}
+
+/// A Path of Exile 2 character made a build: the whole of it (items, skills,
+/// passives) from one call, imported by Path of Building 2's Import tab.
+fn export_poe2(req: &Request, name: &str, key: (String, String), kept: Option<Value>) -> Result<Value, String> {
+    let char = match kept {
+        Some(c) => c,
+        None => {
+            let mut account = req.account.clone();
+            kept_token(&mut account);
+            let token = account.token.clone();
+            let mut v = crate::oauth::api(&mut account, &format!("/character/poe2/{}", encode(name)), &|| set_step("signin"))?;
+            if account.token != token {
+                keep_token(&account);
+            }
+            let c = v.get_mut("character").map(Value::take).filter(Value::is_object).ok_or("notFound")?;
+            ITEMS.lock().unwrap().insert(key, (c.clone(), Value::Null));
+            c
+        }
+    };
+    // The character alone: Path of Building 2 reads its items and passives from it.
+    let out = crate::host::export(PathBuf::from(&req.pob_dir), name.to_string(), char.to_string(), String::new(), String::new(), set_step)?;
+    Ok(serde_json::json!({ "code": keep_build(req, name, out), "untranslated": 0 }))
+}
+
+/// A WeGame character made a build: its items and passives in English (`wegame`), imported by Path of Building 2's
+/// Import tab as the API's are.
+fn export_wegame(req: &Request, name: &str) -> Result<Value, String> {
+    let code = crate::wegame::share_code(&req.account.sessid).ok_or("needShare")?;
+    set_step("translating");
+    let (char, missed) = crate::wegame::character(&code)?;
+    let out = crate::host::export(PathBuf::from(&req.pob_dir), name.to_string(), char.to_string(), String::new(), String::new(), set_step)?;
+    Ok(serde_json::json!({ "code": keep_build(req, name, out), "untranslated": missed }))
 }
 
 #[cfg(test)]
@@ -764,6 +888,81 @@ mod tests {
             let out = export(&req).unwrap();
             eprintln!("{}: code of {} bytes, {} lines untranslated", c["name"], out["code"].as_str().unwrap().len(), out["untranslated"]);
         }
+    }
+
+    /// What Tencent's site gives of a Path of Exile 2 account, by its
+    /// POESESSID in `POBT_TEST_TENCENT_SESSID`: its characters, and the shape
+    /// of the first one's items and passives. Ignored: it goes to Tencent's site.
+    #[test]
+    #[ignore = "uses a real Tencent account"]
+    fn live_tencent_poe2() {
+        let Some(sessid) = std::env::var("POBT_TEST_TENCENT_SESSID").ok().filter(|s| !s.is_empty()) else {
+            eprintln!("POBT_TEST_TENCENT_SESSID not set: skipped");
+            return;
+        };
+        let account = Account { realm: "tencent".into(), sessid, ..Default::default() };
+        let short = |s: &str| s.chars().take(400).collect::<String>();
+        if let Ok(list) = get(&account, "character-window/get-characters?realm=poe2").and_then(|b| json(&b)) {
+            let realms: std::collections::BTreeSet<_> = list.as_array().into_iter().flatten().map(|c| c["realm"].to_string()).collect();
+            eprintln!("get-characters?realm=poe2: realms {realms:?}");
+        }
+        let n = "%E9%98%BF%E5%B8%83%E5%92%8B%E5%8A%9E%237081";
+        for path in [format!("character-window/get-characters?accountName={n}&realm=poe2"), format!("account/view-profile/{n}/characters?realm=poe2"), "api/character/poe2".into(), "api/league?realm=poe2".into(), "api/account/characters?realm=poe2".into(), "poe2".into()] {
+            let path = path.as_str();
+            match get(&account, path) {
+                Ok(b) => eprintln!("{path}: {}", short(&b)),
+                Err(e) => eprintln!("{path}: {e}"),
+            }
+        }
+    }
+
+    /// A real Path of Exile 2 account: signed in to in the browser (sign in
+    /// and allow POBT there), its characters listed, the first made a build
+    /// by the Path of Building 2 of `POB2_DIR`. Ignored by default: it needs
+    /// someone at the browser. Keeps the account in `accounts.json`.
+    #[test]
+    #[ignore = "signs in to a real Path of Exile 2 account"]
+    fn live_poe2_account() {
+        let req = Request { account: Account { realm: "poe2".into(), ..Default::default() }, character: None, pob_dir: String::new() };
+        let got = characters(&req).unwrap();
+        let account: Account = serde_json::from_value(got).unwrap();
+        let list = account.characters.clone().unwrap();
+        eprintln!("{}: {} characters", account.name, list.as_array().unwrap().len());
+        let Some(dir) = std::env::var_os("POB2_DIR") else { return };
+        let first = list[0].clone();
+        let req = Request { account, character: Some(first.clone()), pob_dir: dir.to_string_lossy().into_owned() };
+        let out = export(&req).unwrap();
+        eprintln!("{} ({}): code of {} bytes", first["name"], first["class"], out["code"].as_str().unwrap().len());
+    }
+
+    /// A Path of Exile 2 character, as its API gives it, made a build by the
+    /// Path of Building 2 of `POB2_DIR`. Ignored by default: it runs the
+    /// whole of POB, and changes the process's folder.
+    #[test]
+    #[ignore = "runs the whole of POB 2"]
+    fn exports_a_poe2_character() {
+        let Some(dir) = std::env::var_os("POB2_DIR").map(PathBuf::from) else {
+            eprintln!("POB2_DIR not set: skipped");
+            return;
+        };
+        let char = serde_json::json!({
+            "name": "TestWitch", "realm": "poe2", "class": "Witch", "league": "Standard", "level": 80,
+            "equipment": [{
+                "id": "b1", "inventoryId": "BodyArmour", "frameType": 2, "ilvl": 80, "name": "Doom Wrap",
+                "typeLine": "Silk Robe", "baseType": "Silk Robe", "identified": true,
+                "properties": [{ "name": "Energy Shield", "values": [["50", 1]], "displayMode": 0 }],
+                "explicitMods": ["+80 to maximum Life"],
+            }],
+            "skills": [{ "typeLine": "Fireball", "baseType": "Fireball", "frameType": 4, "properties": [{ "name": "Level", "values": [["20", 0]] }], "socketedItems": [] }],
+            "jewels": [],
+            "passives": { "hashes": [], "specialisations": {}, "skill_overrides": {}, "jewel_data": {}, "quest_stats": [] },
+        });
+        let out = crate::host::export(dir, "TestWitch".into(), char.to_string(), String::new(), String::new(), |s| eprintln!("step: {s}")).unwrap();
+        assert!(out.code.len() > 100, "{}", out.code);
+        assert!(out.xml.contains("Silk Robe"), "{}", out.xml);
+        assert!(out.xml.contains("+80 to maximum Life"), "{}", out.xml);
+        assert!(out.xml.contains("Witch") && out.xml.contains("Fireball"), "{}", out.xml);
+        eprintln!("build path: {}", out.build_path);
     }
 
     /// A Tencent character, its items in Chinese, made a build by the POB of

@@ -22,6 +22,9 @@ serde_json = "1"
 zstd = "0.13"
 texture2ddecoder = "0.1"
 ureq = "2"
+base64 = "0.22"
+getrandom = "0.2"
+sha2 = "0.10"
 zip = { version = "2", default-features = false, features = ["deflate"] }
 
 # POB ships its LuaJIT for Windows only (`lua51.dll`): elsewhere POBT builds its own in.

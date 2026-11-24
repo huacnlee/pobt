@@ -22,7 +22,19 @@ POBT 直接运行你电脑上已有的 [Path of Building Community](https://path
 - 随时按 **Ctrl+Shift+T** 切换中文 / 英文。
 - 翻译是 `POBT.exe` 旁边 `trs` 文件夹里的 CSV 文件，可以自己修改或补充（POBT 更新时会覆盖这个文件夹，改过的内容请自己备份）。
 - 有新版本时自动更新。
-- **角色导入**：在启动器里填写国际服账号（私密资料加 POESESSID）或腾讯服的 POESESSID，列出角色，一键复制 POB 代码或保存到 POB 的构筑列表；腾讯服的中文物品会翻译回英文再导入。
+- **角色导入**：从账号导入角色，复制 POB 代码或保存到 Path of Building，见下文。
+
+## 角色导入
+
+<p align="center"><img src="website/public/screenshot-characters.png" alt="角色导入页" width="800"></p>
+
+在启动器（或 Path of Building 上方）点 **工具 → 角色导入**，列出账号下的角色，一键复制 POB 代码，或保存到
+Path of Building 的构筑列表。
+
+- **流放之路**：国际服（PC、Xbox、PS）填写账号名，私密资料再加 POESESSID；腾讯服填写 POESESSID。腾讯服的中文物品
+  会先翻译回英文再导入。
+- **流放之路 2**：国际服像 Path of Building 2 一样，在浏览器里登录 pathofexile.com 授权；腾讯服粘贴 WeGame 角色
+  分享链接：在 WeGame 的流放之路 2 助手里打开角色数据，点右上角「一键分享」。
 
 ## 性能
 

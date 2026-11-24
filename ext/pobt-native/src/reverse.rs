@@ -158,17 +158,31 @@ impl Reverse {
         files.splice(0..0, crate::trs::files(&format!("{language}/tencent")));
         let mut rev = Reverse::default();
         for (_, data) in files {
-            let mut reader = csv::ReaderBuilder::new().has_headers(false).flexible(true).from_reader(data.as_slice());
-            for record in reader.byte_records().flatten() {
-                if record.len() < 2 {
-                    continue;
-                }
-                let en = String::from_utf8_lossy(&record[0]).trim_start_matches('\u{feff}').trim().to_string();
-                let zh = String::from_utf8_lossy(&record[1]).trim().to_string();
-                rev.insert(en, &zh);
-            }
+            rev.read(&data);
         }
         rev
+    }
+
+    /// The reverse of the CSV files of `trs/<dir>` alone: Path of Exile 2's
+    /// mods, which Path of Exile's words would take wrongly.
+    pub fn load_only(dir: &str) -> Self {
+        let mut rev = Reverse::default();
+        for (_, data) in crate::trs::files(dir) {
+            rev.read(&data);
+        }
+        rev
+    }
+
+    fn read(&mut self, data: &[u8]) {
+        let mut reader = csv::ReaderBuilder::new().has_headers(false).flexible(true).from_reader(data);
+        for record in reader.byte_records().flatten() {
+            if record.len() < 2 {
+                continue;
+            }
+            let en = String::from_utf8_lossy(&record[0]).trim_start_matches('\u{feff}').trim().to_string();
+            let zh = String::from_utf8_lossy(&record[1]).trim().to_string();
+            self.insert(en, &zh);
+        }
     }
 
     fn insert(&mut self, en: String, zh: &str) {

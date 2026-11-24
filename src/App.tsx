@@ -13,6 +13,7 @@ import {
   accountStrings,
   errorText,
   PC_SITE,
+  POE2_REALMS,
   REALMS,
   sameAccount,
   TENCENT_SITE,
@@ -1321,25 +1322,33 @@ function SaveTree(props: { s: AccountStrings; name: string; onClose: (saved: str
   );
 }
 
-/** Characters from an account, on Path of Exile's site or Tencent's, made builds: the account (kept for next time,
- * with the others used), its characters by league, and for each a build code to copy or a build saved among POB's. */
+/** Characters from an account, on Path of Exile's site or Tencent's, or Path of Exile 2's signed in to, made builds: the
+ * account (kept for next time, with the others used), its characters by league, and for each a build code to copy or a
+ * build saved among POB's. */
 function Characters(props: { settings: Settings; t: () => Strings; onBack: () => void }) {
   const a = () => accountStrings(props.settings.language);
   const accounts = signal<Account[]>(JSON.parse(Pob.accounts() || "[]"));
-  const last = accounts()[0];
+  // The game whose characters show: the launcher's, to begin with.
+  const game = signal<Game>(props.settings.game);
+  // An account is Path of Exile 2's, or Path of Exile's; the last used of a game.
+  const ofGame = (acc: Account, g: Game) => POE2_REALMS.includes(acc.realm) === (g === "Poe2");
+  const lastOf = (g: Game) => accounts().find((acc) => ofGame(acc, g));
+  // Path of Exile 2's realm: the official site's (signed in to), or Tencent's (a WeGame share link); the last used.
+  const poe2Realm = signal<Realm>(lastOf("Poe2")?.realm ?? (props.settings.language === "zh-rCN" ? "wegame" : "poe2"));
+  const share = signal(lastOf("Poe2")?.realm === "wegame" ? lastOf("Poe2")!.sessid : "");
+  const last = lastOf("Poe1");
   const realm = signal<Realm>(last?.realm ?? (props.settings.language === "zh-rCN" ? "tencent" : "pc"));
   const name = signal(last?.name ?? "");
   const sessid = signal(last?.sessid ?? "");
-  // The account whose characters show, and them: the last one's, as they were last got.
-  const shown = signal<Account | null>(last?.characters ? last : null);
-  const characters = signal<Character[]>(last?.characters ?? []);
+  // The account whose characters show, and them: the game's last one's, as they were last got.
+  const lastShown = lastOf(game());
+  const shown = signal<Account | null>(lastShown?.characters ? lastShown : null);
+  const characters = signal<Character[]>(lastShown?.characters ?? []);
   const league = signal<string | null>(null);
   const job = signal<AccountProgress | null>(null);
   // Which character's action runs: its name and the action.
   const working = signal<string | null>(null);
   const running = () => job()?.state === "running";
-  // The game whose characters show: the launcher's, to begin with.
-  const game = signal<Game>(props.settings.game);
   // The guide to the POESESSID, open.
   const guide = signal(false);
   // A build made, to save where the user says: its character's name, and what was left untranslated.
@@ -1355,18 +1364,41 @@ function Characters(props: { settings: Settings; t: () => Strings; onBack: () =>
 
   // An account used before: its characters as they were last got, or got now.
   const choose = (acc: Account) => {
-    realm.set(acc.realm);
-    name.set(acc.name);
-    sessid.set(acc.sessid);
-    if (!acc.characters) return fetchCharacters();
+    const poe2 = POE2_REALMS.includes(acc.realm);
+    if (poe2) {
+      poe2Realm.set(acc.realm);
+      if (acc.realm === "wegame") share.set(acc.sessid);
+    } else {
+      realm.set(acc.realm);
+      name.set(acc.name);
+      sessid.set(acc.sessid);
+    }
+    if (!acc.characters) return fetchCharacters(poe2 ? acc : undefined);
     shown.set(acc);
     characters.set(acc.characters);
     league.set(null);
   };
 
-  const fetchCharacters = () => {
+  // The game shown, and its last account's characters.
+  const showGame = (g: Game) => {
+    game.set(g);
+    const acc = lastOf(g);
+    shown.set(acc?.characters ? acc : null);
+    characters.set(acc?.characters ?? []);
+    league.set(null);
+  };
+
+  // The characters of the account typed in; Path of Exile 2's, of the account given, or the WeGame share link pasted, or
+  // the last signed in to (signing in first, in the browser, when it never was).
+  const fetchCharacters = (poe2?: Account) => {
     if (running()) return;
-    const acc: Account = { realm: realm(), name: realm() === "tencent" ? "" : name().trim(), sessid: sessid().trim() };
+    const acc: Account =
+      game() === "Poe2"
+        ? { ...(poe2 ??
+            (poe2Realm() === "wegame"
+              ? { realm: "wegame", name: "", sessid: share().trim() }
+              : accounts().find((x) => x.realm === "poe2") ?? { realm: "poe2", name: "", sessid: "" })), characters: undefined }
+        : { realm: realm(), name: realm() === "tencent" ? "" : name().trim(), sessid: sessid().trim() };
     if (!Pob.accountStart("characters", JSON.stringify({ account: acc }))) return;
     watchJob(Pob.accountProgress, job.set, (p) => {
       if (p.state === "failed") {
@@ -1375,7 +1407,7 @@ function Characters(props: { settings: Settings; t: () => Strings; onBack: () =>
       }
       // The account as kept: named as the site spells it, with its characters.
       const got: Account = p.result;
-      if (got.realm !== "tencent") name.set(got.name);
+      if (!["tencent", ...POE2_REALMS].includes(got.realm)) name.set(got.name);
       shown.set(got);
       characters.set(got.characters ?? []);
       league.set(null);
@@ -1391,7 +1423,7 @@ function Characters(props: { settings: Settings; t: () => Strings; onBack: () =>
   const exportCharacter = (c: Character, action: "code" | "save") => {
     const acc = shown();
     if (running() || !acc) return;
-    const sent = Pob.accountStart("export", JSON.stringify({ account: acc, character: c, pob_dir: props.settings.poe1_dir ?? "" }));
+    const sent = Pob.accountStart("export", JSON.stringify({ account: acc, character: c, pob_dir: dirOf(props.settings, POE2_REALMS.includes(acc.realm) ? "Poe2" : "Poe1") ?? "" }));
     if (!sent) return;
     working.set(`${c.name}\n${action}`);
     watchJob(Pob.accountProgress, job.set, async (p) => {
@@ -1419,27 +1451,42 @@ function Characters(props: { settings: Settings; t: () => Strings; onBack: () =>
       <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.45)" }} />
       <TitleBar t={props.t} onBack={props.onBack} backLabel={accountStrings(props.settings.language).back} />
 
-      {/* The game: Path of Exile's characters; Path of Exile 2's come from elsewhere, and not yet */}
+      {/* The game: Path of Exile's characters, or Path of Exile 2's, which come from its API once signed in to */}
       <View style={{ paddingHorizontal: 32, paddingTop: 12 }}>
         <View style={{ width: 340 }}>
-          <Segmented items={GAMES.map((g) => ({ value: g.id, label: props.t().games[g.id] }))} value={game()} onChange={(g) => game.set(g as Game)} />
+          <Segmented items={GAMES.map((g) => ({ value: g.id, label: props.t().games[g.id] }))} value={game()} onChange={(g) => showGame(g as Game)} />
         </View>
       </View>
-      <If
-        when={game() === "Poe1"}
-        else={
-          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingBottom: 60 }}>
-            <View style={{ ...PANEL, width: 560, alignItems: "center", gap: 12 }}>
-              <Text style={{ fontFamily: DISPLAY, fontSize: 18, fontWeight: "700", color: C.goldHi }}>{a().poe2.title}</Text>
-              <Rule width={480} />
-              <Text style={{ fontFamily: BODY, fontSize: 14, color: C.text, lineHeight: 22, textAlign: "center" }}>{a().poe2.body}</Text>
-            </View>
-          </View>
-        }
-      >
       <View style={{ flex: 1, flexDirection: "row", gap: 20, paddingHorizontal: 32, paddingTop: 12, paddingBottom: 24 }}>
         {/* The account */}
         <View style={{ width: 340, gap: 20 }}>
+          <If
+            when={game() === "Poe1"}
+            else={
+              <View style={PANEL}>
+                <Text style={{ fontFamily: DISPLAY, fontSize: 16, fontWeight: "700", letterSpacing: 3, color: C.goldHi }}>{a().poe2.title}</Text>
+                <Rule width={300} />
+                <Segmented items={POE2_REALMS.map((r) => ({ value: r, label: a().realms[r] }))} value={poe2Realm()} onChange={(r) => poe2Realm.set(r as Realm)} />
+                {/* The official site's, signed in to in the browser; Tencent's, by a WeGame share link */}
+                <If
+                  when={poe2Realm() === "wegame"}
+                  else={
+                    <View style={{ gap: 14 }}>
+                      <Text style={{ fontFamily: BODY, fontSize: 13, color: C.text, lineHeight: 20 }}>{a().poe2.body}</Text>
+                      <View style={{ flexDirection: "row" }}>
+                        <Button label={a().poe2.signIn} onPress={() => fetchCharacters()} />
+                      </View>
+                    </View>
+                  }
+                >
+                  <Field label={a().poe2.share.label} hint={a().poe2.share.hint} placeholder="https://www.wegame.com.cn/helper/poe2/#/share/…" value={share} onChange={share.set} onSubmit={() => fetchCharacters()} />
+                  <View style={{ flexDirection: "row" }}>
+                    <Button label={a().poe2.share.fetch} onPress={() => fetchCharacters()} />
+                  </View>
+                </If>
+              </View>
+            }
+          >
           <View style={PANEL}>
             <Text style={{ fontFamily: DISPLAY, fontSize: 16, fontWeight: "700", letterSpacing: 3, color: C.goldHi }}>{a().title}</Text>
             <Rule width={300} />
@@ -1454,14 +1501,15 @@ function Characters(props: { settings: Settings; t: () => Strings; onBack: () =>
               <SmallButton label={a().signIn} onPress={() => Pob.openUrl(realm() === "tencent" ? TENCENT_SITE : PC_SITE)} />
             </View>
           </View>
+          </If>
 
-          {/* The accounts used before */}
+          {/* The accounts used before, the game's */}
           <View style={{ ...PANEL, flex: 1, gap: 8 }}>
             <Text style={{ fontFamily: DISPLAY, fontSize: 12, fontWeight: "600", letterSpacing: 2, color: C.gold }}>{a().saved}</Text>
-            <If when={accounts().length > 0} else={<Text style={{ fontFamily: BODY, fontSize: 12, color: C.dim }}>{a().none}</Text>}>
+            <If when={accounts().some((acc) => ofGame(acc, game()))} else={<Text style={{ fontFamily: BODY, fontSize: 12, color: C.dim }}>{a().none}</Text>}>
               <Scroll style={{ flex: 1 }}>
                 <View style={{ gap: 4 }}>
-                  <Each of={accounts()}>
+                  <Each of={accounts().filter((acc) => ofGame(acc, game()))}>
                     {(acc) => (
                       <View
                         role="button"
@@ -1536,8 +1584,6 @@ function Characters(props: { settings: Settings; t: () => Strings; onBack: () =>
           </If>
         </View>
       </View>
-      </If>
-
 
       {/* How to get the POESESSID, over the page */}
       <If when={guide()}>

@@ -1,9 +1,14 @@
-// Characters from an account on Path of Exile's site or Tencent's, made Path of Building builds (`Pob.accountStart`):
-// the launcher's Characters page, its words in each language, and what the native side gives it.
+// Characters from an account on Path of Exile's site or Tencent's, or from Path of Exile 2's API, made Path of Building
+// builds (`Pob.accountStart`): the launcher's Characters page, its words in each language, and what the native side gives it.
 
-export type Realm = "pc" | "xbox" | "sony" | "tencent";
+/** Path of Exile's realms, and Path of Exile 2's: `poe2`, signed in to by OAuth, and `wegame`, Tencent's by a WeGame
+ * share link (kept as `sessid`). */
+export type Realm = "pc" | "xbox" | "sony" | "tencent" | "poe2" | "wegame";
 
+/** Path of Exile's realms, to choose among. */
 export const REALMS: Realm[] = ["pc", "xbox", "sony", "tencent"];
+/** Path of Exile 2's. */
+export const POE2_REALMS: Realm[] = ["poe2", "wegame"];
 
 /** Tencent's site, where its players sign in for their POESESSID. */
 export const TENCENT_SITE = "https://poe.game.qq.com/";
@@ -16,6 +21,10 @@ export interface Account {
   /** Its characters as they were last got, and when (seconds since 1970). */
   characters?: Character[];
   updated?: number;
+  /** Path of Exile 2's sign-in: its OAuth token, refresh token, and when the token expires. */
+  token?: string;
+  refresh?: string;
+  expires?: number;
 }
 
 /** A character as the site lists it. */
@@ -44,8 +53,8 @@ export interface AccountStrings {
   /** Back from the page, to the launcher or Path of Building. */
   back: string;
   title: string;
-  /** Path of Exile 2's characters: not yet, and why. */
-  poe2: { title: string; body: string };
+  /** Path of Exile 2's characters: signing in to its site (OAuth); Tencent's, by a WeGame share link. */
+  poe2: { title: string; body: string; signIn: string; share: { label: string; hint: string; fetch: string } };
   realms: Record<Realm, string>;
   accountName: string;
   accountHint: string;
@@ -88,8 +97,13 @@ const STRINGS: Record<string, AccountStrings> = {
     open: "Import characters",
     back: "Back",
     title: "CHARACTERS",
-    poe2: { title: "Not yet for Path of Exile 2", body: "Path of Exile 2's characters come from other places than Path of Exile's: Tencent's from WeGame's helper, by a character's share link; the official site's by signing in to it (OAuth). POBT does not import them yet." },
-    realms: { pc: "PC", xbox: "Xbox", sony: "PS", tencent: "Tencent" },
+    poe2: {
+      title: "PATH OF EXILE 2",
+      body: "Path of Exile 2's characters come from its site's API, which an app may use once you let it in: sign in on pathofexile.com in your browser, as Path of Building 2 does. POBT keeps the sign-in, as Path of Building 2 would.",
+      signIn: "Sign in and get characters",
+      share: { label: "WeGame share link", hint: "Tencent: in WeGame's Path of Exile 2 helper, open the character's data, press Share (一键分享) and copy the link", fetch: "Get the character" },
+    },
+    realms: { pc: "PC", xbox: "Xbox", sony: "PS", tencent: "Tencent", poe2: "PC", wegame: "Tencent" },
     accountName: "Account name",
     accountHint: "Name#1234",
     sessid: "POESESSID",
@@ -137,6 +151,7 @@ const STRINGS: Record<string, AccountStrings> = {
       loading: "Loading Path of Building…",
       importing: "Importing…",
       saving: "Saving…",
+      signin: "Waiting for you to sign in, in the browser…",
     },
     errors: {
       needSessid: "Tencent needs the account's POESESSID",
@@ -145,7 +160,15 @@ const STRINGS: Record<string, AccountStrings> = {
       notFound: "No such account or character",
       noCharacters: "The account has no characters",
       noPob: "Choose or install Path of Building for Path of Exile first",
-      restart: "Another Path of Building is loaded (Path of Exile 2's): restart POBT to export",
+      restart: "Another Path of Building is loaded (the other game's): restart POBT to export",
+      noPob2: "Choose or install Path of Building for Path of Exile 2 first",
+      signinTimeout: "Not signed in in time: try again",
+      signinDenied: "POBT was not let in on the site",
+      signinFailed: "Signing in failed: try again",
+      signinPort: "Cannot wait for the sign-in: ports 49082 to 49084 are in use (Path of Building 2 may be signing in)",
+      needShare: "Paste a WeGame share link",
+      shareExpired: "WeGame does not know the share link, or it has expired: share the character again",
+      blocked: "Path of Exile's site turned POBT away with a browser check (Cloudflare), as it does on some networks: try again later, or on another network",
     },
     rateLimited: (r, wait) =>
       (r === "tencent"
@@ -162,8 +185,13 @@ const STRINGS: Record<string, AccountStrings> = {
     open: "角色导入",
     back: "返回",
     title: "角色导入",
-    poe2: { title: "暂不支持流放之路 2", body: "流放之路 2 的角色数据和流放之路不在同一个地方：腾讯服的来自 WeGame 助手（通过角色分享链接），国际服的需要登录官方账号授权（OAuth）。POBT 暂时还不能导入它们。" },
-    realms: { pc: "国际服", xbox: "Xbox", sony: "PS", tencent: "腾讯服" },
+    poe2: {
+      title: "流放之路 2",
+      body: "流放之路 2 的角色来自官网的开放接口，需要授权才能读取：点下方按钮，在浏览器里登录 pathofexile.com 并授权（和 Path of Building 2 的导入一样）。POBT 会记住授权，下次不必再登录。",
+      signIn: "登录并获取角色",
+      share: { label: "WeGame 分享链接", hint: "腾讯服：在 WeGame 流放之路 2 助手里打开角色数据，点右上角「一键分享」，复制链接粘贴到这里", fetch: "获取角色" },
+    },
+    realms: { pc: "国际服", xbox: "Xbox", sony: "PS", tencent: "腾讯服", poe2: "国际服", wegame: "腾讯服" },
     accountName: "账号名",
     accountHint: "Name#1234",
     sessid: "POESESSID",
@@ -211,6 +239,7 @@ const STRINGS: Record<string, AccountStrings> = {
       loading: "加载 Path of Building…",
       importing: "导入角色…",
       saving: "保存构筑…",
+      signin: "等待在浏览器中登录授权…",
     },
     errors: {
       needSessid: "腾讯服需要填写 POESESSID",
@@ -219,7 +248,15 @@ const STRINGS: Record<string, AccountStrings> = {
       notFound: "找不到这个账号或角色",
       noCharacters: "这个账号没有角色",
       noPob: "请先在主界面选择或安装流放之路的 Path of Building",
-      restart: "已加载另一个 Path of Building（流放之路 2 的），请重启 POBT 后再导出",
+      restart: "已加载另一个游戏的 Path of Building，请重启 POBT 后再导出",
+      noPob2: "请先在主界面选择或安装流放之路 2 的 Path of Building",
+      signinTimeout: "等待登录超时，请重试",
+      signinDenied: "未在官网上授权 POBT",
+      signinFailed: "登录失败，请重试",
+      signinPort: "无法等待登录：端口 49082 到 49084 已被占用（可能 Path of Building 2 正在登录）",
+      needShare: "请粘贴 WeGame 分享链接",
+      shareExpired: "WeGame 分享链接无效或已过期，请重新分享角色",
+      blocked: "官网的防护（Cloudflare）拦下了 POBT 的请求，某些网络下会这样：请稍后再试，或换个网络",
     },
     rateLimited: (r, wait) =>
       (r === "tencent" ? "请求太频繁：腾讯限制每个账号每分钟 10 次、每 30 分钟 50 次请求" : "请求太频繁：Path of Exile 官网限制了每个账号的请求次数") +
@@ -232,8 +269,13 @@ const STRINGS: Record<string, AccountStrings> = {
     open: "角色匯入",
     back: "返回",
     title: "角色匯入",
-    poe2: { title: "暫不支援流亡黯道 2", body: "流亡黯道 2 的角色資料和流亡黯道不在同一個地方：騰訊服的來自 WeGame 助手（透過角色分享連結），國際服的需要登入官方帳號授權（OAuth）。POBT 暫時還不能匯入它們。" },
-    realms: { pc: "國際服", xbox: "Xbox", sony: "PS", tencent: "騰訊服" },
+    poe2: {
+      title: "流亡黯道 2",
+      body: "流亡黯道 2 的角色來自官網的開放介面，需要授權才能讀取：點下方按鈕，在瀏覽器裡登入 pathofexile.com 並授權（和 Path of Building 2 的匯入一樣）。POBT 會記住授權，下次不必再登入。",
+      signIn: "登入並取得角色",
+      share: { label: "WeGame 分享連結", hint: "騰訊服：在 WeGame 流亡黯道 2 助手裡打開角色資料，點右上角「一鍵分享」，複製連結貼到這裡", fetch: "取得角色" },
+    },
+    realms: { pc: "國際服", xbox: "Xbox", sony: "PS", tencent: "騰訊服", poe2: "國際服", wegame: "騰訊服" },
     accountName: "帳號名稱",
     accountHint: "Name#1234",
     sessid: "POESESSID",
@@ -281,6 +323,7 @@ const STRINGS: Record<string, AccountStrings> = {
       loading: "載入 Path of Building…",
       importing: "匯入角色…",
       saving: "儲存構築…",
+      signin: "等待在瀏覽器中登入授權…",
     },
     errors: {
       needSessid: "騰訊服需要填寫 POESESSID",
@@ -289,7 +332,15 @@ const STRINGS: Record<string, AccountStrings> = {
       notFound: "找不到這個帳號或角色",
       noCharacters: "這個帳號沒有角色",
       noPob: "請先在主介面選擇或安裝流亡黯道的 Path of Building",
-      restart: "已載入另一個 Path of Building（流亡黯道 2 的），請重新啟動 POBT 後再匯出",
+      restart: "已載入另一個遊戲的 Path of Building，請重新啟動 POBT 後再匯出",
+      noPob2: "請先在主介面選擇或安裝流亡黯道 2 的 Path of Building",
+      signinTimeout: "等待登入逾時，請重試",
+      signinDenied: "未在官網上授權 POBT",
+      signinFailed: "登入失敗，請重試",
+      signinPort: "無法等待登入：連接埠 49082 到 49084 已被佔用（可能 Path of Building 2 正在登入）",
+      needShare: "請貼上 WeGame 分享連結",
+      shareExpired: "WeGame 分享連結無效或已過期，請重新分享角色",
+      blocked: "官網的防護（Cloudflare）攔下了 POBT 的請求，某些網路下會這樣：請稍後再試，或換個網路",
     },
     rateLimited: (r, wait) =>
       (r === "tencent" ? "請求太頻繁：騰訊限制每個帳號每分鐘 10 次、每 30 分鐘 50 次請求" : "請求太頻繁：Path of Exile 官網限制了每個帳號的請求次數") +
@@ -302,8 +353,13 @@ const STRINGS: Record<string, AccountStrings> = {
     open: "캐릭터 가져오기",
     back: "돌아가기",
     title: "캐릭터 가져오기",
-    poe2: { title: "패스 오브 엑자일 2는 아직 지원하지 않습니다", body: "패스 오브 엑자일 2의 캐릭터는 다른 곳에서 옵니다: 텐센트는 WeGame 도우미의 공유 링크로, 공식 사이트는 계정 로그인(OAuth)으로. POBT는 아직 가져오지 못합니다." },
-    realms: { pc: "PC", xbox: "Xbox", sony: "PS", tencent: "텐센트" },
+    poe2: {
+      title: "패스 오브 엑자일 2",
+      body: "패스 오브 엑자일 2의 캐릭터는 공식 사이트의 API에서 가져오며, 허용이 필요합니다: 아래 버튼을 눌러 브라우저에서 pathofexile.com에 로그인하고 허용하세요 (Path of Building 2의 가져오기와 같습니다). POBT가 로그인을 기억합니다.",
+      signIn: "로그인하고 캐릭터 가져오기",
+      share: { label: "WeGame 공유 링크", hint: "텐센트: WeGame 패스 오브 엑자일 2 도우미에서 캐릭터 데이터를 열고 공유(一键分享)를 눌러 링크를 복사하세요", fetch: "캐릭터 가져오기" },
+    },
+    realms: { pc: "PC", xbox: "Xbox", sony: "PS", tencent: "텐센트", poe2: "PC", wegame: "텐센트" },
     accountName: "계정 이름",
     accountHint: "Name#1234",
     sessid: "POESESSID",
@@ -351,6 +407,7 @@ const STRINGS: Record<string, AccountStrings> = {
       loading: "Path of Building 불러오는 중…",
       importing: "가져오는 중…",
       saving: "저장 중…",
+      signin: "브라우저에서 로그인을 기다리는 중…",
     },
     errors: {
       needSessid: "텐센트 서버는 POESESSID가 필요합니다",
@@ -359,7 +416,15 @@ const STRINGS: Record<string, AccountStrings> = {
       notFound: "계정이나 캐릭터를 찾을 수 없습니다",
       noCharacters: "계정에 캐릭터가 없습니다",
       noPob: "먼저 패스 오브 엑자일의 Path of Building을 선택하거나 설치하세요",
-      restart: "다른 Path of Building(패스 오브 엑자일 2)이 로드되었습니다: POBT를 다시 시작한 뒤 내보내세요",
+      restart: "다른 게임의 Path of Building이 로드되었습니다: POBT를 다시 시작한 뒤 내보내세요",
+      noPob2: "먼저 패스 오브 엑자일 2용 Path of Building을 선택하거나 설치하세요",
+      signinTimeout: "로그인 시간이 지났습니다: 다시 시도하세요",
+      signinDenied: "사이트에서 POBT를 허용하지 않았습니다",
+      signinFailed: "로그인에 실패했습니다: 다시 시도하세요",
+      signinPort: "로그인을 기다릴 수 없습니다: 49082~49084 포트가 사용 중입니다 (Path of Building 2가 로그인 중일 수 있습니다)",
+      needShare: "WeGame 공유 링크를 붙여 넣으세요",
+      shareExpired: "WeGame 공유 링크가 잘못되었거나 만료되었습니다: 캐릭터를 다시 공유하세요",
+      blocked: "공식 사이트의 보호(Cloudflare)가 POBT의 요청을 막았습니다 (일부 네트워크에서 그렇습니다): 나중에 다시 시도하거나 다른 네트워크를 사용하세요",
     },
     rateLimited: (r, wait) =>
       (r === "tencent" ? "요청이 너무 많습니다: 텐센트는 계정당 1분에 10회, 30분에 50회로 제한합니다" : "요청이 너무 많습니다: Path of Exile 사이트가 계정의 요청 횟수를 제한합니다") +
@@ -391,6 +456,7 @@ export function errorText(s: AccountStrings, realm: Realm, error: string): strin
   if (error === "login") return s.login(realm);
   if (error.startsWith("rateLimited")) return s.rateLimited(realm, error.split(":")[1] ?? "");
   if (error.startsWith("network: ")) return s.network(error.slice("network: ".length));
+  if (error === "noPob" && realm === "poe2") return s.errors.noPob2;
   return s.errors[error] ?? error;
 }
 
