@@ -9,6 +9,7 @@ import plaques from "../assets/ui/plaques.png";
 import title from "../assets/ui/title.png";
 import { GATE, GATE_MOTION } from "./gate";
 import { BuildEditor } from "./editor/BuildEditor";
+import { Icon } from "./ui/icon";
 import { t as editorT, useLanguage } from "./editor/i18n";
 import {
   accountLabel,
@@ -799,7 +800,7 @@ function TitleBar(props: {
                 >
                   {props.t().tools.toUpperCase()}
                 </Text>
-                <Text style={{ fontSize: 8, color: toolsHover() ? "#fff3d0" : C.trimHi }}>▼</Text>
+                <Icon name="chevron-down" size={10} color={toolsHover() ? "#fff3d0" : C.trimHi} />
               </View>
             }
           >

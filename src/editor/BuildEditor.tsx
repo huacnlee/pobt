@@ -167,7 +167,7 @@ function Header() {
     }
   };
   return (
-    <View class="h-12 flex-row items-center gap-3 border-b border-trim bg-card px-3">
+    <View class="h-12 flex-row items-center gap-3 border-b border-border bg-card px-3">
       <Button label={`‹ ${t("backToBuilds")}`} variant="ghost" size="sm" onPress={() => view.set("list")} />
       <View class="h-6 w-px bg-border" />
       <Text variant="title" tone="primary" class="truncate tracking-widest">
@@ -297,7 +297,7 @@ export function BuildEditor(props: { game: Game; file?: string; onBack: () => vo
 function Opening() {
   return (
     <View class="flex-1">
-      <View class="h-12 flex-row items-center gap-3 border-b border-trim px-3">
+      <View class="h-12 flex-row items-center gap-3 border-b border-border px-3">
         <Text variant="display" tone="primary" class="tracking-widest">
           {build.loading() ?? ""}
         </Text>

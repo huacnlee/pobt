@@ -14,7 +14,7 @@ const VARIANT: Record<ButtonVariant, { box: string; text: string }> = {
 
 const SIZE: Record<ButtonSize, { box: string; text: string }> = {
   sm: { box: "h-7 px-2.5 gap-1.5", text: "text-xs" },
-  md: { box: "h-8 px-3.5 gap-2", text: "text-sm" },
+  md: { box: "h-7 px-3 gap-1.5", text: "text-sm" },
 };
 
 /** POBT's button: a label (or `children`), in a variant and a size; `busy` shows it working and takes no presses. */

@@ -1,5 +1,6 @@
-import { Text as NshText, type InputRef, type JSX, View } from "nsh";
+import { type InputRef, type JSX, View } from "nsh";
 import { Checkbox as BaseCheckbox, Input, NumberInput, Select as BaseSelect, Switch as BaseSwitch, type SelectItem } from "nsh/base";
+import { Icon } from "./icon";
 import { POPUP, POPUP_END, POPUP_START, WASH } from "./motion";
 import { Text } from "./text";
 
@@ -27,7 +28,7 @@ export function TextField(props: {
       autoFocus={props.autoFocus}
       autoCapitalize="none"
       autoCorrect={false}
-      class={`h-8 px-2.5 ${FIELD} ${props.class ?? ""}`}
+      class={`h-7 px-2 ${FIELD} ${props.class ?? ""}`}
     />
   );
 }
@@ -53,7 +54,7 @@ export function TextArea(props: {
       readonly={props.readonly}
       autoCapitalize="none"
       autoCorrect={false}
-      class={`px-2.5 py-2 ${FIELD} ${props.class ?? ""}`}
+      class={`px-2 py-1.5 ${FIELD} ${props.class ?? ""}`}
     />
   );
 }
@@ -98,16 +99,16 @@ export function Select(props: {
       renderItem={props.renderItem ? (e) => props.renderItem!(e as unknown as { value: string; title: string }) : undefined}
       // The popup lines up with the trigger, so the trigger fills the field: the list is as wide as the field and
       // `offset` is the gap below its edge.
-      class={`min-h-8 flex-row items-stretch ${FIELD} hover:bg-accent/40 ${props.class ?? ""}`}
+      class={`h-7 flex-row items-stretch ${FIELD} hover:bg-accent/40 ${props.class ?? ""}`}
       popupClass={`max-h-80 rounded-(--radius) border border-border bg-popover p-1 shadow-lg ${POPUP}`}
       popupStartingClass={POPUP_START}
       popupEndingClass={POPUP_END}
-      itemClass={`rounded-sm px-2 py-1.5 text-sm text-popover-foreground ${WASH} hover:bg-accent focus:bg-accent checked:text-primary`}
+      itemClass={`rounded-sm px-2 py-1 text-sm text-popover-foreground ${WASH} hover:bg-accent focus:bg-accent checked:text-primary`}
       groupClass="px-2 pt-2 pb-1"
       searchClass={`mb-1 h-7 px-2 ${FIELD}`}
       trigger={
         // The trigger is the app's: the chosen item's title (or the placeholder) and a chevron.
-        <View class="flex-1 flex-row items-center gap-2 px-2.5">
+        <View class="flex-1 flex-row items-center gap-2 px-2">
           <If
             when={props.triggerContent}
             else={
@@ -118,9 +119,7 @@ export function Select(props: {
           >
             <View class="flex-1">{props.triggerContent}</View>
           </If>
-          <Text class="text-xs" tone="muted">
-            ▾
-          </Text>
+          <Icon name="chevron-down" size={14} />
         </View>
       }
     />
@@ -155,7 +154,7 @@ export function Checkbox(props: { checked: boolean; onChange: (on: boolean) => v
       // nsh-base draws no mark: the check shows while checked, as shadcn's does.
       indicator={
         <If when={props.checked}>
-          <NshText class="text-[11px] font-bold leading-none text-primary-foreground">✓</NshText>
+          <Icon name="check" size={12} class="tint-primary-foreground" />
         </If>
       }
     >
@@ -186,13 +185,13 @@ export function NumberField(props: {
       max={props.max}
       step={props.step ?? 1}
       placeholder={props.placeholder}
-      class={`h-8 flex-row items-center ${FIELD} ${props.class ?? ""}`}
-      inputClass="flex-1 px-2.5 text-sm text-foreground"
+      class={`h-7 flex-row items-center ${FIELD} ${props.class ?? ""}`}
+      inputClass="flex-1 px-2 text-sm text-foreground"
       controlsClass="flex-col border-l border-input"
       incrementButtonClass={`flex-1 w-5 items-center justify-center ${WASH} hover:bg-accent`}
       decrementButtonClass={`flex-1 w-5 items-center justify-center ${WASH} hover:bg-accent`}
-      incrementButton={<Text class="text-[9px] text-muted-foreground">▲</Text>}
-      decrementButton={<Text class="text-[9px] text-muted-foreground">▼</Text>}
+      incrementButton={<Icon name="chevron-up" size={10} />}
+      decrementButton={<Icon name="chevron-down" size={10} />}
     />
   );
 }
@@ -200,7 +199,7 @@ export function NumberField(props: {
 /** A labelled row of a form: the label, then its control. */
 export function FieldRow(props: { label: string; hint?: string; children?: import("nsh").JSX.Element }) {
   return (
-    <View class="min-h-9 flex-row items-center gap-3 py-1">
+    <View class="min-h-8 flex-row items-center gap-3 py-0.5">
       <View class="flex-1 gap-0.5">
         <Text>{props.label}</Text>
         <If when={props.hint}>

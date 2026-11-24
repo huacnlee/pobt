@@ -3,7 +3,7 @@
 // its gems on the right. Every value and number is POB's own (its controls' text, its labels, its tooltips; read by
 // service/skills.lua), and every change goes through the Skills tab's own controls, so POB's rules apply.
 import { computed, resource, Scroll, signal, View } from "nsh";
-import { Badge, Button, EmptyState, FieldRow, Panel, Select, Text } from "../../ui";
+import { Badge, Button, EmptyState, FieldRow, Panel, Select, Text, Icon } from "../../ui";
 import { ListRow } from "../../ui/list-row";
 import { GameArt } from "../art";
 import { ColoredText, plain } from "../ColoredText";
@@ -278,11 +278,12 @@ export function SkillsPage() {
                           variant="ghost"
                           size="sm"
                           class="w-7 px-0"
-                          label="✕"
                           accessibilityLabel={labelText(detail()?.imbuedLabel.label)}
                           disabled={!detail()?.imbuedClear.enabled || !detail()?.imbued.text}
                           onPress={() => void edit("clearImbued")}
-                        />
+                        >
+                          <Icon name="x" size={14} />
+                        </Button>
                       </PobHover>
                     </View>
                   </If>
@@ -521,8 +522,8 @@ function GemRow(props: {
   const tip = (what: string) => () => tipOf({ what, group: props.group, gem: props.index });
   const tipId = (what: string) => () => `${what}|${props.group}|${props.index}`;
   return (
-    <View class="border-b border-border px-3">
-      <View class="h-8 flex-row items-center gap-1.5" classList={{ "opacity-50": !props.gem.enabled }}>
+    <View class="gap-1.5 border-b border-border px-3 py-1.5">
+      <View class="h-7 flex-row items-center gap-1.5" classList={{ "opacity-50": !props.gem.enabled }}>
         <PobHover
           class="flex-1 flex-row items-center gap-1.5"
           center
@@ -591,11 +592,12 @@ function GemRow(props: {
               variant="ghost"
               size="sm"
               class="w-7 px-0"
-              label="✕"
               accessibilityLabel={`${s("removeGem")}: ${name()}`}
               disabled={!c().delete.enabled}
               onPress={() => props.edit("removeGem", {})}
-            />
+            >
+              <Icon name="x" size={14} />
+            </Button>
           </If>
         </PobHover>
       </View>

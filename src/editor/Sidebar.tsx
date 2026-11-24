@@ -20,7 +20,7 @@ const CONTROLS: { key: keyof SidebarData; label: string }[] = [
 export function Sidebar() {
   const s = () => build.sidebar();
   return (
-    <View class="w-75 border-r border-trim/60 bg-sidebar">
+    <View class="w-75 border-r border-border bg-sidebar">
       <View class="gap-1.5 p-3">
         <Text variant="label" tone="muted">
           {tr("Main Skill")}

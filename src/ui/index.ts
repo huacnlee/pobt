@@ -12,3 +12,4 @@ export { Modal } from "./modal";
 export { Backdrop, Framed, Rule } from "./art";
 export * from "./popover";
 export { HoverCard } from "./hovercard";
+export { Icon, type IconName } from "./icon";

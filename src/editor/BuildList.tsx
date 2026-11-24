@@ -5,7 +5,7 @@ import { effect, resource, signal, untracked, View } from "nsh";
 import { Tree, type TreeEntry, type TreeItem } from "nsh/base";
 import { shellInfo } from "nsh/updater";
 import { Pob } from "pobt/native";
-import { Backdrop, Button, EmptyState, Framed, Rule, Select, Text, TextField } from "../ui";
+import { Backdrop, Button, Icon, EmptyState, Framed, Rule, Select, Text, TextField } from "../ui";
 import { WASH } from "../ui/motion";
 import { t, tr } from "./i18n";
 import { build, type BuildEntry, listBuilds, newBuild, openBuild, openFile, type SortMode } from "./session";
@@ -42,9 +42,9 @@ function Row(props: { entry?: BuildEntry; tree: TreeEntry }) {
     <View class="h-10 flex-1 flex-row items-center gap-3 pr-4" style={{ paddingLeft: 12 + props.tree.depth * 18 }}>
       <View class="w-4 items-center">
         <If when={props.tree.folder} else={<Text tone="muted" class="text-xs">◆</Text>}>
-          <Text tone="primary" class="text-xs transition-transform duration-180 group-aria-expanded:rotate-90 motion-reduce:transition-none">
-            ▸
-          </Text>
+          <View class="transition-transform duration-180 group-aria-expanded:rotate-90 motion-reduce:transition-none">
+            <Icon name="chevron-right" size={14} class="tint-primary" />
+          </View>
         </If>
       </View>
       <Text class="flex-1 truncate" tone={props.tree.folder ? "primary" : props.tree.disabled ? "muted" : "default"}>

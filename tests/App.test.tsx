@@ -90,16 +90,13 @@ test("opens the AI analysis page from the Tools menu, and back", async () => {
   await home(app);
 });
 
-test("in development, lists the project's test builds and opens one", async () => {
+test("in development, lists the project's test builds, and back", async () => {
   const app = await open("../App.tsx", { width: 1280, height: 820 });
   if ((await home(app)) !== "editor") return;
   await app.press("text:测试 Build");
   await app.waitFor("text:Ascendant", { timeout: 10000 });
-  await app.screenshot("/private/tmp/claude-502/-Users-jason-work-pobt/12bc0639-e213-4c87-8377-2be4ef2cd0a8/scratchpad/headless-list.png");
   expect(app.texts().some((t) => t.includes("assets/builds"))).toBe(true);
-  // Selected, then Return opens it (as a double click does): its screen shows at once, then POB's pages.
-  await app.press("text:Ascendant");
-  await app.submit("text:Ascendant");
-  await app.waitFor("text:天赋树", { timeout: 30000 });
-  await app.screenshot("/private/tmp/claude-502/-Users-jason-work-pobt/12bc0639-e213-4c87-8377-2be4ef2cd0a8/scratchpad/headless-build.png");
+  // Opening one is a double click or Return, which headless tests cannot send (editor.test opens a build).
+  await app.press("text:全部 Builds");
+  await app.waitUntil(() => !app.texts().includes("Ascendant"));
 });
