@@ -6,7 +6,11 @@ export type ButtonVariant = "primary" | "secondary" | "ghost" | "destructive";
 export type ButtonSize = "sm" | "md";
 
 const VARIANT: Record<ButtonVariant, { box: string; text: string }> = {
-  primary: { box: "bg-primary hover:bg-primary/90 active:bg-primary/80", text: "text-primary-foreground" },
+  // The launcher's red banner: dark red, lit from above, in gold trim; its label in the display face.
+  primary: {
+    box: "border border-trim-hi bg-linear-to-b from-banner-hi to-banner hover:border-gold hover:from-banner-hi hover:to-banner-hi/80 active:from-banner active:to-banner",
+    text: "font-display font-semibold tracking-wide text-banner-foreground",
+  },
   secondary: { box: "border border-border bg-secondary hover:bg-accent active:bg-accent/80", text: "text-secondary-foreground" },
   ghost: { box: "hover:bg-accent active:bg-accent/80", text: "text-foreground" },
   destructive: { box: "border border-destructive/40 hover:bg-destructive/15 active:bg-destructive/25", text: "text-destructive" },

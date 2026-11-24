@@ -10,6 +10,7 @@ import { build } from "../session";
 import { equip, equipItem, type ItemInfo, type ItemsData, rarityOf, readItems, setActiveSet, setFlask, setWeaponSet, type SlotInfo, type TipLine, tooltipOf } from "./items/data";
 import { ItemHover } from "./items/ItemHover";
 import { ItemTip, RARITY_TEXT } from "./items/ItemTip";
+import { ItemWindow, type WindowKind } from "./items/ItemWindow";
 import { PasteItem } from "./items/PasteItem";
 import { s } from "./items/strings";
 
@@ -21,6 +22,9 @@ const slotLabel = (x: SlotInfo) => (x.parent ? `${tr(x.parent)} ${tr(x.label)}` 
 export function ItemsPage() {
   const selection = signal<Selection>(null);
   const pasting = signal(false);
+  // POB's "Craft item..." / "Create custom..." window, asked for anew each press
+  const making = signal<{ what: WindowKind; n: number } | null>(null);
+  let makes = 0;
 
   // read again after every recalculation
   const data = resource(
@@ -104,6 +108,8 @@ export function ItemsPage() {
           <If when={build.busy() || data.loading()}>
             <ProgressBar value={null} class="w-24" />
           </If>
+          <Button variant="secondary" size="md" label={tr("Craft item...")} onPress={() => making.set({ what: "craft", n: ++makes })} />
+          <Button variant="secondary" size="md" label={tr("Create custom...")} onPress={() => making.set({ what: "custom", n: ++makes })} />
           <Button variant="secondary" size="md" label={s("paste")} onPress={() => pasting.set(true)} />
         </View>
         <If when={data.error()}>
@@ -121,6 +127,7 @@ export function ItemsPage() {
                       <SlotRow
                         row={row()}
                         item={itemOf(row().itemId)}
+                        itemOf={itemOf}
                         selected={isSelected({ slot: row().name })}
                         onPress={() => selection.set({ slot: row().name })}
                       />
@@ -147,6 +154,7 @@ export function ItemsPage() {
                           <SlotRow
                             row={row()}
                             item={itemOf(row().itemId)}
+                            itemOf={itemOf}
                             selected={isSelected({ slot: row().name })}
                             onPress={() => selection.set({ slot: row().name })}
                             class="flex-1"
@@ -165,6 +173,7 @@ export function ItemsPage() {
                         <SlotRow
                           row={row()}
                           item={itemOf(row().itemId)}
+                          itemOf={itemOf}
                           selected={isSelected({ slot: row().name })}
                           onPress={() => selection.set({ slot: row().name })}
                         />
@@ -209,6 +218,7 @@ export function ItemsPage() {
             </Scroll>
           </View>
         </If>
+        <ItemWindow request={making()} onClose={() => making.set(null)} onSaved={(id) => selection.set({ item: id })} />
         <PasteItem open={pasting()} onClose={() => pasting.set(false)} onAdded={(id) => selection.set({ item: id })} />
       </If>
     </View>
@@ -234,23 +244,54 @@ function ItemArt(props: { item?: ItemInfo; size: number; class?: string }) {
   );
 }
 
-/** A slot: its name, then its item's in its rarity's colour. */
-function SlotRow(props: { row: SlotInfo; item?: ItemInfo; selected: boolean; onPress: () => void; class?: string }) {
+/** POB's drop-down of a slot (ItemSlotControl): "None", then the items it takes, in their rarity's colour with their
+ * picture; choosing one goes through POB's own control. Pointed at, an item shows POB's tooltip for the slot. */
+function SlotSelect(props: { slot: SlotInfo; itemOf: (id: number) => ItemInfo | undefined; label: string; class?: string }) {
+  const choices = () =>
+    (props.slot.choices ?? []).map((name, i) => ({ value: String(props.slot.ids?.[i] ?? 0), title: i === 0 ? s("empty") : tr(plain(name)) }));
+  return (
+    <Select
+      class={props.class}
+      accessibilityLabel={props.label}
+      value={String(props.slot.itemId || 0)}
+      onChange={(v) => void equip(props.slot, Number(v))}
+      items={choices()}
+      searchable={(props.slot.choices?.length ?? 0) > 8}
+      triggerContent={
+        <If when={props.itemOf(props.slot.itemId)} else={<Text tone="muted" class="text-sm">{s("empty")}</Text>}>
+          {(cur) => <Text class={`text-sm truncate ${RARITY_TEXT[rarityOf(cur().rarity)]}`}>{tr(cur().name)}</Text>}
+        </If>
+      }
+      renderItem={(e) => <SlotChoice slot={props.slot.name} item={props.itemOf(Number(e.value))} title={e.title} />}
+    />
+  );
+}
+
+/** A slot, as POB lists it: its picture and name (chosen, it shows in the detail pane), and its drop-down. */
+function SlotRow(props: {
+  row: SlotInfo;
+  item?: ItemInfo;
+  itemOf: (id: number) => ItemInfo | undefined;
+  selected: boolean;
+  onPress: () => void;
+  class?: string;
+}) {
   return (
     <ItemHover class={props.class} id={props.item?.id} rarity={rarityOf(props.item?.rarity)} slot={props.row.name}>
-      <ListRow
-        selected={props.selected}
-        onPress={props.onPress}
-        accessibilityLabel={`${slotLabel(props.row)}: ${props.item ? tr(props.item.name) : s("empty")}`}
-      >
-        <ItemArt item={props.item} size={36} />
-        <Text variant="caption" tone="muted" class="w-28 truncate">
-          {slotLabel(props.row)}
-        </Text>
-        <If when={props.item} else={<Text tone="muted" class="flex-1">{s("empty")}</Text>}>
-          {(it) => <Text class={`flex-1 truncate ${RARITY_TEXT[rarityOf(it().rarity)]}`}>{tr(it().name)}</Text>}
-        </If>
-      </ListRow>
+      <View class="flex-row items-center gap-2">
+        <ListRow
+          selected={props.selected}
+          onPress={props.onPress}
+          accessibilityLabel={`${slotLabel(props.row)}: ${props.item ? tr(props.item.name) : s("empty")}`}
+          class="w-40"
+        >
+          <ItemArt item={props.item} size={36} />
+          <Text variant="caption" tone="muted" class="flex-1 truncate">
+            {slotLabel(props.row)}
+          </Text>
+        </ListRow>
+        <SlotSelect slot={props.row} itemOf={props.itemOf} label={slotLabel(props.row)} class="flex-1" />
+      </View>
     </ItemHover>
   );
 }
@@ -294,9 +335,6 @@ function Detail(props: {
   const visible = signal(false);
   requestAnimationFrame(() => visible.set(true));
 
-  // POB's drop-down of the slot: "None", then the items it takes
-  const slotChoices = (slot: SlotInfo) =>
-    (slot.choices ?? []).map((name, i) => ({ value: String(slot.ids?.[i] ?? 0), title: i === 0 ? s("empty") : tr(plain(name)) }));
   // the items of the slot's drop-down, "None" left out
   const candidates = (slot: SlotInfo) => (slot.ids ?? []).filter((id) => id > 0).map((id) => props.itemOf(id)).filter((x): x is ItemInfo => !!x);
   // the shown slots whose drop-down offers this item
@@ -319,19 +357,7 @@ function Detail(props: {
           {(slot) => (
             <View class="gap-2">
               <Text variant="heading">{slotLabel(slot())}</Text>
-              <Select
-                accessibilityLabel={s("inSlot")}
-                value={String(slot().itemId || 0)}
-                onChange={(v) => void equip(slot(), Number(v))}
-                items={slotChoices(slot())}
-                searchable={(slot().choices?.length ?? 0) > 8}
-                triggerContent={
-                  <If when={props.itemOf(slot().itemId)} else={<Text tone="muted" class="text-sm">{s("empty")}</Text>}>
-                    {(cur) => <Text class={`text-sm truncate ${RARITY_TEXT[rarityOf(cur().rarity)]}`}>{tr(cur().name)}</Text>}
-                  </If>
-                }
-                renderItem={(e) => <SlotChoice slot={slot().name} item={props.itemOf(Number(e.value))} title={e.title} />}
-              />
+              <SlotSelect slot={slot()} itemOf={props.itemOf} label={s("inSlot")} />
               <If when={slot().flask && slot().itemId > 0}>
                 <View class="flex-row items-center gap-2">
                   <Checkbox checked={slot().active} disabled={build.busy()} accessibilityLabel={s("flaskActive")} onChange={(on) => void setFlask(slot().name, on)} />
@@ -351,7 +377,6 @@ function Detail(props: {
                       {(it) => (
                         <View
                           onMouseEnter={() => props.onPreview(it().id)}
-                          onFocusIn={() => props.onPreview(it().id)}
                         >
                           <ItemHover id={it().id} rarity={rarityOf(it().rarity)} slot={slot().name}>
                             <ListRow

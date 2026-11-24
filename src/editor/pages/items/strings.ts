@@ -31,6 +31,7 @@ const STRINGS = {
     socket: "Socket #{n}",
     changeFailed: "That change did not go through",
     weaponSet: "Weapon set",
+    newItem: "New item",
     equip: "Equip",
     candidates: "Items for this slot",
     compareHint: "Point at or focus an item to compare it with this slot; press it to equip it.",
@@ -64,6 +65,7 @@ const STRINGS = {
     socket: "插槽 #{n}",
     changeFailed: "这项更改没有完成",
     weaponSet: "武器组",
+    newItem: "新物品",
     equip: "装备",
     candidates: "可放入此栏位的物品",
     compareHint: "指向或聚焦一件物品，与此栏位比较；按下即可装备。",
@@ -97,6 +99,7 @@ const STRINGS = {
     socket: "插槽 #{n}",
     changeFailed: "這項變更沒有完成",
     weaponSet: "武器組",
+    newItem: "新物品",
     equip: "裝備",
     candidates: "可放入此欄位的物品",
     compareHint: "指向或聚焦一件物品，與此欄位比較；按下即可裝備。"
@@ -130,6 +133,7 @@ const STRINGS = {
     socket: "소켓 #{n}",
     changeFailed: "변경하지 못했습니다",
     weaponSet: "무기 세트",
+    newItem: "새 아이템",
     equip: "장착",
     candidates: "이 슬롯에 넣을 수 있는 아이템",
     compareHint: "아이템을 가리키거나 포커스하면 이 슬롯과 비교합니다. 누르면 장착합니다."

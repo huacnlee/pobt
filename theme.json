@@ -41,7 +41,11 @@
       "overlay": "rgba(20,16,10,0.45)",
       "trim": "#6b522c",
       "trim-hi": "#b18d4e",
-      "jewel": "#640d0e"
+      "jewel": "#640d0e",
+      "banner": "#4a0f0d",
+      "banner-hi": "#7a1d16",
+      "banner-foreground": "#f6e6c2",
+      "gold": "#dcc792"
     },
     "dark": {
       "background": "#0b0c0f",
@@ -79,7 +83,11 @@
       "overlay": "rgba(0,0,0,0.55)",
       "trim": "#6b522c",
       "trim-hi": "#b18d4e",
-      "jewel": "#640d0e"
+      "jewel": "#640d0e",
+      "banner": "#4a0f0d",
+      "banner-hi": "#7a1d16",
+      "banner-foreground": "#f6e6c2",
+      "gold": "#dcc792"
     }
   }
 }

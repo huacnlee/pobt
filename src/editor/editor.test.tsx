@@ -12,20 +12,46 @@ test("opens a build on the official Path of Building and shows its sidebar", asy
 });
 
 
-// Needs an installed Path of Building. Changing a slot's item goes through POB's own slot drop-down.
-test("equips another item in a slot through POB's slot drop-down", async () => {
-  const app = await open("./editor.fixture.tsx", { width: 1400, height: 900, platform: "macos" });
+const WIDE = { width: 1400, height: 900, platform: "macos" } as const;
+
+async function itemsPage() {
+  const app = await open("./editor.fixture.tsx", WIDE);
   await app.waitFor("text:Total Life", { timeout: 25000 });
   await app.press("text:Items");
   await app.waitFor("label:Weapon 1: Empty", { timeout: 15000 });
-  await app.press("label:Weapon 1: Empty");
-  await app.waitFor("label:Item in this slot", { timeout: 5000 });
-  console.log("before open", app.count("text:Woe Razor, Sabre"));
-  await app.press("label:Item in this slot");
-  console.log("after open", app.count("text:Woe Razor, Sabre"));
-  await app.hover("text:Woe Razor, Sabre >> nth=1");
-  await app.wait(400);
-  await app.press("text:Woe Razor, Sabre >> nth=1");
+  return app;
+}
+
+// Needs an installed Path of Building. A slot's item is changed in its drop-down, through POB's own slot control.
+test("equips another item in a slot through POB's slot drop-down", async () => {
+  const app = await itemsPage();
+  await app.press("label:Weapon 1");
+  await app.press("text:Woe Razor, Sabre");
   await app.waitFor("label:Weapon 1: Woe Razor, Sabre", { timeout: 15000 });
+  // POB's sidebar: this build's skill needs another weapon
   await app.waitFor("text:No usable weapon equipped", { timeout: 15000 });
+});
+
+// Needs an installed Path of Building. POB's "Craft item..." window makes a rare of the first base; "Add to build" keeps it.
+test("crafts an item in POB's craft window and adds it to the build", async () => {
+  const app = await itemsPage();
+  await app.press("text:Craft item...");
+  await app.waitFor("text:Craft Item", { timeout: 10000 });
+  await app.press("text:Create");
+  await app.waitFor("text:Add to build", { timeout: 10000 });
+  await app.press("text:Add to build");
+  await app.waitUntil(() => app.texts().some((t) => t.startsWith("New Item")), { timeout: 15000 });
+});
+
+// Needs an installed Path of Building. POB's "Create custom..." window reads the item's text.
+test("creates a custom item from its text and adds it to the build", async () => {
+  const app = await itemsPage();
+  await app.press("text:Create custom...");
+  await app.waitFor("label:Item text", { timeout: 10000 });
+  await app.type("label:Item text", "Doom Loop\nLeather Belt\n--------\n+40 to maximum Life");
+  await app.waitUntil(() => app.enabled("text:Create"), { timeout: 10000 });
+  await app.press("text:Create");
+  await app.waitFor("text:Add to build", { timeout: 10000 });
+  await app.press("text:Add to build");
+  await app.waitUntil(() => app.texts().some((t) => t.startsWith("Doom Loop")), { timeout: 15000 });
 });
