@@ -1,12 +1,13 @@
 // Line icons (Lucide's shapes), white SVGs recoloured by a `tint-*` token class, so they follow the theme.
 import { Image } from "nsh";
+import alertTriangle from "./icons/alert-triangle.svg";
 import check from "./icons/check.svg";
 import chevronDown from "./icons/chevron-down.svg";
 import chevronRight from "./icons/chevron-right.svg";
 import chevronUp from "./icons/chevron-up.svg";
 import x from "./icons/x.svg";
 
-const ICONS = { check, "chevron-down": chevronDown, "chevron-right": chevronRight, "chevron-up": chevronUp, x };
+const ICONS = { "alert-triangle": alertTriangle, check, "chevron-down": chevronDown, "chevron-right": chevronRight, "chevron-up": chevronUp, x };
 export type IconName = keyof typeof ICONS;
 
 /** An icon, `size` points square (default 16); `class` gives its colour as `tint-*` (default the muted foreground); `color` (the launcher's own palette) over it. */

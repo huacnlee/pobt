@@ -3,7 +3,7 @@
 // tree does (allocate the path, deallocate with dependants, change ascendancy, choose a mastery effect); the tooltip is
 // POB's own, stat changes included.
 import { computed, resource, Scroll, signal, View } from "nsh";
-import { Button, EmptyState, ListRow, Modal, Text, TextField } from "../../ui";
+import { Button, EmptyState, ListRow, Modal, Text, TextField, Icon } from "../../ui";
 import { ColoredText, plain } from "../ColoredText";
 import { t, tr } from "../i18n";
 import { PobControl } from "../PobControl";
@@ -233,9 +233,7 @@ export function TreePage() {
         <If when={state()?.convert}>
           {(c) => (
             <View class="flex-row flex-wrap items-center gap-2 border-b border-border px-4 py-1.5" role="alert" accessibilityLiveRegion="polite">
-              <Text tone="warning" accessibilityElementsHidden>
-                {"\u26A0"}
-              </Text>
+              <Icon name="alert-triangle" size={14} class="tint-warning" />
               <Text variant="caption" tone="warning" class="flex-1">
                 {tr(plain(c().text))}
               </Text>
