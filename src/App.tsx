@@ -8,6 +8,8 @@ import "../assets/fonts/Cinzel-SemiBold.woff2";
 import plaques from "../assets/ui/plaques.png";
 import title from "../assets/ui/title.png";
 import { GATE, GATE_MOTION } from "./gate";
+import { BuildEditor } from "./editor/BuildEditor";
+import { t as editorT, useLanguage } from "./editor/i18n";
 import {
   accountLabel,
   accountStrings,
@@ -224,6 +226,19 @@ const UI: Record<string, Strings> = {
     tools: "도구",
   },
 };
+
+/** The go-pob build editor's name in the Tools menu, in the launcher's language. */
+const editorLabel = () => (void useLanguageOnce(), editorT("goPob"));
+const legacyLabel = () => (void useLanguageOnce(), editorT("legacy"));
+let languageSet: string | null | undefined;
+/** Puts the build editor in the launcher's language (its dictionary loads off the UI thread). */
+function useLanguageOnce() {
+  const lang = currentLanguage();
+  if (languageSet !== lang) {
+    languageSet = lang;
+    void useLanguage(lang);
+  }
+}
 
 /** The language the launcher last saved: for what has no settings of its own to hand. */
 function currentLanguage(): string | null {
@@ -678,7 +693,17 @@ const TITLE_BAR = 44;
 /** The window's title bar, drawn by the app: POBT at the left (a link to the site); the system draws the window's
  * buttons in the reserved title bar area. Dragging it moves the window. Over the launcher's backdrop it is clear, with the version
  * and the update check; over Path of Building, `solid`, with only a way back to the launcher (`onBack`). */
-function TitleBar(props: { t: () => Strings; solid?: boolean; onBack?: () => void; backLabel?: string; onCharacters?: () => void; onAnalysis?: () => void }) {
+function TitleBar(props: {
+  t: () => Strings;
+  solid?: boolean;
+  onBack?: () => void;
+  backLabel?: string;
+  onCharacters?: () => void;
+  onAnalysis?: () => void;
+  onEditor?: () => void;
+  /** The build editor's: the way to the classic (Lua) Path of Building's launcher. */
+  onLegacy?: () => void;
+}) {
   const brandHover = signal(false);
   const backHover = signal(false);
   const toolsHover = signal(false);
@@ -780,6 +805,22 @@ function TitleBar(props: { t: () => Strings; solid?: boolean; onBack?: () => voi
           >
             <CardMenuItem label={accountStrings(currentLanguage()).open} onSelect={() => open()()} />
             <If when={props.onAnalysis}>{(analyse) => <CardMenuItem label={analysisStrings(currentLanguage()).open} onSelect={() => analyse()()} />}</If>
+            <If when={props.onEditor}>
+              {(editor) => (
+                <>
+                  <MenuSeparator />
+                  <CardMenuItem label={editorLabel()} onSelect={() => editor()()} />
+                </>
+              )}
+            </If>
+            <If when={props.onLegacy}>
+              {(legacy) => (
+                <>
+                  <MenuSeparator />
+                  <CardMenuItem label={legacyLabel()} onSelect={() => legacy()()} />
+                </>
+              )}
+            </If>
           </Menu>
         )}
       </If>
@@ -795,7 +836,7 @@ function TitleBar(props: { t: () => Strings; solid?: boolean; onBack?: () => voi
   );
 }
 
-function Launcher(props: { onStart: () => void; onCharacters: () => void; onAnalysis: () => void }) {
+function Launcher(props: { onStart: () => void; onCharacters: () => void; onAnalysis: () => void; onEditor: () => void }) {
   const settings = signal<Settings>(JSON.parse(Pob.settings()));
   const available = new Set<string>(JSON.parse(Pob.languages()).map((l: { value: string }) => l.value));
   const languages = LANGUAGES.filter((l) => l.value === null || available.has(l.value));
@@ -865,7 +906,7 @@ function Launcher(props: { onStart: () => void; onCharacters: () => void; onAnal
       <Shader source={GATE} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
       <Shader source={GATE_MOTION} uniforms={{ time: motionTime }} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
 
-      <TitleBar t={t} onCharacters={props.onCharacters} onAnalysis={props.onAnalysis} />
+      <TitleBar t={t} onCharacters={props.onCharacters} onAnalysis={props.onAnalysis} onEditor={props.onEditor} />
 
       <View style={{ flex: 1, paddingHorizontal: 72, paddingBottom: 16, gap: 24, justifyContent: "center" }}>
         {/* Title */}
@@ -2039,9 +2080,35 @@ export function App() {
   // The Analysis page, as the Characters page is.
   const analysis = signal(false);
   const openAnalysis = () => (characters.set(false), analysis.set(true));
+  // POBT's own build editor is the main screen: it opens at once when the chosen game's Path of Building is installed
+  // (it runs that Path of Building with no window). The launcher and the classic Lua Path of Building it starts are the
+  // legacy way, from the editor's Tools menu; the launcher also shows first while Path of Building is to be set up.
+  // POBT_LEGACY=1 opens the launcher, POBT_EDITOR=1 the editor (development: POBT_BUILD names a build file to open).
+  const installed = () => {
+    const s = JSON.parse(Pob.settings()) as Settings;
+    return !!dirOf(s, s.game);
+  };
+  const editor = signal(!!Pob.devEnv("POBT_EDITOR") || (!Pob.devEnv("POBT_LEGACY") && installed()));
+  if (editor()) useLanguageOnce();
+  const openEditor = () => {
+    useLanguageOnce();
+    characters.set(false);
+    analysis.set(false);
+    editor.set(true);
+  };
   return (
     <View style={{ flex: 1 }}>
-      <If when={running()} else={<Launcher onStart={start} onCharacters={openCharacters} onAnalysis={openAnalysis} />}>
+      <If
+        when={running()}
+        else={
+          <If when={editor()} else={<Launcher onStart={start} onCharacters={openCharacters} onAnalysis={openAnalysis} onEditor={openEditor} />}>
+            <View style={{ flex: 1 }}>
+              <TitleBar t={t} solid onCharacters={openCharacters} onAnalysis={openAnalysis} onLegacy={() => editor.set(false)} />
+              <BuildEditor file={(Pob.devEnv("POBT_BUILD") || undefined)} game={(JSON.parse(Pob.settings()) as Settings).game === "Poe2" ? "poe2" : "poe1"} onBack={() => editor.set(false)} />
+            </View>
+          </If>
+        }
+      >
         <View style={{ flex: 1 }}>
           <TitleBar t={t} solid onBack={back} onCharacters={openCharacters} onAnalysis={openAnalysis} />
           <View style={{ flex: 1 }}>

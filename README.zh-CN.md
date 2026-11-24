@@ -37,6 +37,14 @@ Path of Building 的构筑列表。
 - **流放之路 2**：国际服像 Path of Building 2 一样，在浏览器里登录 pathofexile.com 授权；腾讯服粘贴 WeGame 角色
   分享链接：在 WeGame 的流放之路 2 助手里打开角色数据，点右上角「一键分享」。
 
+
+## 构建编辑器
+
+POBT 启动后直接进入自己的构建界面：天赋树、技能、物品、计算、配置与备注，全新界面并已翻译。所有数字都出自
+Path of Building 本身：你安装的 Path of Building 在后台无窗口运行，承担全部计算，因此结果准确，并随 Path of Building
+的每次更新自动跟进。第一个界面列出 Path of Building 的构建文件夹，保存时写回同一个文件，两边共享所有构建。经典版
+Path of Building（原窗口界面）仍可从**工具 → 经典版 Path of Building（旧版）**进入。
+
 ## 性能
 
 POBT 可以代替 Path of Building 自带的程序使用：它运行的是 Path of Building 自己的代码，只是用 POBT 自己的程序代替了

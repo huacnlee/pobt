@@ -1,11 +1,28 @@
-// The launcher, headless: `nsh test` runs this file in a runner it builds
+// The app, headless: `nsh test` runs this file in a runner it builds
 // with the crate, at the window's size (nsh.json).
 import { expect, open, test } from "nsh/test";
 
-test("shows the launcher", async () => {
+type App = Awaited<ReturnType<typeof open>>;
+
+/** The first screen: the build editor's build list where Path of Building is installed, else the launcher, which
+ * sets it up. */
+async function home(app: App): Promise<"editor" | "launcher"> {
+  await app.waitUntil(() => app.texts().includes("新建构建") || app.texts().includes("启动"));
+  return app.texts().includes("新建构建") ? "editor" : "launcher";
+}
+
+test("opens on the build editor, or the launcher to set Path of Building up", async () => {
   const app = await open("../App.tsx", { width: 1280, height: 820 });
   expect(app.texts()).toContain("POBT");
-  expect(app.texts()).toContain("启动");
+  await home(app);
+});
+
+test("goes from the build editor to the classic Path of Building's launcher", async () => {
+  const app = await open("../App.tsx", { width: 1280, height: 820 });
+  if ((await home(app)) !== "editor") return;
+  await app.press("text:工具");
+  await app.press("text:经典版 Path of Building（旧版）");
+  await app.waitFor("text:启动");
 });
 
 test("opens the characters page from the Tools menu, and back", async () => {
@@ -17,7 +34,7 @@ test("opens the characters page from the Tools menu, and back", async () => {
   expect(app.texts()).toContain("腾讯服");
   expect(app.texts()).toContain("POESESSID");
   await app.press("text:返回");
-  await app.waitFor("text:启动");
+  await home(app);
 });
 
 test("explains how to get the POESESSID", async () => {
@@ -70,5 +87,5 @@ test("opens the AI analysis page from the Tools menu, and back", async () => {
   await app.press("text:构筑代码 >> nth=0");
   await app.waitFor("text:粘贴构筑代码（Path of Building 的导出）");
   await app.press("text:返回");
-  await app.waitFor("text:启动");
+  await home(app);
 });

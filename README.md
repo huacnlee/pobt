@@ -39,6 +39,15 @@ a character's build code or save it among Path of Building's builds.
   Building 2 does. Tencent's, by a WeGame share link: in WeGame's Path of Exile 2 helper, open the character's data and
   press Share (一键分享).
 
+## The build editor
+
+POBT opens on its own build screens: the passive tree, skills, items, calculations,
+configuration and notes, in a new interface, translated. The numbers are Path of Building's own: the Path of Building
+you have installed runs with no window behind the screens and does every calculation, so it stays exact and follows
+each update of Path of Building. Its first screen lists Path of Building's builds folder; saving writes the same file,
+so both see every build. The classic Path of Building, in its own window, stays under **Tools → Classic Path of
+Building (legacy)**.
+
 ## Performance
 
 POBT can stand in for Path of Building's own program: it runs Path of Building's code with its own program in place

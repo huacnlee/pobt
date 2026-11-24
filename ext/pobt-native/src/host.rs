@@ -113,6 +113,9 @@ fn normalize_key(name: &str) -> String {
 }
 
 const PRELUDE: &str = include_str!("prelude.lua");
+const CALLBACK_INIT: &str = "OnInit";
+
+pub mod service;
 
 struct Sub {
     rx: mpsc::Receiver<SubMsg>,
