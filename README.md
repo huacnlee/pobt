@@ -7,12 +7,13 @@
   English | <a href="README.zh-CN.md">简体中文</a> · <a href="https://huacnlee.github.io/pobt/">Website</a>
 </p>
 
-<p align="center"><img src="website/public/screenshot.png" alt="The POBT launcher" width="800"></p>
+<p align="center"><img src="https://github.com/user-attachments/assets/b3f43303-ee08-48c8-98e9-fa6fc31639ca" alt="The POBT launcher" width="800"></p>
 
 <p align="center">
-  <img src="website/public/screenshot-tree.png" alt="The passive tree, translated" width="32%">
-  <img src="website/public/screenshot-pob.png" alt="The calculations, translated" width="32%">
-  <img src="website/public/screenshot-pob2.png" alt="Path of Building for Path of Exile 2, translated" width="32%">
+  <img src="https://github.com/user-attachments/assets/7abd50f0-b0d1-4c61-88c2-179b061bc808" alt="The passive tree" width="49%">
+  <img src="https://github.com/user-attachments/assets/3d617a3f-16e8-4a3e-add9-1bce0bab2013" alt="Skills" width="49%">
+  <img src="https://github.com/user-attachments/assets/1f48eb28-994e-4e81-9856-f20e3c32b715" alt="Items" width="49%">
+  <img src="https://github.com/user-attachments/assets/23c22714-cdcd-4cfe-bdea-3724511e8516" alt="Calcs" width="49%">
 </p>
 
 POBT runs the [Path of Building Community](https://pathofbuilding.community/) you already have — for Path of Exile
@@ -26,6 +27,8 @@ Chinese, Traditional Chinese and Korean are included.
 - **Import characters** from an account, as a build code or a build saved in Path of Building: see below.
 - **AI build analysis**: from the Tools menu, choose one of your builds (or paste a build code) and have the AI already on your computer, Claude Code or Codex, rate it by damage, defence, recovery, ailments, utility and gear, with what to change first. POBT sends it no account and keeps no key: the agent runs as you signed it in.
 
+<p align="center"><img src="https://github.com/user-attachments/assets/3f934056-48ba-45d7-b251-4afc7a126875" alt="AI build analysis" width="800"></p>
+
 ## Import characters
 
 <p align="center"><img src="website/public/screenshot-characters.png" alt="The Characters page" width="800"></p>
@@ -38,6 +41,15 @@ a character's build code or save it among Path of Building's builds.
 - **Path of Exile 2**: the official site's characters once signed in to pathofexile.com in the browser, as Path of
   Building 2 does. Tencent's, by a WeGame share link: in WeGame's Path of Exile 2 helper, open the character's data and
   press Share (一键分享).
+
+## The build editor
+
+POBT opens on its own build screens: the passive tree, skills, items, calculations,
+configuration and notes, in a new interface, translated. The numbers are Path of Building's own: the Path of Building
+you have installed runs with no window behind the screens and does every calculation, so it stays exact and follows
+each update of Path of Building. Its first screen lists Path of Building's builds folder; saving writes the same file,
+so both see every build. The classic Path of Building, in its own window, stays under **Tools → Classic Path of
+Building (legacy)**.
 
 ## Performance
 

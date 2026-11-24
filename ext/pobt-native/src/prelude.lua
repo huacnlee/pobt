@@ -546,7 +546,8 @@ function __pobt_hookLaunch()
 	local show = launch.ShowErrMsg
 	if type(show) == "function" then
 		launch.ShowErrMsg = function(self, fmt, ...)
-			log("POB error: " .. string.format(fmt, ...))
+			__pobt_lastError = string.format(fmt, ...)
+			log("POB error: " .. __pobt_lastError)
 			return show(self, fmt, ...)
 		end
 	end

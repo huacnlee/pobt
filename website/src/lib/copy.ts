@@ -7,6 +7,13 @@ export const ZIP = `${REPO}/releases/latest/download/pobt-windows-x86_64.zip`;
 export const RELEASES = `${REPO}/releases`;
 export const POB = "https://pathofbuilding.community/";
 export const SPONSOR = "https://github.com/sponsors/huacnlee";
+/** The screenshots are attached to the repository's pull requests on GitHub, not kept in the repository. */
+export const SHOT = "https://github.com/user-attachments/assets/b3f43303-ee08-48c8-98e9-fa6fc31639ca";
+
+export interface Shot {
+  src: string;
+  alt: string;
+}
 
 export interface Copy {
   title: string;
@@ -19,9 +26,9 @@ export interface Copy {
   downloadNote: string;
   scriptLink: string;
   shotAlt: string;
-  shotTreeAlt: string;
-  shotPobAlt: string;
-  shotPob2Alt: string;
+  /** The build editor's pages, in this language; then an AI analysis. */
+  shots: Shot[];
+  shotAi: Shot;
   featuresTitle: string;
   features: string[];
   /** Importing characters: what it does, and its screenshot's alt text. */
@@ -71,9 +78,13 @@ export const copy: Record<Language, Copy> = {
     downloadNote: "Free · .zip · 64-bit Windows 10 / 11 · no installer needed",
     scriptLink: "or install with a script · macOS and Linux",
     shotAlt: "The POBT launcher: pick Path of Exile or Path of Exile 2 and a language, then Start.",
-    shotTreeAlt: "The passive tree in Path of Building, translated",
-    shotPobAlt: "Path of Building's calculations, translated",
-    shotPob2Alt: "Path of Building for Path of Exile 2, translated",
+    shots: [
+      { src: "https://github.com/user-attachments/assets/7abd50f0-b0d1-4c61-88c2-179b061bc808", alt: "The passive tree" },
+      { src: "https://github.com/user-attachments/assets/3d617a3f-16e8-4a3e-add9-1bce0bab2013", alt: "Skills and gems" },
+      { src: "https://github.com/user-attachments/assets/1f48eb28-994e-4e81-9856-f20e3c32b715", alt: "Items, with Path of Building's comparison" },
+      { src: "https://github.com/user-attachments/assets/23c22714-cdcd-4cfe-bdea-3724511e8516", alt: "The calculations" },
+    ],
+    shotAi: { src: "https://github.com/user-attachments/assets/3f934056-48ba-45d7-b251-4afc7a126875", alt: "An AI analysis of a build: its score, what to do first, and each part rated" },
     featuresTitle: "What it does",
     features: [
       "Translates Path of Building for Path of Exile 1 and 2",
@@ -171,9 +182,13 @@ export const copy: Record<Language, Copy> = {
     downloadNote: "免费 · zip 压缩包 · 64 位 Windows 10 / 11 · 无需安装",
     scriptLink: "或用脚本安装 · macOS 与 Linux",
     shotAlt: "POBT 启动界面：选择流放之路或流放之路 2 和语言，然后启动。",
-    shotTreeAlt: "翻译后的 Path of Building 天赋树",
-    shotPobAlt: "翻译后的 Path of Building 计算页",
-    shotPob2Alt: "翻译后的流放之路 2 Path of Building",
+    shots: [
+      { src: "https://github.com/user-attachments/assets/eba552e5-a7b8-48e0-85a8-1e307499001b", alt: "天赋树" },
+      { src: "https://github.com/user-attachments/assets/19cbb22d-173e-43c8-8588-2d11a704f45f", alt: "技能与宝石" },
+      { src: "https://github.com/user-attachments/assets/30fba843-e862-47ca-8188-e57f9c71d442", alt: "物品，带 Path of Building 的对比" },
+      { src: "https://github.com/user-attachments/assets/535a093a-244c-4766-b78e-205b8f065b93", alt: "计算页" },
+    ],
+    shotAi: { src: "https://github.com/user-attachments/assets/a16663b7-185d-4784-90f4-f859edeeaeb2", alt: "构筑的 AI 分析：总分、优先改进项与各项评分" },
     featuresTitle: "功能",
     features: [
       "翻译流放之路 1 与 2 的 Path of Building",

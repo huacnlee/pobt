@@ -7,12 +7,13 @@
   <a href="README.md">English</a> | 简体中文 · <a href="https://huacnlee.github.io/pobt/zh-CN/">官网</a>
 </p>
 
-<p align="center"><img src="website/public/screenshot.png" alt="POBT 启动界面" width="800"></p>
+<p align="center"><img src="https://github.com/user-attachments/assets/b3f43303-ee08-48c8-98e9-fa6fc31639ca" alt="POBT 启动界面" width="800"></p>
 
 <p align="center">
-  <img src="website/public/screenshot-tree.png" alt="翻译后的天赋树" width="32%">
-  <img src="website/public/screenshot-pob.png" alt="翻译后的计算页" width="32%">
-  <img src="website/public/screenshot-pob2.png" alt="翻译后的流放之路 2 Path of Building" width="32%">
+  <img src="https://github.com/user-attachments/assets/eba552e5-a7b8-48e0-85a8-1e307499001b" alt="天赋树" width="49%">
+  <img src="https://github.com/user-attachments/assets/19cbb22d-173e-43c8-8588-2d11a704f45f" alt="技能" width="49%">
+  <img src="https://github.com/user-attachments/assets/30fba843-e862-47ca-8188-e57f9c71d442" alt="物品" width="49%">
+  <img src="https://github.com/user-attachments/assets/535a093a-244c-4766-b78e-205b8f065b93" alt="计算" width="49%">
 </p>
 
 POBT 直接运行你电脑上已有的 [Path of Building Community](https://pathofbuilding.community/)（流放之路 1 和 2），
@@ -25,6 +26,8 @@ POBT 直接运行你电脑上已有的 [Path of Building Community](https://path
 - **角色导入**：从账号导入角色，复制 POB 代码或保存到 Path of Building，见下文。
 - **AI 构筑分析**：在「工具」菜单里选一个构筑（或粘贴构筑代码），调用你电脑上已安装的 Claude Code 或 Codex，从伤害、防御、恢复、异常状态、功能、装备六个维度打分，并给出优先改进项。POBT 不保存任何密钥，AI 以你已登录的身份运行。
 
+<p align="center"><img src="https://github.com/user-attachments/assets/a16663b7-185d-4784-90f4-f859edeeaeb2" alt="AI 构筑分析" width="800"></p>
+
 ## 角色导入
 
 <p align="center"><img src="website/public/screenshot-characters.png" alt="角色导入页" width="800"></p>
@@ -36,6 +39,14 @@ Path of Building 的构筑列表。
   会先翻译回英文再导入。
 - **流放之路 2**：国际服像 Path of Building 2 一样，在浏览器里登录 pathofexile.com 授权；腾讯服粘贴 WeGame 角色
   分享链接：在 WeGame 的流放之路 2 助手里打开角色数据，点右上角「一键分享」。
+
+
+## 构建编辑器
+
+POBT 启动后直接进入自己的构建界面：天赋树、技能、物品、计算、配置与备注，全新界面并已翻译。所有数字都出自
+Path of Building 本身：你安装的 Path of Building 在后台无窗口运行，承担全部计算，因此结果准确，并随 Path of Building
+的每次更新自动跟进。第一个界面列出 Path of Building 的构建文件夹，保存时写回同一个文件，两边共享所有构建。经典版
+Path of Building（原窗口界面）仍可从**工具 → 经典版 Path of Building（旧版）**进入。
 
 ## 性能
 

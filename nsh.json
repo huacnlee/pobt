@@ -4,8 +4,21 @@
   "icon": "icon.png",
   "version": "0.4.0",
   "build": 1,
-  "updater": { "github": "huacnlee/pobt" },
+  "updater": {
+    "github": "huacnlee/pobt"
+  },
   "appearance": "dark",
-  "window": { "title": "POBT", "defaultSize": { "width": 1280, "height": 820 }, "minSize": { "width": 960, "height": 640 } },
-  "rust": "ext/pobt-native"
+  "window": {
+    "title": "POBT",
+    "defaultSize": {
+      "width": 1280,
+      "height": 820
+    },
+    "minSize": {
+      "width": 960,
+      "height": 640
+    }
+  },
+  "rust": "ext/pobt-native",
+  "theme": "theme.json"
 }

@@ -45,17 +45,30 @@ export interface Report {
   priorities?: string[];
 }
 
-/** The analysis running or last run (`Pob.aiProgress`). */
+/** The analysis running or last run (`Pob.aiProgress`), or one kept beside its build (`Pob.aiSaved`). */
 export interface AiProgress {
   state: "running" | "done" | "failed" | "cancelled";
   agent: string;
   build: string;
-  step: "reading" | "thinking" | string;
+  /** One of `AI_STEPS`. */
+  step: string;
+  /** The last of what the agent streams. */
   activity: string;
+  /** How many characters of its answer have come. */
+  received: number;
   error: string;
   report: Report | null;
   raw: string;
+  /** When it ended, in Unix seconds (0 while it runs). */
+  finished: number;
+  language: string;
+  question: string;
+  /** The build's file it is kept beside, "" for none. */
+  save_to: string;
 }
+
+/** The stages of an analysis, in their order (`ai.rs`'s `step`). */
+export const AI_STEPS = ["reading", "starting", "waiting", "thinking", "writing", "parsing"];
 
 export interface AnalysisStrings {
   open: string;
@@ -76,9 +89,18 @@ export interface AnalysisStrings {
   analyse: string;
   stop: string;
   empty: string;
+  /** The editor's tab, before the build's first analysis. */
+  emptyEditor: string;
   /** Running, `seconds` so far. */
   steps: Record<string, string>;
   elapsed: (seconds: number) => string;
+  /** How much of the answer has come. */
+  received: (chars: number) => string;
+  failedTitle: string;
+  /** Analyse the build again, over the report kept. */
+  again: string;
+  /** Who made the report kept, and when. */
+  madeBy: (agent: string, when: string) => string;
   dimensions: Record<DimensionKey, string>;
   overall: string;
   priorities: string;
@@ -118,8 +140,20 @@ const STRINGS: Record<string, AnalysisStrings> = {
     analyse: "Analyse",
     stop: "Stop",
     empty: "Choose a build and press Analyse: the AI rates its damage, defences, recovery, ailments, utility and gear",
-    steps: { reading: "Reading the build…", thinking: "The AI is analysing the build…" },
+    emptyEditor: "Press Analyse: the AI rates this build as it is now (its damage, defences, recovery, ailments, utility and gear), and the report is kept beside the build's file",
+    steps: {
+      reading: "Reading the build…",
+      starting: "Starting the AI…",
+      waiting: "Waiting for the AI's first words…",
+      thinking: "The AI is thinking the build over…",
+      writing: "The AI is writing its report…",
+      parsing: "Reading the report…",
+    },
     elapsed: (s) => `${s}s`,
+    received: (n) => `${n.toLocaleString()} characters received`,
+    failedTitle: "The analysis failed",
+    again: "Analyse again",
+    madeBy: (agent, when) => `By ${agent}, ${when}`,
     dimensions: { offence: "Damage", defence: "Defence", recovery: "Recovery", ailments: "Ailments", utility: "Utility", gear: "Gear" },
     overall: "Endgame ready",
     priorities: "What to do first",
@@ -135,6 +169,7 @@ const STRINGS: Record<string, AnalysisStrings> = {
       noBuild: "The build's file cannot be read",
       badBuild: "This is not a Path of Building build",
       badCode: "This is not a build code",
+      timedOut: "The AI took over 15 minutes and was stopped",
     },
     failed: (why) => `The AI failed: ${why}`,
   },
@@ -161,8 +196,20 @@ const STRINGS: Record<string, AnalysisStrings> = {
     analyse: "开始分析",
     stop: "停止",
     empty: "选择构筑并点击开始分析：AI 会评估它的伤害、防御、恢复、异常状态、功能与装备",
-    steps: { reading: "读取构筑…", thinking: "AI 正在分析构筑…" },
+    emptyEditor: "点击开始分析：AI 会按当前状态评估这个构筑的伤害、防御、恢复、异常状态、功能与装备，报告保存在构筑文件旁边",
+    steps: {
+      reading: "读取构筑…",
+      starting: "启动 AI…",
+      waiting: "等待 AI 开始回答…",
+      thinking: "AI 正在思考构筑…",
+      writing: "AI 正在写报告…",
+      parsing: "读取报告…",
+    },
     elapsed: (s) => `${s} 秒`,
+    received: (n) => `已收到 ${n.toLocaleString()} 字`,
+    failedTitle: "分析失败",
+    again: "重新分析",
+    madeBy: (agent, when) => `${agent} · ${when}`,
     dimensions: { offence: "伤害", defence: "防御", recovery: "恢复", ailments: "异常状态", utility: "功能", gear: "装备" },
     overall: "终局就绪度",
     priorities: "优先改进",
@@ -178,6 +225,7 @@ const STRINGS: Record<string, AnalysisStrings> = {
       noBuild: "无法读取构筑文件",
       badBuild: "这不是 Path of Building 的构筑",
       badCode: "这不是构筑代码",
+      timedOut: "AI 超过 15 分钟未完成，已停止",
     },
     failed: (why) => `AI 运行失败：${why}`,
   },
@@ -204,8 +252,20 @@ const STRINGS: Record<string, AnalysisStrings> = {
     analyse: "開始分析",
     stop: "停止",
     empty: "選擇構築並按下開始分析：AI 會評估它的傷害、防禦、恢復、異常狀態、功能與裝備",
-    steps: { reading: "讀取構築…", thinking: "AI 正在分析構築…" },
+    emptyEditor: "按下開始分析：AI 會依目前狀態評估這個構築的傷害、防禦、恢復、異常狀態、功能與裝備，報告保存在構築檔案旁邊",
+    steps: {
+      reading: "讀取構築…",
+      starting: "啟動 AI…",
+      waiting: "等待 AI 開始回答…",
+      thinking: "AI 正在思考構築…",
+      writing: "AI 正在寫報告…",
+      parsing: "讀取報告…",
+    },
     elapsed: (s) => `${s} 秒`,
+    received: (n) => `已收到 ${n.toLocaleString()} 字`,
+    failedTitle: "分析失敗",
+    again: "重新分析",
+    madeBy: (agent, when) => `${agent} · ${when}`,
     dimensions: { offence: "傷害", defence: "防禦", recovery: "恢復", ailments: "異常狀態", utility: "功能", gear: "裝備" },
     overall: "終局就緒度",
     priorities: "優先改進",
@@ -221,6 +281,7 @@ const STRINGS: Record<string, AnalysisStrings> = {
       noBuild: "無法讀取構築檔案",
       badBuild: "這不是 Path of Building 的構築",
       badCode: "這不是構築代碼",
+      timedOut: "AI 超過 15 分鐘未完成，已停止",
     },
     failed: (why) => `AI 執行失敗：${why}`,
   },
@@ -247,8 +308,20 @@ const STRINGS: Record<string, AnalysisStrings> = {
     analyse: "분석",
     stop: "중지",
     empty: "빌드를 고르고 분석을 누르세요: AI가 피해, 방어, 회복, 상태 이상, 유틸리티, 장비를 평가합니다",
-    steps: { reading: "빌드를 읽는 중…", thinking: "AI가 빌드를 분석하는 중…" },
+    emptyEditor: "분석을 누르세요: AI가 지금 상태의 이 빌드(피해, 방어, 회복, 상태 이상, 유틸리티, 장비)를 평가하고, 보고서는 빌드 파일 옆에 저장됩니다",
+    steps: {
+      reading: "빌드를 읽는 중…",
+      starting: "AI를 시작하는 중…",
+      waiting: "AI의 첫 답을 기다리는 중…",
+      thinking: "AI가 빌드를 검토하는 중…",
+      writing: "AI가 보고서를 쓰는 중…",
+      parsing: "보고서를 읽는 중…",
+    },
     elapsed: (s) => `${s}초`,
+    received: (n) => `${n.toLocaleString()}자 받음`,
+    failedTitle: "분석 실패",
+    again: "다시 분석",
+    madeBy: (agent, when) => `${agent} · ${when}`,
     dimensions: { offence: "피해", defence: "방어", recovery: "회복", ailments: "상태 이상", utility: "유틸리티", gear: "장비" },
     overall: "엔드게임 준비도",
     priorities: "우선 개선",
@@ -264,6 +337,7 @@ const STRINGS: Record<string, AnalysisStrings> = {
       noBuild: "빌드 파일을 읽을 수 없습니다",
       badBuild: "Path of Building 빌드가 아닙니다",
       badCode: "빌드 코드가 아닙니다",
+      timedOut: "AI가 15분 넘게 걸려 중지했습니다",
     },
     failed: (why) => `AI 실행 실패: ${why}`,
   },
@@ -278,6 +352,11 @@ export const AGENT_SITES = {
   claude: "https://claude.com/claude-code",
   codex: "https://github.com/openai/codex",
 };
+
+/** When a report was made (`finished`, Unix seconds), as the user's clock says it. */
+export function whenText(finished: number): string {
+  return finished ? new Date(finished * 1000).toLocaleString() : "";
+}
 
 /** The words for an analysis' error code (`ai.rs`'s), or the error itself. */
 export function aiErrorText(s: AnalysisStrings, error: string): string {

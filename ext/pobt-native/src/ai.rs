@@ -107,20 +107,35 @@ pub struct Request {
     pub language: String,
     #[serde(default)]
     pub question: String,
+    /// The build's name, for one given as a code.
+    #[serde(default)]
+    pub name: String,
+    /// The build's file to keep the report beside (`<name>.ai.json`, see [`saved_path`]) once done; "" for none.
+    #[serde(default)]
+    pub save_to: String,
 }
 
-/// The analysis running or last run. `state`: "running", "done", "failed" or "cancelled"; `step`: "reading",
-/// "thinking"; `activity`: what the agent last said it does; `report`: its answer as JSON, else `raw`, its text.
-#[derive(Debug, Clone, Default, Serialize)]
+/// The analysis running or last run. `state`: "running", "done", "failed" or "cancelled"; `step`: "reading" (the
+/// build), "starting" (the agent), "waiting" (for its first words), "thinking", "writing" (its answer), "parsing" (the
+/// report in it); `activity`: the last of what it streams; `received`: how many characters of its answer have come;
+/// `report`: its answer as JSON, else `raw`, its text; `finished`: when it ended (Unix seconds); `save_to`: the
+/// build's file the report is kept beside, if any.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Progress {
     pub state: String,
     pub agent: String,
     pub build: String,
     pub step: String,
     pub activity: String,
+    pub received: usize,
     pub error: String,
     pub report: Value,
     pub raw: String,
+    pub finished: u64,
+    pub language: String,
+    pub question: String,
+    pub save_to: String,
 }
 
 static JOB: Mutex<Option<Progress>> = Mutex::new(None);
@@ -145,7 +160,16 @@ pub fn start(request: Request) -> bool {
         if job.as_ref().is_some_and(|p| p.state == "running") {
             return false;
         }
-        *job = Some(Progress { state: "running".into(), agent: request.agent.clone(), step: "reading".into(), ..Default::default() });
+        *job = Some(Progress {
+            state: "running".into(),
+            agent: request.agent.clone(),
+            build: request.name.clone(),
+            step: "reading".into(),
+            language: request.language.clone(),
+            question: request.question.clone(),
+            save_to: request.save_to.clone(),
+            ..Default::default()
+        });
     }
     CANCEL.store(false, Ordering::SeqCst);
     std::thread::spawn(move || {
@@ -154,20 +178,49 @@ pub fn start(request: Request) -> bool {
             log::warn!("ai {}: {e}", request.agent);
         }
         let cancelled = CANCEL.load(Ordering::SeqCst);
-        update(|p| match out {
-            _ if cancelled => p.state = "cancelled".into(),
-            Ok((report, raw)) => {
-                p.state = "done".into();
-                p.report = report;
-                p.raw = raw;
-            }
-            Err(e) => {
-                p.state = "failed".into();
-                p.error = e;
+        let finished = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
+        update(|p| {
+            p.finished = finished;
+            match out {
+                _ if cancelled => p.state = "cancelled".into(),
+                Ok((report, raw)) => {
+                    p.state = "done".into();
+                    p.report = report;
+                    p.raw = raw;
+                }
+                Err(e) => {
+                    p.state = "failed".into();
+                    p.error = e;
+                }
             }
         });
+        // Kept beside its build, to be shown when the build is opened again
+        if let Some(p) = progress().filter(|p| p.state == "done" && !p.save_to.is_empty()) {
+            if let Err(e) = save(Path::new(&p.save_to), &p) {
+                log::warn!("ai: keeping the report beside {}: {e}", p.save_to);
+            }
+        }
     });
     true
+}
+
+/// Where the report of the build in `build` (`<name>.xml`) is kept: `<name>.ai.json` beside it.
+pub fn saved_path(build: &Path) -> PathBuf {
+    build.with_extension("ai.json")
+}
+
+/// The report kept beside the build in `build`, if one.
+pub fn saved(build: &Path) -> Option<Progress> {
+    serde_json::from_str(&std::fs::read_to_string(saved_path(build)).ok()?).ok()
+}
+
+/// Keeps `report` beside the build in `build`.
+pub fn save(build: &Path, report: &Progress) -> Result<(), String> {
+    let mut kept = report.clone();
+    kept.save_to = build.display().to_string();
+    kept.activity.clear();
+    let json = serde_json::to_string_pretty(&kept).map_err(|e| e.to_string())?;
+    std::fs::write(saved_path(build), json).map_err(|e| e.to_string())
 }
 
 /// Stops the analysis running, if one.
@@ -193,11 +246,13 @@ const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
 fn analyse(req: &Request) -> Result<(Value, String), String> {
     let (name, xml) = read_build(req)?;
-    update(|p| p.build = name.clone());
+    if !name.is_empty() {
+        update(|p| p.build = name.clone());
+    }
     let digest = digest(&xml)?;
     let prompt = prompt(&digest, &req.language, &req.question);
-    update(|p| p.step = "thinking".into());
     let text = run_agent(&req.agent, &prompt)?;
+    update(|p| p.step = "parsing".into());
     Ok(match report(&text) {
         Some(report) => (report, text),
         None => (Value::Null, text),
@@ -453,11 +508,12 @@ fn run_agent(agent: &str, prompt: &str) -> Result<String, String> {
     let _ = std::fs::remove_file(&last);
     let mut cmd = Command::new(&program);
     match agent {
+        // Each streams its events as JSON lines, read as they come (`event`): what it does, and its answer.
         "claude" => {
-            cmd.args(["-p", "--output-format", "text", "--no-session-persistence", "--tools", ""]);
+            cmd.args(["-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages", "--no-session-persistence", "--tools", ""]);
         }
         "codex" => {
-            cmd.args(["exec", "--skip-git-repo-check", "--sandbox", "read-only", "--ephemeral", "--color", "never", "-o"]).arg(&last).arg("-");
+            cmd.args(["exec", "--skip-git-repo-check", "--sandbox", "read-only", "--ephemeral", "--color", "never", "--json", "-o"]).arg(&last).arg("-");
         }
         _ => return Err("noAgent".into()),
     }
@@ -467,6 +523,7 @@ fn run_agent(agent: &str, prompt: &str) -> Result<String, String> {
         use std::os::windows::process::CommandExt;
         cmd.creation_flags(CREATE_NO_WINDOW);
     }
+    update(|p| p.step = "starting".into());
     let mut child = cmd.spawn().map_err(|e| format!("agentFailed: {}: {e}", program.display()))?;
     let mut stdin = child.stdin.take().ok_or("agentFailed: no stdin")?;
     let stdout = child.stdout.take().ok_or("agentFailed: no stdout")?;
@@ -477,11 +534,18 @@ fn run_agent(agent: &str, prompt: &str) -> Result<String, String> {
     std::thread::spawn(move || {
         let _ = stdin.write_all(prompt.as_bytes());
     });
-    let out = std::thread::spawn(move || read_lines(stdout));
+    update(|p| p.step = "waiting".into());
+    let out = std::thread::spawn(move || read_stream(stdout));
     let err = std::thread::spawn(move || read_lines(stderr));
+    let began = std::time::Instant::now();
+    let mut timed_out = false;
     let status = loop {
         if let Some(status) = child.lock().unwrap().try_wait().map_err(|e| format!("agentFailed: {e}"))? {
             break status;
+        }
+        if !timed_out && began.elapsed() > TIMEOUT {
+            timed_out = true;
+            kill(&mut child.lock().unwrap());
         }
         std::thread::sleep(Duration::from_millis(100));
     };
@@ -491,8 +555,15 @@ fn run_agent(agent: &str, prompt: &str) -> Result<String, String> {
     if CANCEL.load(Ordering::SeqCst) {
         return Err("cancelled".into());
     }
-    let text = std::fs::read_to_string(&last).ok().filter(|t| !t.trim().is_empty()).unwrap_or(out);
+    if timed_out {
+        return Err("timedOut".into());
+    }
+    let text = std::fs::read_to_string(&last).ok().filter(|t| !t.trim().is_empty()).unwrap_or(out.answer);
     let _ = std::fs::remove_file(&last);
+    // What it said went wrong (not signed in, out of usage…)
+    if let Some(e) = out.error.filter(|e| !e.trim().is_empty()) {
+        return Err(format!("agentFailed: {e}"));
+    }
     if !status.success() || text.trim().is_empty() {
         let why = if err.trim().is_empty() { &text } else { &err };
         let tail: String = why.trim().lines().rev().take(6).collect::<Vec<_>>().into_iter().rev().collect::<Vec<_>>().join("\n");
@@ -501,20 +572,123 @@ fn run_agent(agent: &str, prompt: &str) -> Result<String, String> {
     Ok(text)
 }
 
-/// All of `r`, each line said as the agent's activity as it comes.
-fn read_lines(r: impl Read) -> String {
-    use std::io::BufRead;
+/// How long an agent may take before it is stopped.
+const TIMEOUT: Duration = Duration::from_secs(15 * 60);
+
+/// All of `r` (the agent's stderr).
+fn read_lines(mut r: impl Read) -> String {
     let mut all = String::new();
-    for line in std::io::BufReader::new(r).lines().map_while(Result::ok) {
-        let shown = line.trim();
-        if !shown.is_empty() {
-            let shown: String = shown.chars().take(160).collect();
-            update(|p| p.activity = shown);
-        }
-        all.push_str(&line);
-        all.push('\n');
-    }
+    let _ = r.read_to_string(&mut all);
     all
+}
+
+/// What the agent's stream has said: its answer (whole, once it has come), the answer's pieces as they came, and the
+/// error it reported, if any.
+#[derive(Debug, Default)]
+struct Stream {
+    answer: String,
+    pieces: String,
+    error: Option<String>,
+}
+
+/// Reads the agent's JSON lines as they come, saying what it does (`step`, `activity`, `received`).
+fn read_stream(r: impl Read) -> Stream {
+    use std::io::BufRead;
+    let mut s = Stream::default();
+    for line in std::io::BufReader::new(r).lines().map_while(Result::ok) {
+        if let Some(e) = event(&mut s, &line) {
+            let received = s.answer.chars().count().max(s.pieces.chars().count());
+            update(|p| {
+                if !e.step.is_empty() {
+                    p.step = e.step.into();
+                }
+                if !e.activity.is_empty() {
+                    p.activity = e.activity;
+                }
+                p.received = received;
+            });
+        }
+    }
+    if s.answer.is_empty() {
+        s.answer = std::mem::take(&mut s.pieces);
+    }
+    s
+}
+
+/// What a line of the stream says the agent does: its step, and the last of its words.
+#[derive(Debug, Default, PartialEq)]
+struct Event {
+    step: &'static str,
+    activity: String,
+}
+
+/// A line of Claude Code's `stream-json` (with partial messages) or of Codex's `--json` events; a line that is no
+/// JSON is taken as the answer's text.
+fn event(s: &mut Stream, line: &str) -> Option<Event> {
+    let line = line.trim();
+    if line.is_empty() {
+        return None;
+    }
+    let Ok(v) = serde_json::from_str::<Value>(line) else {
+        s.pieces.push_str(line);
+        s.pieces.push('\n');
+        return Some(Event { step: "writing", activity: tail(&s.pieces) });
+    };
+    let text_of = |v: &Value, k: &str| v.get(k).and_then(Value::as_str).unwrap_or_default().to_string();
+    match v.get("type").and_then(Value::as_str).unwrap_or_default() {
+        // Claude Code: its thinking and its answer in pieces, then the result
+        "stream_event" => {
+            let delta = v.pointer("/event/delta")?;
+            match delta.get("type").and_then(Value::as_str)? {
+                "text_delta" => {
+                    s.pieces.push_str(&text_of(delta, "text"));
+                    Some(Event { step: "writing", activity: tail(&s.pieces) })
+                }
+                "thinking_delta" => Some(Event { step: "thinking", activity: tail(&text_of(delta, "thinking")) }),
+                _ => None,
+            }
+        }
+        "result" => {
+            let text = text_of(&v, "result");
+            if v.get("is_error").and_then(Value::as_bool).unwrap_or(false) {
+                s.error = Some(if text.is_empty() { text_of(&v, "subtype") } else { text });
+            } else {
+                s.answer = text;
+            }
+            None
+        }
+        // Codex: its items as they start and end (its reasoning, its message), and its errors
+        kind @ ("item.started" | "item.updated" | "item.completed") => {
+            let item = v.get("item")?;
+            let text = text_of(item, "text");
+            match item.get("type").and_then(Value::as_str)? {
+                "reasoning" => Some(Event { step: "thinking", activity: tail(&text) }),
+                "agent_message" => {
+                    if kind == "item.completed" {
+                        s.answer = text.clone();
+                    }
+                    Some(Event { step: "writing", activity: tail(&text) })
+                }
+                _ => None,
+            }
+        }
+        "error" => {
+            s.error = Some(text_of(&v, "message"));
+            None
+        }
+        "turn.failed" => {
+            s.error = Some(v.pointer("/error/message").and_then(Value::as_str).unwrap_or("turn failed").to_string());
+            None
+        }
+        _ => None,
+    }
+}
+
+/// The last line of `text` with words in it: at most its last 160 characters.
+fn tail(text: &str) -> String {
+    let line = text.lines().rev().map(str::trim).find(|l| !l.is_empty()).unwrap_or_default();
+    let n = line.chars().count();
+    line.chars().skip(n.saturating_sub(160)).collect()
 }
 
 /// The report in the agent's answer: its JSON object, from its first `{` to its last `}` (any fence or words
@@ -623,6 +797,60 @@ mod tests {
         let (report, raw) = analyse(&req).unwrap();
         eprintln!("{raw}");
         assert_eq!(report["dimensions"].as_array().map(Vec::len), Some(6), "{raw}");
+    }
+
+    #[test]
+    fn reads_claude_codes_stream() {
+        let mut s = Stream::default();
+        assert_eq!(event(&mut s, r#"{"type":"system","subtype":"init"}"#), None);
+        let e = event(&mut s, r#"{"type":"stream_event","event":{"type":"content_block_delta","delta":{"type":"thinking_delta","thinking":"Looking at the defences"}}}"#).unwrap();
+        assert_eq!((e.step, e.activity.as_str()), ("thinking", "Looking at the defences"));
+        event(&mut s, r#"{"type":"stream_event","event":{"type":"content_block_delta","delta":{"type":"text_delta","text":"{\"title\":"}}}"#);
+        let e = event(&mut s, r#"{"type":"stream_event","event":{"type":"content_block_delta","delta":{"type":"text_delta","text":" \"Fireball\""}}}"#).unwrap();
+        assert_eq!((e.step, e.activity.as_str()), ("writing", r#"{"title": "Fireball""#));
+        event(&mut s, r#"{"type":"result","subtype":"success","is_error":false,"result":"{\"dimensions\":[]}"}"#);
+        assert_eq!(s.answer, r#"{"dimensions":[]}"#);
+        assert_eq!(s.error, None);
+        // Not signed in: the result says so
+        let mut s = Stream::default();
+        event(&mut s, r#"{"type":"result","subtype":"success","is_error":true,"result":"Invalid API key · Please run /login"}"#);
+        assert_eq!(s.error.as_deref(), Some("Invalid API key · Please run /login"));
+    }
+
+    #[test]
+    fn reads_codexs_events() {
+        let mut s = Stream::default();
+        assert_eq!(event(&mut s, r#"{"type":"thread.started","thread_id":"x"}"#), None);
+        let e = event(&mut s, r#"{"type":"item.completed","item":{"id":"0","type":"reasoning","text":"**Weighing the resistances**"}}"#).unwrap();
+        assert_eq!(e.step, "thinking");
+        event(&mut s, r#"{"type":"item.completed","item":{"id":"1","type":"agent_message","text":"{\"dimensions\":[]}"}}"#);
+        assert_eq!(s.answer, r#"{"dimensions":[]}"#);
+        let mut s = Stream::default();
+        event(&mut s, r#"{"type":"turn.failed","error":{"message":"You've hit your usage limit"}}"#);
+        assert_eq!(s.error.as_deref(), Some("You've hit your usage limit"));
+    }
+
+    #[test]
+    fn keeps_a_report_beside_its_build() {
+        let dir = std::env::temp_dir().join(format!("pobt-ai-saved-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let build = dir.join("Fireball Witch.xml");
+        assert_eq!(saved_path(&build), dir.join("Fireball Witch.ai.json"));
+        assert!(saved(&build).is_none());
+        let p = Progress {
+            state: "done".into(),
+            agent: "claude".into(),
+            activity: "…".into(),
+            finished: 42,
+            report: serde_json::json!({ "score": 70, "dimensions": [] }),
+            ..Default::default()
+        };
+        save(&build, &p).unwrap();
+        let back = saved(&build).unwrap();
+        assert_eq!((back.state.as_str(), back.finished, back.report["score"].as_i64()), ("done", 42, Some(70)));
+        assert_eq!(back.save_to, build.display().to_string());
+        assert!(back.activity.is_empty());
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

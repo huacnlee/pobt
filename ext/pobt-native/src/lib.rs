@@ -3,6 +3,7 @@
 //! `PobCanvas` component draws its frames and sends it the mouse and keys.
 //! The rest of the UI is `App.tsx`, over the `Pob` module.
 
+mod art;
 pub mod account;
 pub mod ai;
 pub mod dds;
@@ -50,6 +51,9 @@ fn native(registry: &mut Registry) {
     install::rescue_beside_program();
     registry.register::<PobCanvas>().module::<Pob>();
 }
+
+/// The dictionary of POBT's own build screens (`tr_load`), apart from the one the Lua Path of Building draws with.
+static TR_DICT: std::sync::RwLock<Option<Arc<translate::Dictionary>>> = std::sync::RwLock::new(None);
 
 /// The running POB, and its thread.
 static SESSION: Mutex<Option<(Arc<Shared>, std::thread::JoinHandle<()>)>> = Mutex::new(None);
@@ -101,6 +105,111 @@ impl Pob {
         if let Ok(s) = serde_json::from_str::<Settings>(&json) {
             s.save();
         }
+    }
+
+    /// Loads the names of items and gems that lead to their pictures, for `game` (`"poe1"`, `"poe2"`), off the UI
+    /// thread (downloaded once a week); whether any are known.
+    pub async fn art_load(game: String) -> bool {
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        std::thread::spawn(move || {
+            let _ = tx.send(art::load(game == "poe2"));
+        });
+        rx.await.unwrap_or(false)
+    }
+
+    /// The pictures of items and gems, for a JSON array of `[name, base, unique]` (base "" for a gem): a JSON array
+    /// of their URLs on the official site, "" for one with none (or before `art_load`).
+    pub fn art_urls(game: String, json: String) -> String {
+        let poe2 = game == "poe2";
+        let list: Vec<(String, String, bool)> = serde_json::from_str(&json).unwrap_or_default();
+        let out: Vec<String> = list.iter().map(|(n, b, u)| art::url(poe2, n, b, *u)).collect();
+        serde_json::to_string(&out).unwrap_or_else(|_| "[]".into())
+    }
+
+    /// The picture at `url` (from `art_urls`), downloaded once and kept: its URI for an `Image`, "" when it cannot be
+    /// had. An active gem's shows the gem, as a support gem's does.
+    pub async fn art_picture(url: String) -> String {
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        std::thread::spawn(move || {
+            let _ = tx.send(art::picture(&url).map(|p| crate::images::uri_of(&p).to_string()).unwrap_or_default());
+        });
+        rx.await.unwrap_or_default()
+    }
+
+    /// The size in pixels of a picture from `art_picture`, as JSON `[width, height]` (`[0, 0]` when unreadable). The
+    /// official pictures are 78 pixels to an inventory cell.
+    pub fn art_size(uri: String) -> String {
+        let (w, h) = image::image_dimensions(&uri).unwrap_or((0, 0));
+        format!("[{w},{h}]")
+    }
+
+    /// Loads the dictionary of `language` ("" for none) for POBT's own build screens, off the UI thread; whether one
+    /// is in use once it returns.
+    pub async fn tr_load(language: String) -> bool {
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        std::thread::spawn(move || {
+            let dict = (!language.is_empty()).then(|| Arc::new(translate::Dictionary::load(&language)));
+            let _ = tx.send(dict);
+        });
+        let dict = rx.await.ok().flatten();
+        let on = dict.is_some();
+        *TR_DICT.write().unwrap() = dict;
+        on
+    }
+
+    /// The English texts of a JSON array translated by the dictionary `tr_load` loaded (each as it was when there is
+    /// none, or nothing matches it), as a JSON array in the same order.
+    pub fn tr(json: String) -> String {
+        let texts: Vec<String> = serde_json::from_str(&json).unwrap_or_default();
+        let dict = TR_DICT.read().unwrap().clone();
+        let out: Vec<String> = match dict {
+            Some(d) => texts.into_iter().map(|t| d.translate(&t).unwrap_or(t)).collect(),
+            None => texts,
+        };
+        serde_json::to_string(&out).unwrap_or_default()
+    }
+
+    /// Starts the official Path of Building of `game` (`"poe1"` or `"poe2"`) with no window, for POBT's own build
+    /// screens; "" once it starts loading (`service_status`), or why not.
+    pub fn service_start(game: String) -> String {
+        let s = settings::Settings::load();
+        let dir = if game == "poe2" { s.poe2_dir } else { s.poe1_dir };
+        match dir {
+            Some(d) => host::service::start(d),
+            None => "Path of Building is not installed".into(),
+        }
+    }
+
+    /// A development switch from the environment (`POBT_EDITOR`, `POBT_BUILD`), or ""; only names starting `POBT_`.
+    pub fn dev_env(name: String) -> String {
+        if !name.starts_with("POBT_") {
+            return String::new();
+        }
+        std::env::var(name).unwrap_or_default()
+    }
+
+    /// The text of the build file at `path` (POBT_BUILD, for development and tests), or "" when it cannot be read.
+    /// A relative path is taken from the folder POBT started in, even once `service_start` has moved the process into
+    /// POB's folder.
+    pub fn read_build_file(path: String) -> String {
+        let p = std::path::PathBuf::from(&path);
+        let p = match host::service::FIRST_DIR.get() {
+            Some(dir) if p.is_relative() => dir.join(p),
+            _ => p,
+        };
+        std::fs::read_to_string(p).unwrap_or_default()
+    }
+
+    /// Where the build screens' Path of Building stands, as JSON `{ state: "idle" | "loading" | "ready" | "failed",
+    /// error, version }`.
+    pub fn service_status() -> String {
+        host::service::status()
+    }
+
+    /// Runs operation `op` of the build screens' Path of Building (`service.lua`, `service/*.lua`) with `args` (JSON);
+    /// its answer as JSON `{ ok }` or `{ err }`.
+    pub async fn service_request(op: String, args: String) -> String {
+        host::service::request(op, args).await
     }
 
     /// The translations available, as JSON `[{ name, value }]`.
@@ -371,6 +480,26 @@ impl Pob {
     /// Stops the analysis running.
     pub fn ai_cancel() {
         ai::cancel();
+    }
+
+    /// The report kept beside the build file `path` (`<name>.ai.json` for `<name>.xml`), as `ai_progress` gives one;
+    /// "" for none.
+    pub fn ai_saved(path: String) -> String {
+        let path = PathBuf::from(path);
+        if path.extension().and_then(|e| e.to_str()) != Some("xml") {
+            return String::new();
+        }
+        ai::saved(&path).map(|p| serde_json::to_string(&p).unwrap_or_default()).unwrap_or_default()
+    }
+
+    /// Keeps a report (`json`, as `ai_progress` gives one) beside the build file `path`: for a build analysed before
+    /// it had a file. Whether it was written.
+    pub fn ai_save(path: String, json: String) -> bool {
+        let path = PathBuf::from(path);
+        match serde_json::from_str::<ai::Progress>(&json) {
+            Ok(p) if path.extension().and_then(|e| e.to_str()) == Some("xml") => ai::save(&path, &p).is_ok(),
+            _ => false,
+        }
     }
 
     /// Switches the translation on or off while POB runs.
