@@ -5,6 +5,7 @@ import { Button, EmptyState, Modal, ProgressBar, TabBar, Text, TextArea, TextFie
 import { BuildList } from "./BuildList";
 import { FADE } from "../ui/motion";
 import { t, tr } from "./i18n";
+import { AnalysisPage } from "./pages/Analysis";
 import { CalcsPage } from "./pages/Calcs";
 import { ConfigPage } from "./pages/Config";
 import { ItemsPage } from "./pages/Items";
@@ -17,7 +18,7 @@ import { Sidebar } from "./Sidebar";
 import { loadArt } from "./art";
 import { ColoredText } from "./ColoredText";
 
-export type PageKey = "tree" | "skills" | "items" | "calcs" | "config" | "notes";
+export type PageKey = "tree" | "skills" | "items" | "calcs" | "analysis" | "config" | "notes";
 
 /** The page shown: kept across builds, as POB keeps its tab. Pages read it to load only while shown. */
 export const page = signal<PageKey>((Pob.devEnv("POBT_PAGE") as PageKey) || "tree");
@@ -217,6 +218,7 @@ const PAGES: Record<PageKey, () => JSX.Element> = {
   skills: () => <SkillsPage />,
   items: () => <ItemsPage />,
   calcs: () => <CalcsPage />,
+  analysis: () => <AnalysisPage />,
   config: () => <ConfigPage />,
   notes: () => <NotesPage />,
 };
@@ -227,6 +229,7 @@ function BuildView() {
     { key: "skills", label: tr("Skills") },
     { key: "items", label: tr("Items") },
     { key: "calcs", label: tr("Calcs") },
+    { key: "analysis", label: t("aiTab") },
     { key: "config", label: tr("Configuration") },
     { key: "notes", label: tr("Notes") },
   ];

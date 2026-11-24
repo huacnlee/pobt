@@ -3,6 +3,7 @@
 // POB's own controls, so the editor follows each POB update with nothing here to change.
 import { batch, signal } from "nsh";
 import { Pob } from "pobt/native";
+import type { AiProgress } from "../analysis";
 
 export type Game = "poe1" | "poe2";
 
@@ -100,7 +101,12 @@ export type SaveResult = { path?: string; exists?: string; needsName?: boolean }
 
 /** Saves the open build to its file, or (`name` given) as `name` in the builds folder `subPath`. */
 export async function saveBuild(as?: { name: string; subPath?: string; overwrite?: boolean }): Promise<SaveResult> {
+  const before = build.sidebar()?.summary.path ?? null;
   const r = await pob<SaveResult>("save", as ?? {});
+  // The AI's report goes beside the file (ai.rs: `<name>.ai.json`): one made before the build had a file, or (Save
+  // as) the one kept beside its file before
+  const report = build.aiReport() ?? (before && r.path && r.path !== before ? Pob.aiSaved(before) : "");
+  if (r.path && report && Pob.aiSave(r.path, typeof report === "string" ? report : JSON.stringify(report))) build.aiReport.set(null);
   await reload();
   return r;
 }
@@ -111,6 +117,7 @@ async function run(open: () => Promise<unknown>, name?: string): Promise<void> {
     build.loading.set(name ?? "");
     build.open.set(false);
     build.error.set("");
+    build.aiReport.set(null);
   });
   try {
     await open();
@@ -159,6 +166,8 @@ export const build = {
   /** The build being opened (its name), from the moment it is asked for until POB has it: the editor shows it at
    * once, loading, instead of waiting on the list. */
   loading: signal<string | null>(null),
+  /** The AI's report of a build with no file yet, kept beside it once it is saved. */
+  aiReport: signal<AiProgress | null>(null),
 };
 
 /** Starts the Path of Building of `game` with no window; resolves once it is ready or failed. */

@@ -482,6 +482,26 @@ impl Pob {
         ai::cancel();
     }
 
+    /// The report kept beside the build file `path` (`<name>.ai.json` for `<name>.xml`), as `ai_progress` gives one;
+    /// "" for none.
+    pub fn ai_saved(path: String) -> String {
+        let path = PathBuf::from(path);
+        if path.extension().and_then(|e| e.to_str()) != Some("xml") {
+            return String::new();
+        }
+        ai::saved(&path).map(|p| serde_json::to_string(&p).unwrap_or_default()).unwrap_or_default()
+    }
+
+    /// Keeps a report (`json`, as `ai_progress` gives one) beside the build file `path`: for a build analysed before
+    /// it had a file. Whether it was written.
+    pub fn ai_save(path: String, json: String) -> bool {
+        let path = PathBuf::from(path);
+        match serde_json::from_str::<ai::Progress>(&json) {
+            Ok(p) if path.extension().and_then(|e| e.to_str()) == Some("xml") => ai::save(&path, &p).is_ok(),
+            _ => false,
+        }
+    }
+
     /// Switches the translation on or off while POB runs.
     pub fn set_translate(on: bool) {
         if let Some(s) = session() {

@@ -55,3 +55,14 @@ test("creates a custom item from its text and adds it to the build", async () =>
   await app.press("text:Add to build");
   await app.waitUntil(() => app.texts().some((t) => t.startsWith("Doom Loop")), { timeout: 15000 });
 });
+
+// Needs an installed Path of Building. The AI analysis tab, after Calcs: a build with no report yet asks for one (or
+// for an AI to be installed); no AI is run.
+test("shows the AI analysis tab after Calcs", async () => {
+  const app = await open("./editor.fixture.tsx", WIDE);
+  await app.waitFor("text:Total Life", { timeout: 25000 });
+  const texts = app.texts();
+  expect(texts.indexOf("AI analysis")).toBe(texts.indexOf("Calcs") + 1);
+  await app.press("text:AI analysis");
+  await app.waitUntil(() => app.texts().some((t) => t.startsWith("Press Analyse") || t === "No AI found"), { timeout: 10000 });
+});

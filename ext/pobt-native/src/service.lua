@@ -173,6 +173,11 @@ local function entryPath(path)
 	return path
 end
 
+-- The AI report kept beside the build file `path` (ai.rs saved_path): `<name>.ai.json` for `<name>.xml`.
+local function aiReport(path)
+	return (path:gsub("%.xml$", "")) .. ".ai.json"
+end
+
 -- Renames a build or a folder (`{ path, subPath, folder, name }`) as POB's build list does, or copies it under that
 -- name (`copy`): a folder with all it holds. Answers its new path.
 function ops.renameEntry(a)
@@ -221,6 +226,17 @@ function ops.renameEntry(a)
 		ok, msg = os.rename(path, target)
 	end
 	assert(ok, tostring(msg))
+	-- a build's AI report beside it (ai.rs) goes with it
+	local report = not a.folder and aiReport(path)
+	local kept = report and io.open(report, "r")
+	if kept then
+		kept:close()
+		if a.copy then
+			copyFile(report, aiReport(target))
+		else
+			os.rename(report, aiReport(target))
+		end
+	end
 	return { path = target }
 end
 
@@ -232,6 +248,9 @@ function ops.deleteEntry(a)
 		ok, msg = RemoveDir(path, true)
 	else
 		ok, msg = os.remove(path)
+		if ok then
+			os.remove(aiReport(path))
+		end
 	end
 	assert(ok, tostring(msg))
 	return { }

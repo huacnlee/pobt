@@ -25,19 +25,8 @@ import {
   type Character,
   type Realm,
 } from "./accounts";
-import {
-  AGENT_SITES,
-  aiErrorText,
-  analysisStrings,
-  DIMENSIONS,
-  reportText,
-  type Agent,
-  type AiProgress,
-  type AnalysisStrings,
-  type BuildEntry,
-  type BuildRoot,
-  type Dimension,
-} from "./analysis";
+import { AGENT_SITES, aiErrorText, analysisStrings, reportText, whenText, type Agent, type AiProgress, type BuildEntry, type BuildRoot } from "./analysis";
+import { AnalysisFailed, AnalysisReport, AnalysisRunning, PANEL, SmallButton, watchAnalysis } from "./AnalysisView";
 // The icon at the size the launcher shows it (icon.png is the app's, 1024 square).
 import icon from "../assets/ui/icon-64.png";
 type Game = "Poe1" | "Poe2";
@@ -914,30 +903,6 @@ function Toast() {
   );
 }
 
-/** A small framed button, as the update badge: a character's actions, an account's. */
-function SmallButton(props: { label: string; onPress: () => void; disabled?: boolean; accent?: boolean }) {
-  const hover = signal(false);
-  const lit = () => hover() && !props.disabled;
-  return (
-    <View
-      role="button"
-      onPress={() => !props.disabled && props.onPress()}
-      onMouseEnter={() => hover.set(true)}
-      onMouseLeave={() => hover.set(false)}
-      style={{
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderWidth: 1,
-        borderColor: lit() ? C.trimHi : C.trim,
-        backgroundColor: props.accent ? "rgba(142,34,24,0.55)" : "rgba(0,0,0,0.55)",
-        opacity: props.disabled ? 0.45 : 1,
-      }}
-    >
-      <Text style={{ fontFamily: BODY, fontSize: 12, color: lit() ? "#fff3d0" : C.gold }}>{props.label}</Text>
-    </View>
-  );
-}
-
 /** A link in the text, as a help: underlined, lit under the pointer. */
 function TextLink(props: { label: string; onPress: () => void; size?: number }) {
   const hover = signal(false);
@@ -1112,15 +1077,6 @@ function Field(props: {
     </View>
   );
 }
-
-const PANEL: ViewStyle = {
-  backgroundColor: "rgba(5,6,9,0.86)",
-  borderWidth: 1,
-  borderColor: C.trim,
-  boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.8), 0 10px 30px rgba(0,0,0,0.6)",
-  padding: 20,
-  gap: 14,
-};
 
 /** A row of a tree of POB's builds: a folder, open or closed, or a build. */
 function TreeRow(row: { label: string; kind: "open" | "closed" | "build"; depth: number; selected: boolean; onPress: () => void }) {
@@ -1549,70 +1505,6 @@ function Characters(props: { settings: Settings; t: () => Strings; onBack: () =>
   );
 }
 
-/** A score's colour: green when good, gold when fair, red when poor (`of` the most it can be). */
-function scoreColor(score: number, of: number): string {
-  const r = score / of;
-  return r >= 0.7 ? "#8fc46a" : r >= 0.45 ? C.gold : C.red;
-}
-
-/** A score out of `of`, as a bar filling its groove. */
-function ScoreBar(props: { score: number; of: number; width: number }) {
-  return (
-    <View style={{ width: props.width, height: 6, backgroundColor: "rgba(0,0,0,0.7)", borderWidth: 1, borderColor: "rgba(107,82,44,0.6)" }}>
-      <View style={{ width: (props.width - 2) * Math.max(0, Math.min(props.score / props.of, 1)), height: 4, backgroundColor: scoreColor(props.score, props.of) }} />
-    </View>
-  );
-}
-
-/** One list of a dimension (strengths, weaknesses, suggestions), each item after `mark` in `color`. */
-function Points(props: { label: string; items?: string[]; mark: string; color: string }) {
-  return (
-    <If when={props.items?.length}>
-      <View style={{ gap: 4 }}>
-        <Text style={{ fontFamily: BODY, fontSize: 11, fontWeight: "700", color: C.muted }}>{props.label}</Text>
-        <Each of={props.items ?? []}>
-          {(item) => (
-            <View style={{ flexDirection: "row", gap: 6 }}>
-              <Text style={{ fontFamily: BODY, fontSize: 12, fontWeight: "700", color: props.color, lineHeight: 18 }}>{props.mark}</Text>
-              <Text style={{ flex: 1, fontFamily: BODY, fontSize: 12, color: C.text, lineHeight: 18 }}>{item()}</Text>
-            </View>
-          )}
-        </Each>
-      </View>
-    </If>
-  );
-}
-
-/** A dimension of the report, as a card: its name and score, its verdict, its numbers, and its lists. */
-function DimensionCard(props: { s: AnalysisStrings; d: Dimension }) {
-  return (
-    <View style={{ ...PANEL, padding: 16, gap: 10, width: "48.5%" }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-        <Text style={{ flex: 1, fontFamily: DISPLAY, fontSize: 15, fontWeight: "700", letterSpacing: 1, color: C.goldHi }}>{props.s.dimensions[props.d.key] ?? props.d.key}</Text>
-        <ScoreBar score={props.d.score} of={10} width={90} />
-        <Text style={{ fontFamily: BODY, fontSize: 15, fontWeight: "700", color: scoreColor(props.d.score, 10) }}>{props.d.score}</Text>
-        <Text style={{ fontFamily: BODY, fontSize: 11, color: C.dim }}>/10</Text>
-      </View>
-      <Text style={{ fontFamily: BODY, fontSize: 13, color: C.text, lineHeight: 20 }}>{props.d.verdict}</Text>
-      <If when={props.d.metrics?.length}>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-          <Each of={props.d.metrics ?? []}>
-            {(m) => (
-              <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderWidth: 1, borderColor: "rgba(107,82,44,0.6)", backgroundColor: "rgba(0,0,0,0.5)", gap: 1 }}>
-                <Text style={{ fontFamily: BODY, fontSize: 10, color: C.muted }}>{m().label}</Text>
-                <Text style={{ fontFamily: BODY, fontSize: 13, fontWeight: "700", color: C.goldHi }}>{m().value}</Text>
-              </View>
-            )}
-          </Each>
-        </View>
-      </If>
-      <Points label={props.s.strengths} items={props.d.strengths} mark="+" color="#8fc46a" />
-      <Points label={props.s.weaknesses} items={props.d.weaknesses} mark="−" color={C.red} />
-      <Points label={props.s.suggestions} items={props.d.suggestions} mark="›" color={C.unique} />
-    </View>
-  );
-}
-
 /** A build analysed by an AI already on the user's computer, Claude Code or Codex: the agent, the build (one of
  * POB's, a file, or a build code) and a question of the user's; then the report, overall and by dimension (damage,
  * defence, recovery, ailments, utility, gear). The analysis goes on if the page is left, and shows on coming back. */
@@ -1625,6 +1517,13 @@ function Analysis(props: { settings: Settings; t: () => Strings; onBack: () => v
   const opened = signal<string[]>(roots().length === 1 ? [roots()[0].root] : []);
   // The build chosen: its file's whole path.
   const build = signal<string | null>(null);
+  // Choosing a build shows the report kept beside it, if one (unless an analysis runs).
+  const choose = (path: string) => {
+    build.set(path);
+    if (running()) return;
+    const kept = Pob.aiSaved(path);
+    job.set(kept ? JSON.parse(kept) : null);
+  };
   const code = signal("");
   const question = signal("");
   const job = signal<AiProgress | null>(null);
@@ -1641,24 +1540,17 @@ function Analysis(props: { settings: Settings; t: () => Strings; onBack: () => v
     const file = await Pob.pickBuild();
     if (file) {
       source.set("builds");
-      build.set(file);
+      choose(file);
     }
   };
 
-  // Polls the analysis until it ends, counting the seconds it takes.
-  const watch = () => {
-    const began = Date.now();
-    const tick = () => {
-      const json = Pob.aiProgress();
-      const p: AiProgress | null = json ? JSON.parse(json) : null;
+  // Watches the analysis until it ends, counting the seconds it takes.
+  const watch = () =>
+    watchAnalysis((p, secs) => {
       job.set(p);
-      seconds.set(Math.floor((Date.now() - began) / 1000));
-      if (p?.state === "running") setTimeout(tick, 250);
-      else if (p?.state === "failed") say(aiErrorText(s(), p.error), true);
-      else if (p?.state === "cancelled") say(s().cancelled);
-    };
-    tick();
-  };
+      seconds.set(secs);
+      if (p?.state === "failed") say(aiErrorText(s(), p.error), true);
+    });
   // One running or done before: shown, and watched on.
   const last = Pob.aiProgress();
   if (last) {
@@ -1668,7 +1560,8 @@ function Analysis(props: { settings: Settings; t: () => Strings; onBack: () => v
 
   const analyse = () => {
     if (running() || !agent()) return;
-    const from = source() === "code" ? { code: code().trim() } : { path: build() ?? "" };
+    // A build's file keeps its report beside it (`<name>.ai.json`), for the editor too
+    const from = source() === "code" ? { code: code().trim() } : { path: build() ?? "", save_to: build() ?? "" };
     if (!("code" in from ? from.code : from.path)) return;
     const sent = Pob.aiStart(JSON.stringify({ agent: agent(), ...from, language: s().answerIn, question: question().trim() }));
     if (sent) watch();
@@ -1680,11 +1573,7 @@ function Analysis(props: { settings: Settings; t: () => Strings; onBack: () => v
     await Clipboard.writeText(r ? reportText(s(), r) : job()?.raw ?? "");
     say(s().copied);
   };
-  // The dimensions in their order, whatever the agent's.
-  const dimensions = () => {
-    const list = report()?.dimensions ?? [];
-    return [...list].sort((a, b) => DIMENSIONS.indexOf(a.key) - DIMENSIONS.indexOf(b.key));
-  };
+  const agentName = (id: string) => agents().find((a) => a.id === id)?.name ?? id;
   const fileName = (path: string) => path.split(/[\\/]/).pop()!.replace(/\.xml$/i, "");
 
   return (
@@ -1755,7 +1644,7 @@ function Analysis(props: { settings: Settings; t: () => Strings; onBack: () => v
                                     kind={row().entry.dir ? (opened().includes(full()) ? "open" : "closed") : "build"}
                                     depth={row().depth}
                                     selected={!row().entry.dir && build() === full()}
-                                    onPress={() => (row().entry.dir ? toggle(full()) : build.set(full()))}
+                                    onPress={() => (row().entry.dir ? toggle(full()) : choose(full()))}
                                   />
                                 );
                               }}
@@ -1775,81 +1664,23 @@ function Analysis(props: { settings: Settings; t: () => Strings; onBack: () => v
           </If>
           <Field label={s().question} placeholder={s().questionHint} value={question} onChange={question.set} onSubmit={analyse} />
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
-            <If when={running()}>
-              <SmallButton label={s().stop} onPress={() => Pob.aiCancel()} />
-            </If>
             <Button label={s().analyse} onPress={analyse} />
           </View>
         </View>
 
-        {/* The report */}
+        {/* The analysis running, how it ended, or its report */}
         <View style={{ flex: 1 }}>
-          <If when={running()}>
-            <View style={{ ...PANEL, flex: 1, alignItems: "center", justifyContent: "center", gap: 12 }}>
-              <Text style={{ fontFamily: DISPLAY, fontSize: 16, fontWeight: "700", color: C.goldHi }}>{s().steps[job()!.step] ?? "…"}</Text>
-              <Text style={{ fontFamily: BODY, fontSize: 13, color: C.muted }}>
-                {[job()!.build, agents().find((a) => a.id === job()!.agent)?.name, s().elapsed(seconds())].filter(Boolean).join("  ·  ")}
-              </Text>
-              <Text style={{ fontFamily: BODY, fontSize: 11, color: C.dim, maxWidth: 560, numberOfLines: 1 }}>{job()!.activity}</Text>
-            </View>
+          <If when={running() ? job() : null}>
+            {(j) => <AnalysisRunning s={s()} job={j()} seconds={seconds()} agentName={agentName(j().agent)} onStop={() => Pob.aiCancel()} />}
           </If>
-          <If when={!running() && !report() && !job()?.raw}>
+          <If when={job()?.state === "failed" || job()?.state === "cancelled" ? job() : null}>{(j) => <AnalysisFailed s={s()} job={j()} />}</If>
+          <If when={!job()}>
             <View style={{ ...PANEL, flex: 1, alignItems: "center", justifyContent: "center" }}>
               <Text style={{ fontFamily: BODY, fontSize: 13, color: C.dim, maxWidth: 420, textAlign: "center", lineHeight: 20 }}>{s().empty}</Text>
             </View>
           </If>
-          {/* An answer that was no report: as it came */}
-          <If when={job()?.state === "done" && !report() && job()!.raw}>
-            <View style={{ ...PANEL, flex: 1 }}>
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Text style={{ flex: 1, fontFamily: BODY, fontSize: 12, color: C.unique }}>{s().unparsed}</Text>
-                <SmallButton label={s().copy} onPress={copy} />
-              </View>
-              <Scroll style={{ flex: 1 }}>
-                <Text style={{ fontFamily: BODY, fontSize: 12, color: C.text, lineHeight: 19 }}>{job()!.raw}</Text>
-              </Scroll>
-            </View>
-          </If>
-          <If when={running() ? null : report()}>
-            {(r) => (
-              <Scroll style={{ flex: 1 }}>
-                <View style={{ gap: 14, paddingBottom: 4 }}>
-                  {/* Overall: the build, its score, the verdict and what to do first */}
-                  <View style={{ ...PANEL, flexDirection: "row", gap: 20 }}>
-                    <View style={{ width: 120, alignItems: "center", justifyContent: "center", gap: 6 }}>
-                      <Text style={{ fontFamily: DISPLAY, fontSize: 46, fontWeight: "700", color: scoreColor(r().score ?? 0, 100), textShadow: "0 2px 8px #000" }}>{r().score ?? "–"}</Text>
-                      <ScoreBar score={r().score ?? 0} of={100} width={100} />
-                      <Text style={{ fontFamily: BODY, fontSize: 11, color: C.muted }}>{s().overall}</Text>
-                    </View>
-                    <View style={{ flex: 1, gap: 10 }}>
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                        <Text style={{ flex: 1, fontFamily: DISPLAY, fontSize: 18, fontWeight: "700", color: C.goldHi, numberOfLines: 1 }}>{r().title ?? job()!.build}</Text>
-                        <Text style={{ fontFamily: BODY, fontSize: 11, color: C.dim }}>{[job()!.build, agents().find((a) => a.id === job()!.agent)?.name].filter(Boolean).join(" · ")}</Text>
-                        <SmallButton label={s().copy} onPress={copy} />
-                      </View>
-                      <Text style={{ fontFamily: BODY, fontSize: 13, color: C.text, lineHeight: 21 }}>{r().summary ?? ""}</Text>
-                      <If when={r().priorities?.length}>
-                        <View style={{ gap: 4 }}>
-                          <Text style={{ fontFamily: BODY, fontSize: 11, fontWeight: "700", color: C.muted }}>{s().priorities}</Text>
-                          <Each of={r().priorities ?? []}>
-                            {(p, i) => (
-                              <View style={{ flexDirection: "row", gap: 8 }}>
-                                <Text style={{ fontFamily: BODY, fontSize: 12, fontWeight: "700", color: C.unique, lineHeight: 18 }}>{i() + 1}.</Text>
-                                <Text style={{ flex: 1, fontFamily: BODY, fontSize: 12, color: C.text, lineHeight: 18 }}>{p()}</Text>
-                              </View>
-                            )}
-                          </Each>
-                        </View>
-                      </If>
-                    </View>
-                  </View>
-                  {/* Each dimension, two by two */}
-                  <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: 14 }}>
-                    <Each of={dimensions()}>{(d) => <DimensionCard s={s()} d={d()} />}</Each>
-                  </View>
-                </View>
-              </Scroll>
-            )}
+          <If when={job()?.state === "done" ? job() : null}>
+            {(j) => <AnalysisReport s={s()} job={j()} meta={s().madeBy(agentName(j().agent), whenText(j().finished))} onCopy={copy} />}
           </If>
         </View>
       </View>
