@@ -24,6 +24,7 @@ Chinese, Traditional Chinese and Korean are included.
 - The translations are plain CSV files in the `trs` folder beside `POBT.exe`: edit them to fix one or add your own (an update of POBT replaces the folder, so keep a copy of your changes).
 - POBT updates itself when a new version is out.
 - **Import characters**: on the launcher, enter an account (with its POESESSID for a private profile, or for Tencent's realm), list its characters, and copy a build code or save the build among Path of Building's; Tencent's Chinese items go back to English first.
+- **AI build analysis**: from the Tools menu, choose one of your builds (or paste a build code) and have the AI already on your computer, Claude Code or Codex, rate it by damage, defence, recovery, ailments, utility and gear, with what to change first. POBT sends it no account and keeps no key: the agent runs as you signed it in.
 
 ## Performance
 
