@@ -1,16 +1,16 @@
 // The Calcs page of POBT's build editor: POB's own Calcs tab (Classes/CalcsTab.lua), read through
 // ext/pobt-native/src/service/calcs.lua. Its skill controls on top, its sections in columns (offence on the left,
 // defence on the right, as POB arranges them) over the page's whole width. As on go-pob's calcs page, a cell's breakdown
-// opens beside the cell: a preview while pointed at or focused, pinned in a popover once pressed.
+// shows in one card beside the pointer: a preview while the pointer rests on the cell, pinned in place once pressed.
 //
 // Motion inventory:
 // - Cell / row hover and focus: background wash (WASH, 120 ms), instant under reduced motion.
 // - Section and subsection fold: the chevron turns 90° (180 ms ease-out); the rows appear without motion (dense data).
-// - Breakdown preview (the pointer rests 300 ms; POB is asked as it arrives, the card waits for the answer up to 600 ms):
-//   the card shows beside the pointer at its final size and only fades in (HoverCard, opacity 120 ms ease-out); it
-//   fades out as the pointer leaves.
-// - Pinned breakdown (press): the popover grows from the cell (POPUP: opacity and scale 95% → 100%, 180 ms ease-out),
-//   and leaves the same way.
+// - Breakdown card (one at a time): the pointer rests 300 ms on a cell (POB is asked as it arrives, the card waits for
+//   the answer up to 600 ms), then the card shows beside the pointer at its final size and only fades in (HoverCard,
+//   opacity 120 ms ease-out), fading out as the pointer leaves. Pressing the cell pins that card in place with no
+//   motion (it is the same card); unpinned (Escape, a press outside, Unpin, the cell again) it goes at once. While
+//   pinned, no other cell previews.
 // - Breakdown content arriving: fades in (FADE, 240 ms).
 // - A wide table too narrow for its columns: the fade on its right edge goes as the table reaches its end (FADE).
 // - Values after a recalculation: replaced in place without motion (dense data, read side by side).
@@ -43,9 +43,13 @@ export function CalcsPage() {
   const bump = signal(0);
   const query = signal("");
   const showAll = signal(false);
-  // the cell previewed (its card last opened on hover or focus) and the cell pinned
+  // the cell previewed (the pointer last came to it) and the cell pinned: one card shows the breakdown of either
   const hover = signal<string | undefined>(undefined);
   const pinned = signal<string | undefined>(undefined);
+  const active = () => pinned() ?? hover();
+  // a press outside the pinned card unpins it before the press reaches the cell under it: the same cell's press then
+  // must not pin it again
+  let unpinned = { key: "", at: 0 };
 
   const data = resource(
     () => build.open() && visible() && `${build.revision()}:${bump()}`,
@@ -53,17 +57,14 @@ export function CalcsPage() {
   );
   const refresh = () => bump.update((n) => n + 1);
 
-  /** POB's breakdown of the cell `key()` names, again after each recalculation. */
-  const breakdownOf = (key: () => string | undefined) =>
-    resource(
-      () => visible() && key() && `${key()}#${build.revision()}#${bump()}`,
-      async (src) => {
-        const k = src.split("#")[0]!;
-        return { key: k, parts: (await pob<{ parts: Part[] }>("calcs.breakdown", parseKey(k))).parts };
-      },
-    );
-  const peek = breakdownOf(hover);
-  const pin = breakdownOf(pinned);
+  /** POB's breakdown of the cell the card shows, again after each recalculation. */
+  const breakdown = resource(
+    () => visible() && active() && `${active()}#${build.revision()}#${bump()}`,
+    async (src) => {
+      const k = src.split("#")[0]!;
+      return { key: k, parts: (await pob<{ parts: Part[] }>("calcs.breakdown", parseKey(k))).parts };
+    },
+  );
 
   const matches = (text: string | undefined) => {
     const q = query().trim().toLowerCase();
@@ -74,22 +75,30 @@ export function CalcsPage() {
 
   const events: RowEvents = {
     pinned: () => pinned(),
-    pin: (k) => pinned.set(k),
-    peek: (k) => hover.set(k),
-    ready: (k) => peek()?.key === k && !peek.loading(),
-    detail: (k, isPinned) => {
-      const r = isPinned ? pin : peek;
-      return (
-        <BreakdownCard
-          title={titleOf(k)}
-          parts={r()?.key === k ? r()!.parts : []}
-          loading={r.loading() || r()?.key !== k}
-          pinned={isPinned}
-          inset={isPinned}
-          onUnpin={() => pinned.set(undefined)}
-        />
-      );
+    press: (k) => {
+      if (pinned() === k) pinned.set(undefined);
+      else if (!(unpinned.key === k && Date.now() - unpinned.at < 400)) {
+        hover.set(k);
+        pinned.set(k);
+      }
     },
+    unpin: (k) => {
+      if (pinned() !== k) return;
+      unpinned = { key: k, at: Date.now() };
+      pinned.set(undefined);
+    },
+    peek: (k) => hover.set(k),
+    ready: (k) => breakdown()?.key === k && !breakdown.loading(),
+    detail: (k, isPinned) => (
+      <BreakdownCard
+        title={titleOf(k)}
+        parts={breakdown()?.key === k ? breakdown()!.parts : []}
+        loading={breakdown.loading() || breakdown()?.key !== k}
+        pinned={isPinned}
+        inset={false}
+        onUnpin={() => pinned.set(undefined)}
+      />
+    ),
     matches,
     collapse: (section, sub, collapsed) => {
       pob("calcs.collapse", { section, sub, collapsed }).then(refresh, report);

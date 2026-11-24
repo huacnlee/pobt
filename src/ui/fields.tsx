@@ -1,4 +1,4 @@
-import { type InputRef, type JSX, View } from "nsh";
+import { Text as NshText, type InputRef, type JSX, View } from "nsh";
 import { Checkbox as BaseCheckbox, Input, NumberInput, Select as BaseSelect, Switch as BaseSwitch, type SelectItem } from "nsh/base";
 import { POPUP, POPUP_END, POPUP_START, WASH } from "./motion";
 import { Text } from "./text";
@@ -151,8 +151,13 @@ export function Checkbox(props: { checked: boolean; onChange: (on: boolean) => v
       onChange={({ checked }) => props.onChange(checked)}
       accessibilityLabel={props.accessibilityLabel}
       class="flex-row items-center gap-2 rounded-sm focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-      indicatorClass={`h-4 w-4 items-center justify-center rounded-sm border border-input bg-background ${WASH} checked:border-primary checked:bg-primary`}
-      indicator={<View class="h-2 w-2 rounded-xs bg-primary-foreground" />}
+      indicatorClass={`h-4 w-4 items-center justify-center rounded-sm border border-input bg-background ${WASH} hover:border-primary/70 checked:border-primary checked:bg-primary`}
+      // nsh-base draws no mark: the check shows while checked, as shadcn's does.
+      indicator={
+        <If when={props.checked}>
+          <NshText class="text-[11px] font-bold leading-none text-primary-foreground">✓</NshText>
+        </If>
+      }
     >
       <If when={props.label}>
         <Text>{props.label}</Text>

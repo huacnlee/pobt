@@ -279,14 +279,33 @@ export function BuildEditor(props: { game: Game; file?: string; onBack: () => vo
         </View>
       </If>
       <If when={!otherGame() && service.state() === "ready"} else={<If when={!otherGame()}><Starting /></If>}>
-        <If when={view() === "build" && build.open()} else={
+        <If when={view() === "build" && (build.open() || build.loading() !== null)} else={
           <If when={view() === "import"} else={<BuildList onImport={() => view.set("import")} onOpened={() => view.set("build")} />}>
             <OpenBuild onCancel={() => view.set("list")} />
           </If>
         }>
-          <BuildView />
+          <If when={build.open()} else={<Opening />}>
+            <BuildView />
+          </If>
         </If>
       </If>
+    </View>
+  );
+}
+
+/** A build being opened: shown the moment it is asked for, while POB reads it. */
+function Opening() {
+  return (
+    <View class="flex-1">
+      <View class="h-12 flex-row items-center gap-3 border-b border-trim px-3">
+        <Text variant="display" tone="primary" class="tracking-widest">
+          {build.loading() ?? ""}
+        </Text>
+      </View>
+      <View class="flex-1 items-center justify-center gap-3">
+        <Text tone="muted">{t("loadingBuild")}</Text>
+        <ProgressBar value={null} class="w-48" accessibilityLabel={t("loadingBuild")} />
+      </View>
     </View>
   );
 }

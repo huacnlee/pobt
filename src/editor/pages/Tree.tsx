@@ -30,7 +30,12 @@ type TreeState = {
   search: string;
   matches: number[];
   extra: Extra;
+  /** TreeTab's older-tree line (POB's text and its buttons' labels), when the tree is not the latest version. */
+  convert?: { text: string; button: string; allButton: string; current: string; latest: string };
 };
+
+/** A popup POB opened (its title, text and buttons). */
+type PobPopup = { title: string; text: string; buttons: { id: string; label: string }[] };
 
 type NodeInfo = {
   id: number;
@@ -176,6 +181,28 @@ export function TreePage() {
     void run("tree.click", { id });
   };
 
+  // TreeTab's "Convert to …" buttons, by POB's own onClick: POB's confirmation (convert all) and its message after
+  const convertAsk = signal<PobPopup | null>(null);
+  const convertDone = signal<PobPopup | null>(null);
+  const convert = async (args: { all?: boolean; button?: string }) => {
+    build.busy.set(true);
+    try {
+      const answer = await pob<{ done?: boolean; confirm?: PobPopup; message?: PobPopup }>("tree.convert", args);
+      if (answer.confirm) {
+        convertAsk.set(answer.confirm);
+        return;
+      }
+      await pob("settle");
+      await reload();
+      if (answer.message) convertDone.set(answer.message);
+    } catch (e) {
+      build.error.set(String((e as Error).message ?? e));
+    } finally {
+      build.busy.set(false);
+    }
+  };
+  const lines = (text: string) => text.split("\n").map((l) => tr(plain(l)));
+
   return (
     <If when={build.open()} else={<EmptyState title={t("noBuild")} />}>
       <View class="flex-1">
@@ -201,6 +228,22 @@ export function TreePage() {
             </Text>
           </If>
         </View>
+
+        {/* TreeTab's line for an older tree version, with its two convert buttons */}
+        <If when={state()?.convert}>
+          {(c) => (
+            <View class="flex-row flex-wrap items-center gap-2 border-b border-border px-4 py-1.5" role="alert" accessibilityLiveRegion="polite">
+              <Text tone="warning" accessibilityElementsHidden>
+                {"\u26A0"}
+              </Text>
+              <Text variant="caption" tone="warning" class="flex-1">
+                {tr(plain(c().text))}
+              </Text>
+              <Button size="sm" variant="secondary" label={tr(plain(c().allButton))} disabled={build.busy()} onPress={() => void convert({ all: true })} />
+              <Button size="sm" variant="primary" label={tr(plain(c().button))} disabled={build.busy()} onPress={() => void convert({})} />
+            </View>
+          )}
+        </If>
 
         <View class="flex-1 flex-row">
           <If
@@ -276,6 +319,39 @@ export function TreePage() {
             </View>
           </If>
         </View>
+
+        {/* POB's "Convert all to Version …" popup: its text and buttons */}
+        <Modal
+          open={!!convertAsk()}
+          onClose={() => convertAsk.set(null)}
+          title={tr(convertAsk()?.title ?? "")}
+          actions={
+            <Each of={convertAsk()?.buttons ?? []} key={(b) => b.id}>
+              {(b) => (
+                <Button
+                  variant={b().id === "convert" ? "destructive" : "ghost"}
+                  label={tr(b().label)}
+                  onPress={() => {
+                    convertAsk.set(null);
+                    if (b().id !== "cancel") void convert({ all: true, button: b().id });
+                  }}
+                />
+              )}
+            </Each>
+          }
+        >
+          <Each of={lines(convertAsk()?.text ?? "")}>{(line) => <Text>{line()}</Text>}</Each>
+        </Modal>
+
+        {/* POB's "Tree Converted" message */}
+        <Modal
+          open={!!convertDone()}
+          onClose={() => convertDone.set(null)}
+          title={tr(convertDone()?.title ?? "")}
+          actions={<Button variant="primary" label={tr(convertDone()?.buttons[0]?.label ?? "Ok")} onPress={() => convertDone.set(null)} />}
+        >
+          <Each of={lines(convertDone()?.text ?? "")}>{(line) => <Text>{line()}</Text>}</Each>
+        </Modal>
 
         <Modal
           open={!!confirm()}

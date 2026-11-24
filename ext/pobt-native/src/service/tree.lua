@@ -538,6 +538,26 @@ return function(s)
 		return out
 	end
 
+	-- TreeTab's tree version line: shown (TreeTab's `showConvert`) when the active spec's tree is not the latest
+	-- version, with POB's text and its two buttons' labels (POB's own, colour codes included).
+	local function convertLine(b, sp)
+		local tt = b.treeTab
+		if not tt.showConvert then
+			return nil
+		end
+		local c = tt.controls
+		local function label(ctl)
+			return ctl and ctl:GetProperty("label") or ""
+		end
+		return {
+			text = label(c.specConvertText),
+			button = label(c.specConvert),
+			allButton = label(c.specConvertAll),
+			current = treeVersions[sp.treeVersion] and treeVersions[sp.treeVersion].display or tostring(sp.treeVersion),
+			latest = treeVersions[latestTreeVersion] and treeVersions[latestTreeVersion].display or tostring(latestTreeVersion),
+		}
+	end
+
 	-- The jewels in the tree's sockets, as PassiveTreeView:Draw shows them: `[id, overlay, ring, outer, inner, x, y]`
 	-- per socket with a jewel and allocated: the jewel's art (GetJewelSocketOverlay), and its radius rings where POB
 	-- draws them (`ring`: "" for none, else which art; `x, y`: where, Impossible Escape's at its keystones, one entry each).
@@ -615,6 +635,7 @@ return function(s)
 			matches = matches(b.treeTab.viewer.searchStr),
 			extra = { nodes = nodeColumns(extraNodes, ascIndex), edges = extraEdges, asc = asc },
 			jewels = jewels(b, sp, env and env.grantedPassives),
+			convert = convertLine(b, sp),
 			-- PassiveTreeView's view as the build saved it (zoomLevel, and the offset of the tree's centre in pixels)
 			view = { level = b.treeTab.viewer.zoomLevel or 3, x = b.treeTab.viewer.zoomX or 0, y = b.treeTab.viewer.zoomY or 0 },
 		}
@@ -813,6 +834,68 @@ return function(s)
 	end
 
 	-- Makes spec `index` (1-based) the active one, through the spec drop-down.
+	-- A popup POB opened (main:OpenPopup): its title, its text (the labels, in order) and its buttons.
+	local function popupOf(popup)
+		local text, buttons = { }, { }
+		local function label(c)
+			local l = c.GetProperty and c:GetProperty("label") or c.label
+			return type(l) == "string" and l or nil
+		end
+		for _, c in ipairs(popup.controls or { }) do
+			text[#text + 1] = label(c)
+		end
+		for name, c in pairs(popup.controls or { }) do
+			if type(name) == "string" then
+				if c.onClick then
+					buttons[#buttons + 1] = { id = name, label = label(c) or name }
+				elseif label(c) then
+					text[#text + 1] = label(c)
+				end
+			end
+		end
+		table.sort(buttons, function(a, b)
+			return (popup.controls[a.id].x or 0) < (popup.controls[b.id].x or 0)
+		end)
+		return { title = popup.title or "", text = table.concat(text, "\n"), buttons = buttons }
+	end
+
+	-- TreeTab's convert buttons, by their own onClick. "Convert to …" (ConvertToVersion: the converted tree becomes
+	-- a new spec after the current one) answers POB's message popup `{ message }`. "Convert all trees to …" first
+	-- answers its confirmation `{ confirm }` (the popup closed again); called with `button` (the id of the popup's
+	-- button chosen), it opens it once more and presses that button.
+	function ops.convert(a)
+		local b = s.build()
+		local c = b.treeTab.controls
+		local before = #main.popups
+		if a.all then
+			c.specConvertAll.onClick()
+			local popup = #main.popups > before and main.popups[1]
+			assert(popup, "Path of Building opened no confirmation")
+			if not a.button then
+				local ask = popupOf(popup)
+				main:ClosePopup()
+				return { confirm = ask }
+			end
+			local button = assert(popup.controls[a.button], "no such button")
+			button.onClick()
+			while #main.popups > before do
+				main:ClosePopup()
+			end
+			b.buildFlag = true
+			return { done = true }
+		end
+		c.specConvert.onClick()
+		local message
+		if #main.popups > before then
+			message = popupOf(main.popups[1])
+			while #main.popups > before do
+				main:ClosePopup()
+			end
+		end
+		b.buildFlag = true
+		return { done = true, message = message }
+	end
+
 	function ops.spec(a)
 		specControl()
 		s.act(s.build().treeTab.controls.specSelect, tonumber(a.index))

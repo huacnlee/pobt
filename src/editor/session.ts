@@ -72,7 +72,7 @@ export function listBuilds(subPath: string, filter: string, sort?: SortMode): Pr
 
 /** Opens a build file of POB's builds folder; saving writes it back. */
 export async function openFile(entry: BuildEntry): Promise<void> {
-  await run(() => pob("openFile", { path: entry.path, name: entry.name }));
+  await run(() => pob("openFile", { path: entry.path, name: entry.name }), entry.name);
 }
 
 /** A new, empty build, as POB's New makes it. */
@@ -89,14 +89,22 @@ export async function saveBuild(as?: { name: string; subPath?: string; overwrite
   return r;
 }
 
-async function run(open: () => Promise<unknown>): Promise<void> {
-  build.busy.set(true);
+async function run(open: () => Promise<unknown>, name?: string): Promise<void> {
+  batch(() => {
+    build.busy.set(true);
+    build.loading.set(name ?? "");
+    build.open.set(false);
+    build.error.set("");
+  });
   try {
     await open();
     build.open.set(true);
     await reload();
   } finally {
-    build.busy.set(false);
+    batch(() => {
+      build.busy.set(false);
+      build.loading.set(null);
+    });
   }
 }
 
@@ -132,6 +140,9 @@ export const build = {
   sidebar: signal<SidebarData | null>(null),
   busy: signal(false),
   error: signal(""),
+  /** The build being opened (its name), from the moment it is asked for until POB has it: the editor shows it at
+   * once, loading, instead of waiting on the list. */
+  loading: signal<string | null>(null),
 };
 
 /** Starts the Path of Building of `game` with no window; resolves once it is ready or failed. */
@@ -181,14 +192,7 @@ async function source(input: string): Promise<{ xml?: string; code?: string }> {
 
 /** Opens a pasted build in place of the one open. */
 export async function openBuild(input: string, name?: string): Promise<void> {
-  build.busy.set(true);
-  try {
-    await pob("open", { ...(await source(input)), name });
-    build.open.set(true);
-    await reload();
-  } finally {
-    build.busy.set(false);
-  }
+  await run(async () => pob("open", { ...(await source(input)), name }), name);
 }
 
 /** The build code of the open build. */

@@ -1,10 +1,9 @@
 // The Calcs page's sections, as POB's Calcs tab has them (Classes/CalcSectionControl.lua, Modules/CalcSections.lua):
 // a card per section in POB's colour, its subsections folding as POB's +/- buttons do, one-column sections as label /
 // value rows, three-column ones (CalcSections.lua width 3) as tables across damage types. A cell with a breakdown
-// previews it beside the cell while pointed at or focused, and pins it there when pressed.
+// previews it beside the pointer, and pins that card when pressed.
 import { type JSX, Scroll, signal, View } from "nsh";
 import { FADE, HoverCard, Text, WASH } from "../../../ui";
-import { Popover } from "../../../ui/popover";
 import { tr } from "../../i18n";
 import { type Cell, detailCell, hex, isHeaderRow, label, type Row, type SectionData, statRows, type Sub, targetKey } from "./data";
 import { PobText } from "./PobText";
@@ -14,7 +13,10 @@ import { s } from "./strings";
  *  breakdown card of a cell (a preview, or the pinned one), the search, and folding a subsection. */
 export type RowEvents = {
   pinned: () => string | undefined;
-  pin: (key: string | undefined) => void;
+  /** A press on the cell: pins its card, or unpins it if pinned. */
+  press: (key: string) => void;
+  /** The pinned card of `key` went (Escape, a press outside it). */
+  unpin: (key: string) => void;
   peek: (key: string) => void;
   /** Whether the preview of `key` has come from POB. */
   ready: (key: string) => boolean;
@@ -25,43 +27,36 @@ export type RowEvents = {
 
 const FOCUS = "focus-visible:ring-1 focus-visible:ring-ring";
 
-/** A cell with a breakdown (go-pob's calcs page): resting the pointer on it previews the breakdown beside the
- *  pointer (asked of POB as the pointer arrives, shown once it has come); pressing it pins the breakdown beside the
- *  cell in a popover, until Escape, a press outside or its Unpin. `class` sizes the cell in its row, `layout` lays out
- *  its content. */
+/** A cell with a breakdown (go-pob's calcs page): one card shows its breakdown. Resting the pointer on the cell
+ *  previews it beside the pointer (asked of POB as the pointer arrives, shown once it has come); pressing the cell pins
+ *  that card where it is, until Escape, a press outside, its Unpin or another press on the cell. While a card is pinned
+ *  no other cell previews. `class` sizes the cell in its row, `layout` lays out its content. */
 function Target(props: { k: string; name: string; events: RowEvents; class?: string; layout?: string; children?: JSX.Element }) {
   const pinned = () => props.events.pinned() === props.k;
   return (
-    <Popover
-      open={pinned()}
-      onOpenChange={(open) => (open ? props.events.pin(props.k) : pinned() && props.events.pin(undefined))}
-      placement="right"
-      class="w-[560px]"
-      trigger={
-        <View
-          role="button"
-          focusable
-          accessibilityLabel={props.name}
-          accessibilityState={{ selected: pinned(), expanded: pinned() }}
-          class={`${WASH} hover:bg-accent/60 active:bg-accent ${FOCUS} ${props.class ?? ""}`}
-          classList={{ "bg-accent": pinned() }}
-        >
-          <HoverCard
-            class={props.layout}
-            delay={300}
-            disabled={pinned()}
-            onPrepare={() => props.events.peek(props.k)}
-            ready={() => props.events.ready(props.k)}
-            content={() => props.events.detail(props.k, false)}
-            cardClass="w-[440px]"
-          >
-            {props.children}
-          </HoverCard>
-        </View>
-      }
+    <View
+      role="button"
+      focusable
+      accessibilityLabel={props.name}
+      accessibilityState={{ selected: pinned(), expanded: pinned() }}
+      onPress={() => props.events.press(props.k)}
+      class={`${WASH} hover:bg-accent/60 active:bg-accent ${FOCUS} ${props.class ?? ""}`}
+      classList={{ "bg-accent": pinned() }}
     >
-      {props.events.detail(props.k, true)}
-    </Popover>
+      <HoverCard
+        class={props.layout}
+        delay={300}
+        disabled={props.events.pinned() !== undefined}
+        onPrepare={() => props.events.peek(props.k)}
+        ready={() => props.events.ready(props.k)}
+        content={() => props.events.detail(props.k, pinned())}
+        cardClass="w-[480px]"
+        pinned={pinned()}
+        onUnpin={() => props.events.unpin(props.k)}
+      >
+        {props.children}
+      </HoverCard>
+    </View>
   );
 }
 
