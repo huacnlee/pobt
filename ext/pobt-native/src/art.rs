@@ -126,7 +126,7 @@ pub fn picture(url: &str) -> Option<PathBuf> {
 
 fn fetch(url: &str) -> Option<PathBuf> {
     use sha2::{Digest, Sha256};
-    let key: String = Sha256::digest(format!("v2:{url}").as_bytes()).iter().take(12).map(|b| format!("{b:02x}")).collect();
+    let key: String = Sha256::digest(format!("v3:{url}").as_bytes()).iter().take(12).map(|b| format!("{b:02x}")).collect();
     let dir = crate::images::cache_dir().join("art").join("pictures");
     let file = dir.join(format!("{key}.png"));
     if file.exists() {
@@ -153,10 +153,13 @@ fn framed(url: &str, img: image::DynamicImage) -> image::DynamicImage {
     let (w, h) = (img.width(), img.height());
     let flask = url.contains("/Flasks/");
     let gem = url.contains("/Gems/");
-    if !(flask || gem) || w < 3 || w % 3 != 0 || w / 3 > h {
+    // A strip of three frames: a gem's square ones, a flask's twice as tall as wide. A single picture (a support gem's,
+    // whose width may still divide by 3) stays whole.
+    let fw = w / 3;
+    let strip = w >= 3 && w % 3 == 0 && if gem { fw == h } else { flask && fw * 2 == h };
+    if !strip {
         return img;
     }
-    let fw = w / 3;
     let last = img.crop_imm(2 * fw, 0, fw, h);
     if !flask {
         return last;
@@ -188,6 +191,13 @@ mod tests {
         let file = picture(&format!("{CDN}Art/2DItems/Gems/Despair.png")).expect("Despair's picture");
         let img = image::open(file).unwrap();
         assert_eq!(img.width(), img.height());
+        // A support gem's single picture stays whole (its width divides by 3 too).
+        let support = url(false, "Enlighten Support", "", false);
+        let mut bytes = Vec::new();
+        std::io::Read::read_to_end(&mut ureq::get(&support).call().unwrap().into_reader(), &mut bytes).unwrap();
+        let raw = image::load_from_memory(&bytes).unwrap();
+        let img = image::open(picture(&support).expect("a support's picture")).unwrap();
+        assert_eq!((img.width(), img.height()), (raw.width(), raw.height()), "{support}");
         // A flask's: one flask, its liquid behind its glass.
         let flask = url(false, "Ruby Flask", "Ruby Flask", false);
         let img = image::open(picture(&flask).expect("a flask's picture")).unwrap();
