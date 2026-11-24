@@ -13,6 +13,89 @@ end
 local build = main.modes["BUILD"]
 assert(build and build.importTab, "Path of Building did not open a build")
 
+-- Path of Exile 2's character, from its API: the whole of it, which Path of Building 2's Import tab reads.
+if stage == "import" and b == "" then
+	local char = assert(dkjson.decode(a), "the character is not JSON")
+	local tree = build.latestTree
+	-- The API names an ascendancy by its id (as its list does, which the Import tab maps the same way).
+	if tree.internalAscendNameMap and tree.internalAscendNameMap[char.class] then
+		char.class = tree.internalAscendNameMap[char.class].ascendClass.name
+	end
+	char.league = char.league or ""
+	char.level = char.level or 1
+
+	-- A WeGame character's items (`wegame.rs`), named by their art: of the bases that share it, the one with the
+	-- highest level its requirement allows; a unique's base, as Path of Building 2 has it.
+	local uniqueBases
+	local function settle(item)
+		local level = 0
+		for _, req in ipairs(item.requirements or { }) do
+			if req.name == "Level" then
+				level = tonumber(tostring(req.values[1][1]):match("%d+")) or 0
+			end
+		end
+		if item.pobtBases then
+			local best, bestLevel
+			for _, name in ipairs(item.pobtBases) do
+				local base = build.data.itemBases[name]
+				local req = base and base.req and base.req.level or 0
+				if base and req <= math.max(level, 1) and (not bestLevel or req > bestLevel) then
+					best, bestLevel = name, req
+				end
+			end
+			if best then
+				item.typeLine, item.baseType = best, best
+			end
+		end
+		if item.pobtUniques then
+			if not uniqueBases then
+				uniqueBases = { }
+				for _, list in pairs(data.uniques) do
+					for _, raw in pairs(list) do
+						local title, base = raw:match("^%s*([^\n]+)\n%s*([^\n]+)")
+						if title and not uniqueBases[title] then
+							uniqueBases[title] = base
+						end
+					end
+				end
+			end
+			for _, name in ipairs(item.pobtUniques) do
+				if uniqueBases[name] then
+					item.name, item.typeLine, item.baseType = name, uniqueBases[name], uniqueBases[name]
+					break
+				end
+			end
+		end
+		-- A rare's name has no English, and Path of Building keeps no Chinese in a build's file: its base's.
+		if item.frameType == 2 and (item.name or ""):match("[\128-\255]") then
+			item.name = item.typeLine
+		end
+		item.pobtBases, item.pobtUniques = nil, nil
+		for _, socketed in ipairs(item.socketedItems or { }) do
+			settle(socketed)
+		end
+	end
+	for _, item in ipairs(char.equipment or { }) do
+		settle(item)
+	end
+	for _, item in ipairs(char.jewels or { }) do
+		settle(item)
+	end
+
+	char.equipment = char.equipment or { }
+	char.jewels = char.jewels or { }
+	char.skills = char.skills or { }
+	local passives = char.passives or { }
+	passives.hashes = passives.hashes or { }
+	passives.specialisations = passives.specialisations or { }
+	passives.skill_overrides = passives.skill_overrides or { }
+	passives.quest_stats = passives.quest_stats or { }
+	char.passives = passives
+	build.importTab:ImportPassiveTreeAndJewels(char)
+	build.importTab:ImportItemsAndSkills(char)
+	return
+end
+
 if stage == "import" then
 	local char = assert(dkjson.decode(a), "the character is not JSON")
 	local items = assert(dkjson.decode(b), "the items are not JSON")

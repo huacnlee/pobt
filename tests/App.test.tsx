@@ -34,13 +34,18 @@ test("explains how to get the POESESSID", async () => {
   expect(app.texts()).not.toContain("获取 POESESSID");
 });
 
-test("tells Path of Exile 2's characters are not imported yet", async () => {
+test("signs in to Path of Exile 2's site for its characters", async () => {
   const app = await open("../App.tsx", { width: 1280, height: 820 });
   await app.press("text:工具");
   await app.press("text:角色导入");
   await app.press("id:tab-Poe2");
-  await app.waitFor("text:暂不支持流放之路 2");
+  // Tencent's, by a WeGame share link; the official site's, signed in to.
+  await app.press("id:tab-wegame");
+  await app.waitFor("text:WeGame 分享链接");
+  await app.press("id:tab-poe2");
+  await app.waitFor("text:登录并获取角色");
   expect(app.texts()).not.toContain("获取角色");
+  expect(app.texts()).not.toContain("POESESSID");
   await app.press("id:tab-Poe1");
   await app.waitFor("text:获取角色");
 });

@@ -14,11 +14,13 @@ pub mod loading;
 pub mod lua;
 #[cfg(not(windows))]
 pub mod modules;
+mod oauth;
 pub mod reverse;
 pub mod settings;
 pub mod text;
 pub mod translate;
 pub mod trs;
+mod wegame;
 
 use std::{
     path::PathBuf,
@@ -285,8 +287,9 @@ impl Pob {
     /// Starts a job on an account in the background: `kind` "characters"
     /// lists its characters, "export" makes one a build (`json`: `{ account,
     /// character, pob_dir }`; then `save_build` saves it where the user
-    /// chose in `builds`). False while
-    /// one runs; `account_progress` says how it goes.
+    /// chose in `builds`). An account of realm "poe2" (Path of Exile 2's) is
+    /// signed in to in the browser first, when it must be. False while one
+    /// runs; `account_progress` says how it goes.
     pub fn account_start(kind: String, json: String) -> bool {
         let Ok(request) = serde_json::from_str::<account::Request>(&json) else { return false };
         if kind == "export" {

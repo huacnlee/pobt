@@ -23,8 +23,21 @@ Chinese, Traditional Chinese and Korean are included.
 - Press **Ctrl+Shift+T** at any time to switch to English and back.
 - The translations are plain CSV files in the `trs` folder beside `POBT.exe`: edit them to fix one or add your own (an update of POBT replaces the folder, so keep a copy of your changes).
 - POBT updates itself when a new version is out.
-- **Import characters**: on the launcher, enter an account (with its POESESSID for a private profile, or for Tencent's realm), list its characters, and copy a build code or save the build among Path of Building's; Tencent's Chinese items go back to English first.
+- **Import characters** from an account, as a build code or a build saved in Path of Building: see below.
 - **AI build analysis**: from the Tools menu, choose one of your builds (or paste a build code) and have the AI already on your computer, Claude Code or Codex, rate it by damage, defence, recovery, ailments, utility and gear, with what to change first. POBT sends it no account and keeps no key: the agent runs as you signed it in.
+
+## Import characters
+
+<p align="center"><img src="website/public/screenshot-characters.png" alt="The Characters page" width="800"></p>
+
+Open **Tools → Import characters** on the launcher (or over Path of Building), list an account's characters, and copy
+a character's build code or save it among Path of Building's builds.
+
+- **Path of Exile**: the official site's realms (PC, Xbox, PlayStation): the account name, and its POESESSID for a
+  private profile. Tencent's realm: its POESESSID. Tencent's Chinese items go back to English first.
+- **Path of Exile 2**: the official site's characters once signed in to pathofexile.com in the browser, as Path of
+  Building 2 does. Tencent's, by a WeGame share link: in WeGame's Path of Exile 2 helper, open the character's data and
+  press Share (一键分享).
 
 ## Performance
 

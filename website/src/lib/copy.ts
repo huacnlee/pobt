@@ -24,6 +24,10 @@ export interface Copy {
   shotPob2Alt: string;
   featuresTitle: string;
   features: string[];
+  /** Importing characters: what it does, and its screenshot's alt text. */
+  charactersTitle: string;
+  charactersText: string[];
+  shotCharactersAlt: string;
   perfTitle: string;
   perfIntro: string;
   perfHead: [string, string, string];
@@ -79,6 +83,13 @@ export const copy: Record<Language, Copy> = {
         "Updates itself when a new version is out",
         "Starts faster and idles at a sixth of the CPU of Path of Building's own program",
     ],
+    charactersTitle: "Import characters",
+    charactersText: [
+      "From the Tools menu, list the characters of an account and make one a build: copy its code, or save it among Path of Building's.",
+      "Path of Exile: the official site's realms (PC, Xbox, PlayStation), or Tencent's with its POESESSID; Tencent's Chinese items go back to English first.",
+      "Path of Exile 2: signed in to pathofexile.com in the browser, as Path of Building 2 does; Tencent's, by a WeGame share link.",
+    ],
+    shotCharactersAlt: "The Characters page: a Tencent account's characters by league, each copied as a build code or saved to Path of Building.",
     perfTitle: "In place of Path of Building's own program",
     perfIntro:
       "POBT runs Path of Building's own code with its own program in place of Path of Building.exe and its graphics runtime. On the same PC, with the same build open on the passive tree:",
@@ -172,6 +183,13 @@ export const copy: Record<Language, Copy> = {
       "有新版本时自动更新",
       "比 Path of Building 自带的程序启动更快，空闲时 CPU 只用六分之一",
     ],
+    charactersTitle: "角色导入",
+    charactersText: [
+      "从「工具」菜单打开，列出账号下的角色，一键复制 POB 代码，或保存到 Path of Building 的构筑列表。",
+      "流放之路：国际服（PC、Xbox、PS）或填写 POESESSID 的腾讯服；腾讯服的中文物品会先翻译回英文。",
+      "流放之路 2：国际服像 Path of Building 2 一样在浏览器里登录 pathofexile.com 授权；腾讯服粘贴 WeGame 角色分享链接即可。",
+    ],
+    shotCharactersAlt: "角色导入页：腾讯服账号的角色按赛季列出，可复制 POB 代码或保存到 Path of Building。",
     perfTitle: "可以代替 Path of Building 自带的程序",
     perfIntro:
       "POBT 运行的是 Path of Building 自己的代码，只是用 POBT 自己的程序代替了 Path of Building.exe 和它的图形运行时。在同一台电脑上，打开同一个 BD、停在天赋树页：",

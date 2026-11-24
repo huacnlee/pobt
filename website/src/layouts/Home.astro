@@ -85,6 +85,16 @@ const otherName = other === 'en' ? 'English' : '简体中文';
         </ul>
       </section>
 
+      <section class="shell section" id="characters">
+        <div class="section-heading">
+          <h2>{t.charactersTitle}</h2>
+          {t.charactersText.map((line) => <p>{line}</p>)}
+        </div>
+        <figure class="characters-shot">
+          <img src={`${base}screenshot-characters.png`} width="1924" height="1234" alt={t.shotCharactersAlt} loading="lazy" />
+        </figure>
+      </section>
+
       <section class="shell section" id="performance">
         <div class="section-heading">
           <h2>{t.perfTitle}</h2>
