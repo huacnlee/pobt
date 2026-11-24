@@ -23,6 +23,8 @@ zstd = "0.13"
 texture2ddecoder = "0.1"
 ureq = "2"
 zip = { version = "2", default-features = false, features = ["deflate"] }
+roxmltree = "0.21"
+base64 = "0.22"
 
 # POB ships its LuaJIT for Windows only (`lua51.dll`): elsewhere POBT builds its own in.
 [target.'cfg(windows)'.dependencies]
