@@ -4,6 +4,7 @@
 //! The rest of the UI is `App.tsx`, over the `Pob` module.
 
 pub mod account;
+pub mod ai;
 pub mod dds;
 pub mod frame;
 pub mod host;
@@ -326,6 +327,50 @@ impl Pob {
     /// error, result }` (`state`: "running", "done", "failed"); "" for none.
     pub fn account_progress() -> String {
         account::progress().map(|p| serde_json::to_string(&p).unwrap_or_default()).unwrap_or_default()
+    }
+
+    /// The AI agents installed to analyse builds, as JSON `[{ id, name, path
+    /// }]` (`id`: "claude", "codex").
+    pub fn ai_agents() -> String {
+        serde_json::to_string(&ai::agents()).unwrap_or_default()
+    }
+
+    /// POB's builds folders and their builds, as JSON `[{ root, tree }]`
+    /// (`tree` as `builds` gives it).
+    pub fn ai_builds() -> String {
+        let s = Settings::load();
+        let dirs: Vec<PathBuf> = [s.poe1_dir, s.poe2_dir].into_iter().flatten().collect();
+        serde_json::to_string(&ai::roots(&dirs)).unwrap_or_default()
+    }
+
+    /// Asks for a build's file; its path, or "" when cancelled.
+    pub async fn pick_build() -> String {
+        let dialog = nsh_core::file_dialog::OpenDialog::files().filter(nsh_core::file_dialog::FileFilter::new("Path of Building", ["xml"]));
+        match pick_paths(dialog).await {
+            Ok(Some(paths)) => paths.into_iter().next().map(|p| p.display().to_string()).unwrap_or_default(),
+            _ => String::new(),
+        }
+    }
+
+    /// Starts analysing a build in the background (`json`: `{ agent, path |
+    /// code, language, question }`). False while one runs; `ai_progress` says
+    /// how it goes.
+    pub fn ai_start(json: String) -> bool {
+        match serde_json::from_str::<ai::Request>(&json) {
+            Ok(request) => ai::start(request),
+            Err(_) => false,
+        }
+    }
+
+    /// The analysis running or last run, as JSON `{ state, agent, build,
+    /// step, activity, error, report, raw }`; "" for none.
+    pub fn ai_progress() -> String {
+        ai::progress().map(|p| serde_json::to_string(&p).unwrap_or_default()).unwrap_or_default()
+    }
+
+    /// Stops the analysis running.
+    pub fn ai_cancel() {
+        ai::cancel();
     }
 
     /// Switches the translation on or off while POB runs.

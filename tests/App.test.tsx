@@ -60,3 +60,15 @@ test("shows and hides the POESESSID", async () => {
   await app.press("text:隐藏");
   await app.waitFor("text:显示");
 });
+
+test("opens the AI analysis page from the Tools menu, and back", async () => {
+  const app = await open("../App.tsx", { width: 1280, height: 820 });
+  await app.press("text:工具");
+  await app.press("text:AI 构筑分析");
+  await app.waitFor("text:开始分析");
+  expect(app.texts()).toContain("AI 分析");
+  await app.press("text:构筑代码 >> nth=0");
+  await app.waitFor("text:粘贴构筑代码（Path of Building 的导出）");
+  await app.press("text:返回");
+  await app.waitFor("text:启动");
+});

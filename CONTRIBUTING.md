@@ -31,6 +31,7 @@ POBT links its own LuaJIT and stands in for the modules POB uses (lcurl, lzip, l
 | `ext/pobt-native/src/account.rs`, `export.lua` | Characters from an account on Path of Exile's site or Tencent's (with its `POESESSID`), made builds by POB's own Import tab on a POB with no window (`host::export`) |
 | `ext/pobt-native/src/oauth.rs` | Signing in to Path of Exile 2's API (OAuth, as Path of Building 2 does) for its characters |
 | `ext/pobt-native/src/wegame.rs` | Tencent's Path of Exile 2 characters, from a WeGame share link, back in English (names by their art, mods by `trs/zh-rCN/tencent-poe2`) |
+| `ext/pobt-native/src/ai.rs`, `src/analysis.ts` | A build analysed by Claude Code or Codex found on the PATH: the build boiled down (POB's stats, skills, items, configuration), given to the agent on stdin with no tools, its JSON report by dimension; the launcher's Analysis page |
 | `ext/pobt-native/src/reverse.rs` | The dictionary the other way: Tencent's Chinese items back to the English POB reads |
 | `src/App.tsx`, `src/gate.ts`, `src/accounts.ts` | The launcher, its backdrop shader, the update check and the Characters page (`App.tsx` mounts it) |
 

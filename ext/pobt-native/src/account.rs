@@ -581,7 +581,7 @@ pub struct Entry {
 
 /// The folders and builds (`.xml`) under `dir`, folders first, each by name;
 /// so deep, and so many, at most.
-fn entries(dir: &Path, rel: &str, depth: u32, budget: &mut u32) -> Vec<Entry> {
+pub(crate) fn entries(dir: &Path, rel: &str, depth: u32, budget: &mut u32) -> Vec<Entry> {
     let Ok(read) = std::fs::read_dir(dir) else { return Vec::new() };
     let mut list: Vec<(bool, String)> = read
         .flatten()

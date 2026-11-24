@@ -26,6 +26,7 @@ base64 = "0.22"
 getrandom = "0.2"
 sha2 = "0.10"
 zip = { version = "2", default-features = false, features = ["deflate"] }
+roxmltree = "0.21"
 
 # POB ships its LuaJIT for Windows only (`lua51.dll`): elsewhere POBT builds its own in.
 [target.'cfg(windows)'.dependencies]
