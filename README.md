@@ -7,13 +7,13 @@
   English | <a href="README.zh-CN.md">简体中文</a> · <a href="https://huacnlee.github.io/pobt/">Website</a>
 </p>
 
-<p align="center"><img src="https://github.com/user-attachments/assets/b3f43303-ee08-48c8-98e9-fa6fc31639ca" alt="The POBT launcher" width="800"></p>
+<p align="center"><img src="website/public/screenshots/launcher.webp" alt="The POBT launcher" width="800"></p>
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/7abd50f0-b0d1-4c61-88c2-179b061bc808" alt="The passive tree" width="49%">
-  <img src="https://github.com/user-attachments/assets/3d617a3f-16e8-4a3e-add9-1bce0bab2013" alt="Skills" width="49%">
-  <img src="https://github.com/user-attachments/assets/1f48eb28-994e-4e81-9856-f20e3c32b715" alt="Items" width="49%">
-  <img src="https://github.com/user-attachments/assets/23c22714-cdcd-4cfe-bdea-3724511e8516" alt="Calcs" width="49%">
+  <img src="website/public/screenshots/tree-en.webp" alt="The passive tree" width="49%">
+  <img src="website/public/screenshots/skills-en.webp" alt="Skills" width="49%">
+  <img src="website/public/screenshots/items-en.webp" alt="Items" width="49%">
+  <img src="website/public/screenshots/calcs-en.webp" alt="Calcs" width="49%">
 </p>
 
 POBT runs the [Path of Building Community](https://pathofbuilding.community/) you already have — for Path of Exile
@@ -27,7 +27,7 @@ Chinese, Traditional Chinese and Korean are included.
 - **Import characters** from an account, as a build code or a build saved in Path of Building: see below.
 - **AI build analysis**: from the Tools menu, choose one of your builds (or paste a build code) and have the AI already on your computer, Claude Code or Codex, rate it by damage, defence, recovery, ailments, utility and gear, with what to change first. POBT sends it no account and keeps no key: the agent runs as you signed it in.
 
-<p align="center"><img src="https://github.com/user-attachments/assets/3f934056-48ba-45d7-b251-4afc7a126875" alt="AI build analysis" width="800"></p>
+<p align="center"><img src="website/public/screenshots/ai-en.webp" alt="AI build analysis" width="800"></p>
 
 ## Import characters
 
