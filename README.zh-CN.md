@@ -30,8 +30,6 @@ POBT 直接运行你电脑上已有的 [Path of Building Community](https://path
 
 ## 角色导入
 
-<p align="center"><img src="website/public/screenshot-characters.png" alt="角色导入页" width="800"></p>
-
 在启动器（或 Path of Building 上方）点 **工具 → 角色导入**，列出账号下的角色，一键复制 POB 代码，或保存到
 Path of Building 的构筑列表。
 

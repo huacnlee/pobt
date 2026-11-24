@@ -31,8 +31,6 @@ Chinese, Traditional Chinese and Korean are included.
 
 ## Import characters
 
-<p align="center"><img src="website/public/screenshot-characters.png" alt="The Characters page" width="800"></p>
-
 Open **Tools → Import characters** on the launcher (or over Path of Building), list an account's characters, and copy
 a character's build code or save it among Path of Building's builds.
 

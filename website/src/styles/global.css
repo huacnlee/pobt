@@ -140,8 +140,6 @@ h1 img { width: min(760px, 92vw); height: auto; filter: drop-shadow(0 4px 12px r
 .shot { margin-top: -40px; }
 .shot figure { margin: 0; }
 .shot img { display: block; width: 100%; height: auto; }
-.characters-shot { margin: 28px 0 0; }
-.characters-shot img { display: block; width: 100%; height: auto; }
 
 /* Sections, each under a centred heading and a rule. */
 .section { padding: 72px 0 0; }
