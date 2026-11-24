@@ -2,13 +2,23 @@
 // them (Modules/BuildListHelpers.lua: folders first, POB's sort and search). Opening one and saving writes the same
 // file, so Path of Building and POBT share every build.
 import { List, resource, signal, View } from "nsh";
+import { shellInfo } from "nsh/updater";
+import { Pob } from "pobt/native";
 import { Backdrop, Button, EmptyState, Framed, ListRow, Rule, Select, Text, TextField } from "../ui";
 import { t, tr } from "./i18n";
-import { type BuildEntry, listBuilds, newBuild, openFile, type SortMode } from "./session";
+import { type BuildEntry, listBuilds, newBuild, openBuild, openFile, type SortMode } from "./session";
 
 /** The folder shown and the sort: kept while the editor is open, as POB keeps them. */
 const subPath = signal("");
 const sort = signal<SortMode | undefined>(undefined);
+/** Development only (a run with no packaged version): the list shows the project's test builds (assets/builds). */
+const DEV = !shellInfo().version;
+const devShown = signal(false);
+function devEntries(filter: string): BuildEntry[] {
+  const list = JSON.parse(Pob.devBuilds()) as { name: string; path: string }[];
+  const f = filter.toLowerCase();
+  return list.filter((b) => !f || b.name.toLowerCase().includes(f)).map((b) => ({ name: b.name, path: b.path, subPath: "" }) as BuildEntry);
+}
 
 function ago(seconds?: number): string {
   if (!seconds) return "";
@@ -78,12 +88,14 @@ export function BuildList(props: { onImport: () => void; onOpened: () => void })
     }
     error.set("");
     try {
-      await openFile(e);
+      if (devShown()) await openBuild(Pob.readBuildFile(e.path), e.name);
+      else await openFile(e);
       props.onOpened();
     } catch (err) {
       error.set(`${t("openFailed")}: ${String((err as Error).message ?? err)}`);
     }
   };
+  const shown = () => (devShown() ? devEntries(filter()) : (folder()?.list ?? []));
   // The folders down to the one shown, each a step back up.
   const crumbs = () => {
     const parts = subPath().split("/").filter(Boolean);
@@ -130,8 +142,14 @@ export function BuildList(props: { onImport: () => void; onOpened: () => void })
           />
         </View>
         <View class="flex-row flex-wrap items-center gap-1">
-          <Button label={t("allBuilds")} variant="ghost" size="sm" selected={!subPath()} onPress={() => subPath.set("")} />
-          <Each of={crumbs()}>
+          <Button
+            label={t("allBuilds")}
+            variant="ghost"
+            size="sm"
+            selected={!devShown() && !subPath()}
+            onPress={() => (devShown.set(false), subPath.set(""))}
+          />
+          <Each of={devShown() ? [] : crumbs()}>
             {(c) => (
               <View class="flex-row items-center gap-1">
                 <Text tone="muted">/</Text>
@@ -141,8 +159,12 @@ export function BuildList(props: { onImport: () => void; onOpened: () => void })
           </Each>
           <If when={filter()}>
             <Text variant="caption" tone="muted" class="ml-2">
-              {`${folder()?.list.length ?? 0}`}
+              {`${shown().length}`}
             </Text>
+          </If>
+          <If when={DEV}>
+            <View class="flex-1" />
+            <Button label={t("devBuilds")} variant="ghost" size="sm" selected={devShown()} onPress={() => devShown.set(true)} />
           </If>
         </View>
         <If when={error() || folder.error()}>
@@ -152,7 +174,7 @@ export function BuildList(props: { onImport: () => void; onOpened: () => void })
         </If>
         <Framed class="flex-1 overflow-hidden">
           <List
-            each={folder()?.list ?? []}
+            each={shown()}
             keyExtractor={(e) => e.path}
             style={{ flex: 1 }}
             empty={
@@ -163,7 +185,7 @@ export function BuildList(props: { onImport: () => void; onOpened: () => void })
           </List>
         </Framed>
         <Text variant="caption" tone="muted" class="truncate">
-          {folder()?.buildPath ?? ""}
+          {devShown() ? "assets/builds" : (folder()?.buildPath ?? "")}
         </Text>
       </View>
     </View>

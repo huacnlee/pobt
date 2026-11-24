@@ -89,3 +89,13 @@ test("opens the AI analysis page from the Tools menu, and back", async () => {
   await app.press("text:返回");
   await home(app);
 });
+
+test("in development, lists the project's test builds and opens one", async () => {
+  const app = await open("../App.tsx", { width: 1280, height: 820 });
+  if ((await home(app)) !== "editor") return;
+  await app.press("text:测试构建");
+  await app.waitFor("text:Ascendant", { timeout: 10000 });
+  expect(app.texts().some((t) => t.includes("assets/builds"))).toBe(true);
+  await app.press("text:Ascendant");
+  await app.waitFor("text:天赋树", { timeout: 30000 });
+});
