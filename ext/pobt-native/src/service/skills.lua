@@ -15,7 +15,7 @@ return function(s)
 
 	-- The tab's lines of a Tooltip that POB filled: `{ text, size }`, a separator as `{ sep = true }`.
 	local function tooltipLines(fill)
-		local tip = new("Tooltip"):Tooltip()
+		local tip = s.tooltip()
 		local ok = pcall(fill, tip)
 		local out = { }
 		if ok then
@@ -164,9 +164,14 @@ return function(s)
 				gems[j] = readGem(st, gem, j)
 			end
 			local c = st.controls
+			-- a group with no label: POB's SetText(nil) writes "nil" in the box
+			local label = s.control(c.groupLabel)
+			if label and group.label == nil then
+				label.text = ""
+			end
 			detail = {
 				index = shown,
-				label = s.control(c.groupLabel),
+				label = label,
 				slot = s.control(c.groupSlot),
 				enabled = s.control(c.groupEnabled),
 				includeInFullDPS = s.control(c.includeInFullDPS),

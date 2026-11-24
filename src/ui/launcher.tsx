@@ -143,13 +143,13 @@ export function PrimaryButton(props: { label: string; onPress: () => void }) {
   );
 }
 
-/** A small brass button, as the site's store buttons. */
-export function BrassButton(props: { label: string; onPress: () => void }) {
+/** A small brass button, as the site's store buttons; `dark`: on the dark plaque, for a lesser action beside one. */
+export function BrassButton(props: { label: string; onPress: () => void; dark?: boolean }) {
   return (
     <PressButton onPress={props.onPress} style={{ minWidth: 150 }}>
       {(down) => (
-        <Plaque kind={() => "brass"} height={38} pressed={down}>
-        <Text style={{ fontFamily: BODY, fontSize: 13, fontWeight: "700", color: C.ink, textShadow: ENGRAVED }}>{props.label}</Text>
+        <Plaque kind={() => (props.dark ? "dark" : "brass")} height={38} pressed={down}>
+        <Text style={{ fontFamily: BODY, fontSize: 13, fontWeight: "700", ...(props.dark ? { color: C.goldHi } : { color: C.ink, textShadow: ENGRAVED }) }}>{props.label}</Text>
         </Plaque>
       )}
     </PressButton>

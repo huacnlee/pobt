@@ -50,6 +50,7 @@ struct Job {
 struct Running {
     pob_dir: PathBuf,
     jobs: mpsc::Sender<Job>,
+    thread: std::thread::JoinHandle<()>,
 }
 
 static RUNNING: Mutex<Option<Running>> = Mutex::new(None);
@@ -67,7 +68,8 @@ pub fn status() -> String {
 }
 
 /// Starts the service on the POB in `pob_dir` unless it runs there; "" once started (it goes on loading: `status`),
-/// or why not. A process loads one POB's Lua for good, so another folder needs a new POBT.
+/// or why not. The POB of another folder (the other game's) is stopped first, its build dropped; the LuaJIT loaded
+/// first serves both, as it does the launcher's POB.
 /// The process's folder before Path of Building moved it into its own: what a relative path given by POBT means.
 pub static FIRST_DIR: std::sync::OnceLock<PathBuf> = std::sync::OnceLock::new();
 
@@ -76,8 +78,13 @@ pub fn start(pob_dir: PathBuf) -> String {
         let _ = FIRST_DIR.set(d);
     }
     let mut running = RUNNING.lock().unwrap();
-    if let Some(r) = running.as_ref() {
-        return if r.pob_dir == pob_dir { String::new() } else { "another Path of Building is loaded: restart POBT".into() };
+    if running.as_ref().is_some_and(|r| r.pob_dir == pob_dir) {
+        return String::new();
+    }
+    if let Some(r) = running.take() {
+        // No more jobs: `serve` ends after the one it runs, closing its Lua state.
+        drop(r.jobs);
+        let _ = r.thread.join();
     }
     if let Err(e) = lua::init(&pob_dir) {
         set_status("failed", &e, "");
@@ -86,13 +93,15 @@ pub fn start(pob_dir: PathBuf) -> String {
     let (tx, rx) = mpsc::channel::<Job>();
     let dir = pob_dir.clone();
     set_status("loading", "", "");
-    let spawned = std::thread::Builder::new().name("pobt-service".into()).stack_size(64 << 20).spawn(move || serve(dir, rx));
-    if let Err(e) = spawned {
-        let why = e.to_string();
-        set_status("failed", &why, "");
-        return why;
-    }
-    *running = Some(Running { pob_dir, jobs: tx });
+    let thread = match std::thread::Builder::new().name("pobt-service".into()).stack_size(64 << 20).spawn(move || serve(dir, rx)) {
+        Ok(t) => t,
+        Err(e) => {
+            let why = e.to_string();
+            set_status("failed", &why, "");
+            return why;
+        }
+    };
+    *running = Some(Running { pob_dir, jobs: tx, thread });
     String::new()
 }
 
@@ -163,6 +172,7 @@ fn serve(pob_dir: PathBuf, jobs: mpsc::Receiver<Job>) {
         let answer = run(l, &shared, &job.op, &job.args).unwrap_or_else(|e| serde_json::json!({ "err": e }).to_string());
         let _ = job.reply.send(answer);
     }
+    l.close();
 }
 
 /// One operation: `__pobt_service(op, args)` answers JSON, or asks for frames first (`nil, frames`) and is then called
@@ -202,6 +212,32 @@ mod tests {
 
     fn block<F: std::future::Future>(f: F) -> F::Output {
         tokio::runtime::Builder::new_current_thread().build().unwrap().block_on(f)
+    }
+
+    /// Needs `POB_DIR` and `POB2_DIR` (both games' Path of Building) and `POBT_TEST_BUILD2` (a PoE2 build's XML):
+    /// one process runs one, then the other, as switching games in POBT does.
+    #[test]
+    fn switches_games() {
+        let (Some(dir), Some(dir2), Some(xml)) =
+            (std::env::var_os("POB_DIR"), std::env::var_os("POB2_DIR"), std::env::var_os("POBT_TEST_BUILD2"))
+        else {
+            eprintln!("POB_DIR, POB2_DIR or POBT_TEST_BUILD2 not set: skipped");
+            return;
+        };
+        let ready = || loop {
+            let s = status();
+            if !s.contains("\"loading\"") {
+                break s;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(50));
+        };
+        assert_eq!(start(PathBuf::from(dir)), "");
+        assert!(ready().contains("\"ready\""), "{}", status());
+        assert_eq!(start(PathBuf::from(dir2)), "");
+        assert!(ready().contains("\"ready\""), "{}", status());
+        let xml = std::fs::read_to_string(xml).unwrap();
+        let opened = block(request("open".into(), serde_json::json!({ "xml": xml }).to_string()));
+        assert!(opened.contains("\"ok\""), "{opened}");
     }
 
     /// Needs `POB_DIR` (an installed Path of Building) and `POBT_TEST_BUILD` (a build's XML); skipped without them.

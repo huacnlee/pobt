@@ -7,6 +7,8 @@ const STRINGS = {
     paste: "Paste item",
     equipped: "Equipped",
     flasks: "Flasks",
+
+    flasksCharms: "Flasks and charms",
     jewels: "Tree jewels",
     allItems: "All items",
     empty: "Empty",
@@ -41,6 +43,8 @@ const STRINGS = {
     paste: "粘贴物品",
     equipped: "已装备",
     flasks: "药剂",
+
+    flasksCharms: "药剂与护符",
     jewels: "天赋树珠宝",
     allItems: "全部物品",
     empty: "空",
@@ -75,6 +79,8 @@ const STRINGS = {
     paste: "貼上物品",
     equipped: "已裝備",
     flasks: "藥劑",
+
+    flasksCharms: "藥劑與護符",
     jewels: "天賦樹珠寶",
     allItems: "全部物品",
     empty: "空",
@@ -109,6 +115,8 @@ const STRINGS = {
     paste: "아이템 붙여넣기",
     equipped: "장착됨",
     flasks: "플라스크",
+
+    flasksCharms: "플라스크와 부적",
     jewels: "패시브 트리 주얼",
     allItems: "모든 아이템",
     empty: "비어 있음",

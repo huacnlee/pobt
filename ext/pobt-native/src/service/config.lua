@@ -110,7 +110,7 @@ return function(s)
 	-- a check box, adds POB's comparison of what changing it would give.
 	function ops.tooltip(a)
 		local c = assert(tab().varControls[a.var], "no such option")
-		local tt = new("Tooltip"):Tooltip()
+		local tt = s.tooltip()
 		if c.tooltipFunc then
 			if c.SetSel and c.list then
 				local i = tonumber(a.index) or c.selIndex

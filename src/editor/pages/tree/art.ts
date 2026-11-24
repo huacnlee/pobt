@@ -21,7 +21,7 @@ type NodeArt = {
   under: number[];
 };
 
-/** A connector (tree.lua `art`): `[a, b, kind, …Normal quad, …Active quad]`; kind 0 a line (one quad), n an arc of
+/** A connector (tree.lua `art`): `[a, b, kind, …Normal quad, …Active quad, set?]` (`set`: PoE2's art set); kind 0 a line (one quad), n an arc of
  * orbit n. A quad is `ox, oy, ux, uy, vx, vy, t`: texture (u, v) lies at origin + u·U + v·V; a line repeats its
  * texture t times along U, an arc shows the kite (origin + U + V, origin + V·t, origin, origin + U·t). */
 export type Connector = number[];
@@ -31,15 +31,19 @@ export type ArtData = {
   root: string;
   images: { path: string; w: number; h: number; absolute?: boolean }[];
   sprites: Sprite[];
+  /** DrawAsset's scale of a sprite's size, each side of its centre: PoE2's 1 (1.33, ART_SCALE, when not given). */
+  artScale?: number;
   background: number;
-  /** `[classId, sprite, x, y]`: the class background art, drawn for the build's class. */
-  classArt: [number, number, number, number][];
+  /** `[classId, sprite, x, y, ascendancy?, angle?]`: the class background art, drawn for the build's class. PoE2's
+   * say whose: "" always, an ascendancy id only for it, "*" when none of the class's ascendancies is chosen; `angle`
+   * turns it (radians) about its centre. */
+  classArt: [number, number, number, number, string?, number?][];
   /** `[x, y, sprite, half, ascendancy]` (ascendancy: 1-based index into `asc`, 0 for none). */
   groups: [number, number, number, number, number][];
   asc: { id: string }[];
   nodes: NodeArt;
   connectors: Connector[];
-  /** The connector art by kind (0: LineConnector, n: Orbit n): `[Normal, Intermediate, Active]`. */
+  /** The connector art by kind (0: LineConnector, n: Orbit n; PoE2: set × 10 + kind): `[Normal, Intermediate, Active]`. */
   connArt: [number, number, number][];
   /** Art drawn for what the build holds: socketed jewels (POB's asset names) and the radius rings. */
   named: Record<string, number>;
@@ -116,7 +120,8 @@ export function loadArt(key: string): Promise<Art> {
 /** A sprite's half width and height in tree units. */
 export function spriteExtent(art: Art, s: number): { hw: number; hh: number } | undefined {
   const sp = art.data.sprites[s - 1];
-  return sp ? { hw: sp[5] * ART_SCALE, hh: sp[6] * ART_SCALE } : undefined;
+  const k = art.data.artScale ?? ART_SCALE;
+  return sp ? { hw: sp[5] * k, hh: sp[6] * k } : undefined;
 }
 
 /** Draws sprite `s` centred on (`x`, `y`), as DrawAsset does; `half`: the top half as given and the bottom mirrored
@@ -131,8 +136,9 @@ export function drawSprite(cx: CanvasRenderingContext2D, art: Art, s: number, x:
   const sy = sp[2] * img.h;
   const sw = (sp[3] - sp[1]) * img.w;
   const sh = (sp[4] - sp[2]) * img.h;
-  const hw = sp[5] * ART_SCALE;
-  const hh = sp[6] * ART_SCALE;
+  const k = art.data.artScale ?? ART_SCALE;
+  const hw = sp[5] * k;
+  const hh = sp[6] * k;
   if (half) {
     cx.drawImage(url, sx, sy, sw, sh, x - hw, y - hh * 2, hw * 2, hh * 2);
     cx.save();
@@ -173,7 +179,9 @@ export type ConnectorState = 0 | 1 | 2;
  * POB's quad. Whether it drew. */
 export function drawConnector(cx: CanvasRenderingContext2D, art: Art, c: Connector, state: ConnectorState): boolean {
   const kind = c[2]!;
-  const sprite = art.data.connArt[kind]?.[state];
+  // PoE2's art set follows the quads: one for a line, two for an arc
+  const set = c[kind === 0 ? 10 : 17] ?? 0;
+  const sprite = art.data.connArt[set * 10 + kind]?.[state];
   const src = sprite ? source(art, sprite) : undefined;
   if (!src) return false;
   const at = kind > 0 && state === 2 && c.length >= 17 ? 10 : 3;

@@ -38,7 +38,7 @@ return function(s)
 	-- tooltip's width as it adds them; the screens wrap for themselves (and translate whole lines), so the width POB
 	-- sets is ignored here.
 	local function tooltipLines(fill)
-		local tip = new("Tooltip"):Tooltip()
+		local tip = s.tooltip()
 		local view = setmetatable({ }, {
 			__index = tip,
 			__newindex = function(_, k, v)

@@ -709,6 +709,8 @@ fn register(l: Lua) {
         ("Log", n_log),
         ("Step", n_step),
         ("ImgLoad", n_img_load),
+        ("ImgUri", n_img_uri),
+        ("ImgAtlas", n_img_atlas),
         ("ArtLoad", n_art_load),
         ("ArtRect", n_art_rect),
         ("ArtArc", n_art_arc),
@@ -1302,6 +1304,31 @@ native!(n_img_load, |l| {
     l.push_int(h as i64);
     l.push_int(n as i64);
     4
+});
+
+// `ImgUri(id, layer)`: the file the screens load for an image handle's layer (0-based: a texture array's), and
+// its size; nothing when it has none.
+native!(n_img_uri, |l| {
+    match images::uri(l.int(1) as u32, l.int(2).max(0) as u32, [1.0, 1.0, 1.0]) {
+        Some((uri, w, h)) => {
+            l.push_str(&uri);
+            l.push_int(w as i64);
+            l.push_int(h as i64);
+            3
+        }
+        None => 0,
+    }
+});
+
+// `ImgAtlas(id)`: an image handle's layers packed into pages (images::atlas's JSON); nothing when it has none.
+native!(n_img_atlas, |l| {
+    match images::atlas(l.int(1) as u32) {
+        Some(json) => {
+            l.push_str(&json);
+            1
+        }
+        None => 0,
+    }
 });
 
 native!(n_art_load, |l| {

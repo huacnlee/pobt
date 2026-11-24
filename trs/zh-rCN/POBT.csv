@@ -87,3 +87,14 @@ Cost,消耗
 "Freeze Immune",免疫冰冻
 "Avoid Bleed",避免流血
 True,是
+"Deflect Chance:",偏转几率:
+"Skill Movement Speed:",技能移动速度:
+"Your unreserved Spirit is negative",你的未保留精魂为负数
+"Removing this item from Socket #{0} will give you:","(插槽 #{0})移除这个物品会使你:"
+"Equipping this item in Socket #{0} will give you:","(插槽 #{0})装备这个物品会使你:"
+"Grants Skill: {name}","获得技能: {name}"
+"Elemental Resistance penalty:",元素抗性惩罚:
+"Quest Rewards",任务奖励
+"Distance to enemy:",与敌人的距离:
+"Is the enemy Rare?",敌人是稀有怪物吗?
+"Are you Sprinting?",你是否正在冲刺?

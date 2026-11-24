@@ -6,7 +6,7 @@ import { Pob, PobCanvas } from "pobt/native";
 import title from "../assets/ui/title.png";
 import { GATE } from "./gate";
 import { BODY, BrassButton as Button, C, DISPLAY, ENGRAVED, Gate, GoldCheckbox, GoldRule as Rule, Plaque, PressButton, PrimaryButton } from "./ui/launcher";
-import { BuildEditor } from "./editor/BuildEditor";
+import { BuildEditor, editorBack, editorBackLabel } from "./editor/BuildEditor";
 import { Icon } from "./ui/icon";
 import { t as editorT, useLanguage } from "./editor/i18n";
 import {
@@ -1962,7 +1962,7 @@ export function App() {
         else={
           <If when={editor()} else={<Launcher onStart={start} onCharacters={openCharacters} onAnalysis={openAnalysis} onEditor={openEditor} />}>
             <View style={{ flex: 1 }}>
-              <TitleBar t={t} solid onCharacters={openCharacters} onAnalysis={openAnalysis} onLegacy={() => editor.set(false)} legacyText={launcherLabel()} />
+              <TitleBar t={t} solid onBack={() => editorBack() || editor.set(false)} backLabel={editorBackLabel()} onCharacters={openCharacters} onAnalysis={openAnalysis} onLegacy={() => editor.set(false)} legacyText={launcherLabel()} />
               <BuildEditor file={(Pob.devEnv("POBT_BUILD") || undefined)} game={(JSON.parse(Pob.settings()) as Settings).game === "Poe2" ? "poe2" : "poe1"} onBack={() => editor.set(false)} />
             </View>
           </If>

@@ -200,26 +200,6 @@ impl Pob {
         std::fs::read_to_string(p).unwrap_or_default()
     }
 
-    /// Development only: the test builds in the project's `assets/builds` (share codes in `.build` files, or XML), as a
-    /// JSON array of `{ name, path }` sorted by name; `[]` where there is no such folder (a packaged POBT).
-    pub fn dev_builds() -> String {
-        let base = host::service::FIRST_DIR.get().cloned().or_else(|| std::env::current_dir().ok());
-        let mut out: Vec<serde_json::Value> = base
-            .map(|b| b.join("assets").join("builds"))
-            .and_then(|dir| std::fs::read_dir(dir).ok())
-            .into_iter()
-            .flatten()
-            .filter_map(|e| e.ok().map(|e| e.path()))
-            .filter(|p| matches!(p.extension().and_then(|x| x.to_str()), Some("build" | "xml")))
-            .map(|p| {
-                let name = p.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
-                serde_json::json!({ "name": name, "path": p.to_string_lossy() })
-            })
-            .collect();
-        out.sort_by(|a, b| a["name"].as_str().cmp(&b["name"].as_str()));
-        serde_json::Value::Array(out).to_string()
-    }
-
     /// Where the build screens' Path of Building stands, as JSON `{ state: "idle" | "loading" | "ready" | "failed",
     /// error, version }`.
     pub fn service_status() -> String {

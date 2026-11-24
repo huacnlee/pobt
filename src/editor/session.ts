@@ -70,6 +70,22 @@ export function listBuilds(subPath: string, filter: string, sort?: SortMode): Pr
   return pob<BuildFolder>("builds", { subPath, filter, sort });
 }
 
+/** A new folder `name` in POB's builds folder `subPath`; its own sub path ("Act/New/"). */
+export async function newFolder(subPath: string, name: string): Promise<string> {
+  return (await pob<{ subPath: string }>("newFolder", { subPath, name })).subPath;
+}
+
+/** Renames a build or a folder of POB's builds folder, or copies it (`copy`) under the new name; its new path. */
+export async function renameEntry(entry: BuildEntry, name: string, copy = false): Promise<string> {
+  const args = { path: entry.path, subPath: entry.subPath, folder: !!entry.folder, name, copy };
+  return (await pob<{ path: string }>("renameEntry", args)).path;
+}
+
+/** Deletes a build, or a folder with all it holds, from POB's builds folder. */
+export async function deleteEntry(entry: BuildEntry): Promise<void> {
+  await pob("deleteEntry", { path: entry.path, folder: !!entry.folder });
+}
+
 /** Opens a build file of POB's builds folder; saving writes it back. */
 export async function openFile(entry: BuildEntry): Promise<void> {
   await run(() => pob("openFile", { path: entry.path, name: entry.name }), entry.name);
@@ -147,8 +163,15 @@ export const build = {
 
 /** Starts the Path of Building of `game` with no window; resolves once it is ready or failed. */
 export async function startService(game: Game): Promise<void> {
-  // The other game's Path of Building runs: it can only change with POBT started again (BuildEditor says so).
-  if (service.game() && service.game() !== game) return;
+  // The other game's Path of Building runs: the service stops it (its build closes) and starts this one.
+  if (service.game() && service.game() !== game) {
+    batch(() => {
+      build.open.set(false);
+      build.sidebar.set(null);
+      build.error.set("");
+      service.state.set("idle");
+    });
+  }
   if (service.state() === "ready" || service.state() === "loading") return;
   service.game.set(game);
   service.state.set("loading");

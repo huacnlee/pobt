@@ -141,6 +141,68 @@ pub fn load(path: &Path) -> (u32, u32, u32, u32) {
     (id, w, h, count)
 }
 
+/// The pictures of image `id` (a texture array's layers, or its one picture) packed into a few pages, so the canvas
+/// loads those rather than a file a layer: JSON `{ pages: [{ uri, w, h }], cells: [[page, x, y, w, h]] }`, a cell a
+/// layer in order, `page` 1-based. The pages are made once into the cache, named by the layers' files.
+pub fn atlas(id: u32) -> Option<String> {
+    static MADE: OnceLock<Mutex<HashMap<u32, String>>> = OnceLock::new();
+    let made = MADE.get_or_init(Default::default);
+    if let Some(json) = made.lock().unwrap().get(&id) {
+        return Some(json.clone());
+    }
+    let files: Vec<(PathBuf, u32, u32)> = {
+        let reg = registry();
+        let info = reg.images.get(id.wrapping_sub(1) as usize)?;
+        let mut list = vec![(info.file.clone()?, info.width, info.height)];
+        for l in &info.layers {
+            let i = reg.images.get(l.wrapping_sub(1) as usize)?;
+            list.push((i.file.clone()?, i.width, i.height));
+        }
+        list
+    };
+    // v2: pages kept under the canvas's 64 MB an image
+    let key = hash_of(("v2", &files));
+    let index = cache_dir().join(format!("atlas-{key:016x}.json"));
+    let json = match std::fs::read_to_string(&index) {
+        Ok(json) => json,
+        Err(_) => {
+            // a grid of cells of the largest layer's size, 2 pixels apart so the canvas's filtering keeps to a cell;
+            // a page under 4096 a side, as the canvas loads no image of 64 MB (4096 × 4096 × 4) or more
+            const MAX: u32 = 4095;
+            const PAD: u32 = 2;
+            let cw = files.iter().map(|f| f.1).max()?.max(1);
+            let ch = files.iter().map(|f| f.2).max()?.max(1);
+            let cols = ((MAX + PAD) / (cw + PAD)).max(1);
+            let rows = ((MAX + PAD) / (ch + PAD)).max(1);
+            let per = (cols * rows) as usize;
+            let mut pages = Vec::new();
+            let mut cells = Vec::new();
+            for (p, chunk) in files.chunks(per).enumerate() {
+                let n = chunk.len() as u32;
+                let (used_cols, used_rows) = (n.min(cols), n.div_ceil(cols));
+                let (pw, ph) = (used_cols * (cw + PAD) - PAD, used_rows * (ch + PAD) - PAD);
+                let mut page = RgbaImage::new(pw, ph);
+                for (i, (file, w, h)) in chunk.iter().enumerate() {
+                    let (x, y) = ((i as u32 % cols) * (cw + PAD), (i as u32 / cols) * (ch + PAD));
+                    if let Some(img) = decode(file) {
+                        imageops::replace(&mut page, &img, x as i64, y as i64);
+                    }
+                    cells.push(serde_json::json!([p + 1, x, y, w, h]));
+                }
+                let out = cache_dir().join(format!("atlas-{key:016x}-{p}.png"));
+                page.save(&out).ok()?;
+                pages.push(serde_json::json!({ "uri": &*uri_of(&out), "w": pw, "h": ph }));
+            }
+            let json = serde_json::json!({ "pages": pages, "cells": cells }).to_string();
+            // written last: a page missing makes it again
+            let _ = std::fs::write(&index, &json);
+            json
+        }
+    };
+    made.lock().unwrap().insert(id, json.clone());
+    Some(json)
+}
+
 /// `NewArtHandle`: CPU-side pixels to slice images from.
 pub fn art_load(path: &Path) -> Option<(u32, u32, u32)> {
     let img = decode(path)?;

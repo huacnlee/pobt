@@ -80,11 +80,33 @@ local function at(path)
 	return v
 end
 
+-- A new Tooltip for POB to fill: PoE1's POB constructs it with :Tooltip(), PoE2's in new() itself.
+local function tooltip()
+	local tip = new("Tooltip")
+	if rawget(common.classes.Tooltip, "Tooltip") then
+		tip:Tooltip()
+	end
+	return tip
+end
+
 -- What `ops` modules share.
-local service = { build = build, control = control, act = act, at = at, json = dkjson }
+local service = { build = build, control = control, act = act, at = at, json = dkjson, tooltip = tooltip }
 
 function ops.init()
 	return { version = launch.versionNumber or "" }
+end
+
+-- After opening a build. POB refusing one (a PoE1 build in PoE2's) shows its error and goes back to its build list:
+-- its message is the answer, and its prompt is dismissed so the next error shows too.
+local function opened()
+	local b = build()
+	if main.mode == "BUILD" and b and b.calcsTab and b.calcsTab.mainOutput then
+		return
+	end
+	local why = __pobt_lastError
+	__pobt_lastError = nil
+	launch.promptMsg = nil
+	error("Path of Building did not open the build" .. (why and ": " .. why:gsub("%^%x", "") or ""), 0)
 end
 
 -- Opens a build: `{ xml }`, or `{ code }` (a build code), named `name`.
@@ -97,8 +119,7 @@ function ops.open(a)
 	end
 	main:SetMode("BUILD", false, a.name or "POBT", xml)
 	after = function()
-		local b = build()
-		assert(b and b.calcsTab and b.calcsTab.mainOutput, "Path of Building did not open the build")
+		opened()
 		return ops.summary()
 	end
 	return nil, 3
@@ -110,8 +131,13 @@ end
 local helpers = require("Modules.BuildListHelpers")
 function ops.builds(a)
 	local subPath = a.subPath or ""
-	local index = helpers.ScanFolder("")
-	local list = helpers.FilterList(index, subPath, a.filter or "")
+	local list
+	if helpers.FilterList then
+		list = helpers.FilterList(helpers.ScanFolder(""), subPath, a.filter or "")
+	else
+		-- PoE2's POB scans one folder at a time, its filter matching file names in it
+		list = helpers.ScanFolder(subPath, a.filter or "")
+	end
 	local sort = a.sort or main.buildSortMode or "NAME"
 	helpers.SortList(list, sort)
 	local out = { }
@@ -130,6 +156,87 @@ function ops.builds(a)
 	return { buildPath = main.buildPath, subPath = subPath, sort = sort, list = out }
 end
 
+-- A new folder `name` in the builds folder `subPath`, as POB's "New Folder" makes it (Main.lua OpenNewFolderPopup: a
+-- name without \/:*?"<>| or control characters).
+function ops.newFolder(a)
+	local name = tostring(a.name or ""):gsub("^%s+", ""):gsub("%s+$", "")
+	assert(name ~= "" and not name:match("[\\/:%*%?\"<>|%c]"), "a folder name cannot have \\ / : * ? \" < > |")
+	local ok, msg = MakeDir(main.buildPath .. (a.subPath or "") .. name)
+	assert(ok, "could not create " .. name .. ": " .. tostring(msg))
+	return { subPath = (a.subPath or "") .. name .. "/" }
+end
+
+-- A build or folder of the builds folder, by its path (from `builds`): never anything outside it.
+local function entryPath(path)
+	path = tostring(path or "")
+	assert(path ~= "" and path:sub(1, #main.buildPath) == main.buildPath and not path:find("..", 1, true), "not in the builds folder")
+	return path
+end
+
+-- Renames a build or a folder (`{ path, subPath, folder, name }`) as POB's build list does, or copies it under that
+-- name (`copy`): a folder with all it holds. Answers its new path.
+function ops.renameEntry(a)
+	local path = entryPath(a.path)
+	local name = tostring(a.name or ""):gsub("^%s+", ""):gsub("%s+$", "")
+	assert(name ~= "" and not name:match("[\\/:%*%?\"<>|%c]"), "a name cannot have \\ / : * ? \" < > |")
+	local target = main.buildPath .. (a.subPath or "") .. name .. (a.folder and "" or ".xml")
+	-- a new name only differing in case is the same file on Windows: renaming to it is fine, copying is not
+	local existing = (a.copy or target:lower() ~= path:lower()) and io.open(target, "r")
+	if existing then
+		existing:close()
+		error("there is already one named " .. name, 0)
+	end
+	local ok, msg
+	if a.folder and a.copy then
+		-- as Main.lua's CopyFolder, with its errors answered instead of shown
+		local function copyFolder(src, dst)
+			local made, why = MakeDir(dst)
+			if not made then
+				return nil, why
+			end
+			for _, dirs in ipairs({ true, false }) do
+				local handle = NewFileSearch(src .. "/*", dirs)
+				while handle do
+					local fileName = handle:GetFileName()
+					local done, err
+					if dirs then
+						done, err = copyFolder(src .. "/" .. fileName, dst .. "/" .. fileName)
+					else
+						done, err = copyFile(src .. "/" .. fileName, dst .. "/" .. fileName)
+					end
+					if not done then
+						return nil, err
+					end
+					if not handle:NextFile() then
+						break
+					end
+				end
+			end
+			return true
+		end
+		ok, msg = copyFolder(path, target)
+	elseif a.copy then
+		ok, msg = copyFile(path, target)
+	else
+		ok, msg = os.rename(path, target)
+	end
+	assert(ok, tostring(msg))
+	return { path = target }
+end
+
+-- Deletes a build, or a folder with all it holds (`{ path, folder }`); the screens ask first, as POB does.
+function ops.deleteEntry(a)
+	local path = entryPath(a.path)
+	local ok, msg
+	if a.folder then
+		ok, msg = RemoveDir(path, true)
+	else
+		ok, msg = os.remove(path)
+	end
+	assert(ok, tostring(msg))
+	return { }
+end
+
 -- Tests only: points POB at another builds folder, so tests never touch the user's.
 function ops.__buildPath(a)
 	main.buildPath = a.path
@@ -140,8 +247,7 @@ end
 function ops.openFile(a)
 	main:SetMode("BUILD", a.path, a.name)
 	after = function()
-		local b = build()
-		assert(b and b.calcsTab and b.calcsTab.mainOutput, "Path of Building did not open the build")
+		opened()
 		return ops.summary()
 	end
 	return nil, 3

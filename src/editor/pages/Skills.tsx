@@ -51,31 +51,38 @@ export function SkillsPage() {
   /** A change to the build through POB's Skills tab (`{ group }` added unless given), then a recalculation. */
   const edit = (op: string, args: Record<string, unknown> = {}) => change(`skills.${op}`, { group: shown(), ...args }).then(bump);
 
-  // The gems POB's gem selectors offer for the shown group (the next gem's, and the imbued support's).
+  // The gems POB's gem selectors offer for the shown group (the next gem's, and the imbued support's). POB sorts them by
+  // each gem's DPS, which takes PoE2's POB a second or two: as POB does, they are read when a selector opens (for this
+  // group and calculation), not each time a group is shown.
+  const listKey = () => `${shown()}|${build.revision()}|${changes()}`;
+  const listed = signal("");
+  const list = () => listed.set(listKey());
   const choices = resource(
-    () => (page() === "skills" && view() && shown() && !locked() ? { revision: build.revision(), changes: changes(), group: shown() } : null),
+    () => (page() === "skills" && view() && shown() && !locked() && listed() === listKey() ? { revision: build.revision(), changes: changes(), group: shown() } : null),
     ({ group }) => gemChoices(group),
   );
+  // a group's list only, never the one shown before
+  const choiceList = () => (listed() === listKey() ? (choices() ?? []) : []);
   const imbuedChoices = resource(
-    () => (page() === "skills" && detail()?.imbued.shown && detail()?.imbued.enabled ? { revision: build.revision(), group: shown() } : null),
+    () => (page() === "skills" && detail()?.imbued?.shown && detail()?.imbued?.enabled ? { revision: build.revision(), group: shown() } : null),
     ({ group }) => gemChoices(group, true),
   );
   const gemItems = computed(() => {
     language();
-    return (choices() ?? []).map((g) => ({
+    return choiceList().map((g) => ({
       value: g.id,
       title: tr(g.name),
       group: g.canSupport ? s("supportsThis") : g.support ? s("support") : s("active"),
     }));
   });
-  const attrOf = computed(() => new Map((choices() ?? []).map((g) => [g.id, g.attr] as const)));
+  const attrOf = computed(() => new Map(choiceList().map((g) => [g.id, g.attr] as const)));
   // POB's English name of each gem offered: its picture is found by it (the titles are translated)
-  const nameOf = computed(() => new Map((choices() ?? []).map((g) => [g.id, g.name] as const)));
+  const nameOf = computed(() => new Map(choiceList().map((g) => [g.id, g.name] as const)));
   const imbuedItems = computed(() => {
     language();
     return (imbuedChoices() ?? []).map((g) => ({ value: g.id, title: tr(g.name) }));
   });
-  const imbuedValue = () => (imbuedChoices() ?? []).find((g) => g.name === detail()?.imbued.text)?.id ?? null;
+  const imbuedValue = () => (imbuedChoices() ?? []).find((g) => g.name === detail()?.imbued?.text)?.id ?? null;
   const showCount = () => (detail()?.gems ?? []).some((g) => g.controls.count.shown);
 
   const confirming = signal(false);
@@ -196,6 +203,7 @@ export function SkillsPage() {
                       countColumn={showCount()}
                       locked={locked()}
                       choices={gemItems()}
+                      onList={list}
                       attrOf={(id) => attrOf().get(id)}
                       nameOf={(id) => nameOf().get(id)}
                       edit={(op, args) => void edit(op, { gem: j(), ...args })}
@@ -211,6 +219,7 @@ export function SkillsPage() {
                       value={null}
                       searchable
                       placeholder={`+ ${s("addGem")}`}
+                      onOpen={list}
                       accessibilityLabel={s("addGem")}
                       renderItem={(item) => <GemChoiceRow value={item.value} title={item.title} name={nameOf().get(item.value)} attr={attrOf().get(item.value)} group={shown} />}
                       onChange={(id) => void edit("setGem", { id })}
@@ -234,32 +243,32 @@ export function SkillsPage() {
                     <Inline control={detail()?.includeInFullDPS} label="Include in Full DPS" onAct={(v) => void edit("setFullDPS", { on: v })} />
                     <Inline control={detail()?.count} label="Count" class="h-7 w-16" onAct={(v) => void edit("setGroupCount", { value: String(v) })} />
                   </View>
-                  <If when={detail()?.sockets.shown}>
+                  <If when={detail()?.sockets?.shown}>
                     <View class="flex-row flex-wrap items-center gap-x-4 gap-y-1.5">
-                      <ColoredText text={detail()?.sockets.label ?? ""} class="text-xs" />
-                      <If when={detail()?.optimiseSockets.shown}>
+                      <ColoredText text={detail()?.sockets?.label ?? ""} class="text-xs" />
+                      <If when={detail()?.optimiseSockets?.shown}>
                         <PobHover id={() => `optimise|${shown()}`} load={() => tipOf({ what: "optimiseSockets", group: shown() })}>
                           <Button
                             size="sm"
                             variant="secondary"
-                            label={tr(detail()?.optimiseSockets.label)}
-                            disabled={!detail()?.optimiseSockets.enabled}
+                            label={tr(detail()?.optimiseSockets?.label)}
+                            disabled={!detail()?.optimiseSockets?.enabled}
                             onPress={() => void edit("optimiseSockets")}
                           />
                         </PobHover>
                       </If>
                     </View>
                   </If>
-                  <If when={detail()?.imbuedLabel.shown}>
+                  <If when={detail()?.imbuedLabel?.shown}>
                     <View class="flex-row items-center gap-1.5">
                       <Text variant="caption" tone="muted">
-                        {labelText(detail()?.imbuedLabel.label)}
+                        {labelText(detail()?.imbuedLabel?.label)}
                       </Text>
                       <If
-                        when={detail()?.imbued.enabled}
+                        when={detail()?.imbued?.enabled}
                         else={
                           <Text tone="muted" class="w-56 px-2.5 text-xs">
-                            {tr(detail()?.imbued.text) || s("imbuedNone")}
+                            {tr(detail()?.imbued?.text) || s("imbuedNone")}
                           </Text>
                         }
                       >
@@ -269,7 +278,7 @@ export function SkillsPage() {
                           value={imbuedValue()}
                           searchable
                           placeholder={s("imbuedNone")}
-                          accessibilityLabel={labelText(detail()?.imbuedLabel.label)}
+                          accessibilityLabel={labelText(detail()?.imbuedLabel?.label)}
                           onChange={(id) => id !== imbuedValue() && void edit("setImbued", { id })}
                         />
                       </If>
@@ -278,8 +287,8 @@ export function SkillsPage() {
                           variant="ghost"
                           size="sm"
                           class="w-7 px-0"
-                          accessibilityLabel={labelText(detail()?.imbuedLabel.label)}
-                          disabled={!detail()?.imbuedClear.enabled || !detail()?.imbued.text}
+                          accessibilityLabel={labelText(detail()?.imbuedLabel?.label)}
+                          disabled={!detail()?.imbuedClear?.enabled || !detail()?.imbued?.text}
                           onPress={() => void edit("clearImbued")}
                         >
                           <Icon name="x" size={14} />
@@ -513,6 +522,8 @@ function GemRow(props: {
   locked: boolean;
   /** What POB's gem selector offers in this group (skills.gems), for replacing the gem. */
   choices: { value: string; title: string; group?: string }[];
+  /** A gem selector opened: its list is wanted. */
+  onList: () => void;
   attrOf: (id: string) => Attr | undefined;
   nameOf: (id: string) => string | undefined;
   edit: (op: string, args: Record<string, unknown>) => void;
@@ -554,6 +565,7 @@ function GemRow(props: {
                 />
               )}
               onChange={(id) => id !== props.gem.id && props.edit("setGem", { id })}
+              onOpen={props.onList}
             />
           </If>
         </PobHover>

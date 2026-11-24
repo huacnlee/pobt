@@ -24,6 +24,16 @@ export const page = signal<PageKey>((Pob.devEnv("POBT_PAGE") as PageKey) || "tre
 /** What the editor shows: POB's builds (first), a pasted build code to open, or the open build. */
 const view = signal<"list" | "import" | "build">("list");
 
+/** The title bar's back, a level up: from a build or the import to the builds; false on the builds (the launcher is
+ * next). */
+export function editorBack(): boolean {
+  if (view() === "list") return false;
+  view.set("list");
+  return true;
+}
+/** What the title bar's back leads to, when it is not the launcher. */
+export const editorBackLabel = (): string | undefined => (view() === "list" ? undefined : t("backToBuilds"));
+
 function Starting() {
   return (
     <View class="flex-1 items-center justify-center gap-4 p-8">
@@ -168,8 +178,6 @@ function Header() {
   };
   return (
     <View class="h-12 flex-row items-center gap-3 border-b border-border bg-card px-3">
-      <Button label={`‹ ${t("backToBuilds")}`} variant="ghost" size="sm" onPress={() => view.set("list")} />
-      <View class="h-6 w-px bg-border" />
       <Text variant="title" tone="primary" class="truncate tracking-widest">
         {sum()?.name ?? ""}
       </Text>
@@ -257,7 +265,9 @@ function BuildView() {
 /** The editor, filling its parent, on the Path of Building of `game`; `onBack` goes back to the launcher. `file`: a
  * build's XML file to open at once (POBT_BUILD, tests). */
 export function BuildEditor(props: { game: Game; file?: string; onBack: () => void }) {
-  if (service.state() === "idle") {
+  // Not started, or started on the other game (chosen again in the launcher): that one stops, its build closes.
+  if (service.state() === "idle" || (service.game() && service.game() !== props.game)) {
+    view.set("list");
     const text = props.file ? Pob.readBuildFile(props.file) : "";
     if (props.file && !text) build.error.set(`${props.file}: not readable`);
     loadArt(props.game);
@@ -269,16 +279,9 @@ export function BuildEditor(props: { game: Game; file?: string; onBack: () => vo
       }
     });
   }
-  // POB of the other game already runs in this run of POBT (chosen again in the legacy launcher).
-  const otherGame = () => !!service.game() && service.game() !== props.game;
   return (
     <View class="flex-1 bg-background">
-      <If when={otherGame()}>
-        <View class="flex-1 items-center justify-center">
-          <EmptyState title={t("restartForGame")} />
-        </View>
-      </If>
-      <If when={!otherGame() && service.state() === "ready"} else={<If when={!otherGame()}><Starting /></If>}>
+      <If when={service.state() === "ready"} else={<Starting />}>
         <If when={view() === "build" && (build.open() || build.loading() !== null)} else={
           <If when={view() === "import"} else={<BuildList onImport={() => view.set("import")} onOpened={() => view.set("build")} />}>
             <OpenBuild onCancel={() => view.set("list")} />

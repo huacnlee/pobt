@@ -20,6 +20,8 @@ static INDEX: RwLock<[Option<Arc<Index>>; 2]> = RwLock::new([None, None]);
 
 const MAX_AGE: Duration = Duration::from_secs(7 * 24 * 3600);
 const CDN: &str = "https://web.poecdn.com/image/";
+/// PoE2's art is not on the official site's CDN under its path: RePoE's export has it, beside its lists.
+const CDN2: &str = "https://repoe-fork.github.io/poe2/";
 
 fn source(poe2: bool) -> &'static str {
     if poe2 { "https://repoe-fork.github.io/poe2/" } else { "https://repoe-fork.github.io/" }
@@ -103,7 +105,7 @@ pub fn url(poe2: bool, name: &str, base: &str, unique: bool) -> String {
             // a gem: by its name, a support's with "Support" after it as POB may leave out
             base.is_empty().then(|| index.bases.get(name).or_else(|| index.bases.get(&format!("{name} Support")))).flatten()
         });
-    art.map(|a| format!("{CDN}{a}.png")).unwrap_or_default()
+    art.map(|a| format!("{}{a}.png", if poe2 { CDN2 } else { CDN })).unwrap_or_default()
 }
 
 /// The picture at `url` (one of [`url`]'s), downloaded once into the cache, as a file the screens can show. Some art
@@ -187,6 +189,10 @@ mod tests {
         assert_eq!(url(false, "Fireball", "", false), format!("{CDN}Art/2DItems/Gems/Fireball.png"));
         assert_eq!(url(false, "Added Fire Damage", "", false), format!("{CDN}Art/2DItems/Gems/Support/AddedFireDamage.png"));
         assert_eq!(url(false, "No Such Thing", "", false), "");
+        assert!(load(true));
+        let diamond = url(true, "Heart of the Well", "Diamond", false);
+        assert_eq!(diamond, format!("{CDN2}Art/2DItems/Jewels/DiamondJewel.png"));
+        assert!(picture(&diamond).is_some(), "{diamond}");
         // An active gem's frames side by side: the gem is kept, square.
         let file = picture(&format!("{CDN}Art/2DItems/Gems/Despair.png")).expect("Despair's picture");
         let img = image::open(file).unwrap();

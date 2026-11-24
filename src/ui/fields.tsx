@@ -72,6 +72,8 @@ export function Select(props: {
   renderItem?: (item: { value: string; title: string }) => JSX.Element;
   /** The trigger's text in place of the chosen item's title (a colour of the item's, say). */
   triggerContent?: JSX.Element;
+  /** It opens: items costly to make can be asked for then. */
+  onOpen?: () => void;
 }) {
   const chosen = () => {
     const find = (list: SelectItem[]): string | undefined => {
@@ -89,6 +91,7 @@ export function Select(props: {
       items={props.items}
       value={props.value}
       onChange={({ value }) => value !== null && props.onChange(value)}
+      onOpen={props.onOpen}
       accessibilityLabel={props.accessibilityLabel}
       placeholder={props.placeholder}
       searchable={props.searchable}

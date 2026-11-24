@@ -56,14 +56,14 @@ export type Detail = {
   includeInFullDPS: Control;
   /** "Count:" of a group an item or a passive grants. */
   count: Control;
-  /** "Item sockets: …" (its label), and the "Optimise Sockets" button. */
-  sockets: Control;
-  optimiseSockets: Control;
+  /** "Item sockets: …" (its label), and the "Optimise Sockets" button; missing on PoE2's POB, as the imbued support. */
+  sockets?: Control;
+  optimiseSockets?: Control;
   /** What POB says of a group an item or a passive grants (its label). */
   sourceNote: Control;
-  imbuedLabel: Control;
-  imbued: Control;
-  imbuedClear: Control;
+  imbuedLabel?: Control;
+  imbued?: Control;
+  imbuedClear?: Control;
   gems: Gem[];
 };
 

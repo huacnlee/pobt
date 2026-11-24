@@ -273,7 +273,9 @@ impl Dictionary {
     fn delta(&self, t: &str) -> Option<String> {
         let num = t.find(' ')?;
         let (value, rest) = (&t[..num], &t[num + 1..]);
+        // a length or a time keeps its unit ("-0.5m AoE Radius", "+1.2s ...")
         let digits = value.get(1..).unwrap_or("");
+        let digits = digits.strip_suffix(['m', 's']).unwrap_or(digits);
         if !value.starts_with(['+', '-'])
             || !digits.starts_with(|c: char| c.is_ascii_digit())
             || !digits.bytes().all(|c| c.is_ascii_digit() || b".,%".contains(&c))
@@ -732,6 +734,14 @@ mod tests {
         assert_eq!(d.translate(" has no base cooldown"), None);
     }
 
+    #[test]
+    fn deltas_with_units() {
+        let mut d = dict();
+        d.insert("AoE Radius:".into(), "范围效果半径:".into());
+        assert_eq!(d.translate("-0.5m AoE Radius").as_deref(), Some("-0.5m 范围效果半径"));
+        assert_eq!(d.translate("-0.5x AoE Radius"), None);
+    }
+
     /// The Items tab's tooltips: unique mods with value ranges, supports
     /// granted by items, and the lines POB writes around an item.
     #[test]
@@ -760,5 +770,3 @@ mod tests {
         assert_eq!(t("Drops from"), None);
     }
 }
-
-

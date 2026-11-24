@@ -44,6 +44,27 @@ export function ItemsPage() {
     return { item: itemOf(sel.item) };
   };
   const equippedIn = (id: number) => (d()?.slots ?? []).filter((x) => x.itemId === id);
+  // The slots, all items and the detail side by side once there is room for all three (the slots keep 520 wide)
+  const width = signal(0);
+  const wide = () => width() >= 1180;
+  const allItems = () => (
+    <Panel title={`${s("allItems")} (${d()!.items.length})`}>
+      <View class="p-1">
+        <If when={d()!.items.length} else={<Text tone="muted" class="p-2">{s("noItems")}</Text>}>
+          <Each of={d()!.items} key={(i) => i.id}>
+            {(it) => (
+              <ItemRow
+                item={it()}
+                equipped={equippedIn(it().id).length > 0}
+                selected={isSelected({ item: it().id })}
+                onPress={() => selection.set({ item: it().id })}
+              />
+            )}
+          </Each>
+        </If>
+      </View>
+    </Panel>
+  );
   const isSelected = (sel: Selection) => {
     const cur = selection();
     if (!cur || !sel) return false;
@@ -118,8 +139,9 @@ export function ItemsPage() {
           </View>
         </If>
         <If when={d()} else={<EmptyState title={data.error() ? s("failed") : s("loading")} />}>
-          <View class="flex-1 flex-row">
-            <Scroll class="flex-1" contentClass="gap-3 p-4">
+          <View class="flex-1 flex-row" onLayout={(e) => width.set(e.bounds.size.width)}>
+            {/* the slots, the build's items beside them (under them when there is no room), and what is chosen */}
+            <Scroll class={wide() ? "w-[520px] shrink-0" : "flex-1"} contentClass="gap-3 p-4">
               <Panel title={tr("Equipped items:").replace(/[:：]\s*$/, "")}>
                 <View class="p-1">
                   <Each of={gear()} key={(x) => x.name}>
@@ -136,12 +158,22 @@ export function ItemsPage() {
                 </View>
               </Panel>
               <If when={flasks().length}>
-                <Panel title={s("flasks")}>
+                {/* PoE2 has charms in this row too ("Charm 1") */}
+                <Panel title={flasks().some((x) => /^Charm /.test(x.name)) ? s("flasksCharms") : s("flasks")}>
                   <View class="p-1">
                     <Each of={flasks()} key={(x) => x.name}>
                       {(row) => (
-                        <View class="flex-row items-center gap-1">
-                          <View class="w-8 items-center">
+                        <View class="flex-row items-center gap-2">
+                          <SlotRow
+                            row={row()}
+                            item={itemOf(row().itemId)}
+                            itemOf={itemOf}
+                            selected={isSelected({ slot: row().name })}
+                            onPress={() => selection.set({ slot: row().name })}
+                            class="flex-1"
+                          />
+                          {/* after the drop-down, so the flasks' names and drop-downs line up with the other slots' */}
+                          <View class="w-6 items-center">
                             <If when={row().itemId > 0}>
                               <Checkbox
                                 checked={row().active}
@@ -151,14 +183,6 @@ export function ItemsPage() {
                               />
                             </If>
                           </View>
-                          <SlotRow
-                            row={row()}
-                            item={itemOf(row().itemId)}
-                            itemOf={itemOf}
-                            selected={isSelected({ slot: row().name })}
-                            onPress={() => selection.set({ slot: row().name })}
-                            class="flex-1"
-                          />
                         </View>
                       )}
                     </Each>
@@ -182,24 +206,14 @@ export function ItemsPage() {
                   </View>
                 </Panel>
               </If>
-              <Panel title={`${s("allItems")} (${d()!.items.length})`}>
-                <View class="p-1">
-                  <If when={d()!.items.length} else={<Text tone="muted" class="p-2">{s("noItems")}</Text>}>
-                    <Each of={d()!.items} key={(i) => i.id}>
-                      {(it) => (
-                        <ItemRow
-                          item={it()}
-                          equipped={equippedIn(it().id).length > 0}
-                          selected={isSelected({ item: it().id })}
-                          onPress={() => selection.set({ item: it().id })}
-                        />
-                      )}
-                    </Each>
-                  </If>
-                </View>
-              </Panel>
+              <If when={!wide()}>{allItems()}</If>
             </Scroll>
-            <Scroll class="w-[380px] border-l border-border" contentClass="gap-3 p-4">
+            <If when={wide()}>
+              <Scroll class="min-w-[280px] flex-1 border-l border-border" contentClass="gap-3 p-4">
+                {allItems()}
+              </Scroll>
+            </If>
+            <Scroll class="w-[380px] shrink-0 border-l border-border" contentClass="gap-3 p-4">
               {/* a new choice builds its view again, so it fades in */}
               <Each of={[selectionKey()]} key={(k) => k}>
                 {() => (
@@ -285,7 +299,7 @@ function SlotRow(props: {
           accessibilityLabel={`${slotLabel(props.row)}: ${props.item ? tr(props.item.name) : s("empty")}`}
           class="w-40"
         >
-          <ItemArt item={props.item} size={36} />
+          <ItemArt item={props.item} size={24} />
           <Text variant="caption" tone="muted" class="flex-1 truncate">
             {slotLabel(props.row)}
           </Text>
@@ -301,7 +315,7 @@ function ItemRow(props: { item: ItemInfo; equipped: boolean; selected: boolean; 
   return (
     <ItemHover id={props.item.id} rarity={rarityOf(props.item.rarity)}>
       <ListRow selected={props.selected} onPress={props.onPress} accessibilityLabel={tr(props.item.name)}>
-        <ItemArt item={props.item} size={36} />
+        <ItemArt item={props.item} size={24} />
         <View class="flex-1 flex-row items-center gap-2">
           <Text class={`shrink truncate ${RARITY_TEXT[rarityOf(props.item.rarity)]}`}>{tr(props.item.title ?? props.item.name)}</Text>
           <If when={props.item.title && props.item.base}>
@@ -380,12 +394,13 @@ function Detail(props: {
                         >
                           <ItemHover id={it().id} rarity={rarityOf(it().rarity)} slot={slot().name}>
                             <ListRow
+                              pressOnRelease
                               selected={slot().itemId === it().id}
                               onPress={() => void equip(slot(), it().id)}
                               accessibilityLabel={tr(it().name)}
                               accessibilityHint={s("compareHint")}
                             >
-                              <ItemArt item={it()} size={36} />
+                              <ItemArt item={it()} size={24} />
                               <Text class={`flex-1 truncate ${RARITY_TEXT[rarityOf(it().rarity)]}`}>{tr(it().name)}</Text>
                               <If when={slot().itemId === it().id}>
                                 <Badge label={s("equipped")} tone="primary" />
@@ -458,7 +473,7 @@ function SlotChoice(props: { slot: string; item?: ItemInfo; title: string }) {
       {(it) => (
         <ItemHover class="flex-1" id={it().id} rarity={rarityOf(it().rarity)} slot={props.slot}>
           <View class="flex-row items-center gap-2">
-            <ItemArt item={it()} size={28} />
+            <ItemArt item={it()} size={24} />
             <Text class={`flex-1 text-sm truncate ${RARITY_TEXT[rarityOf(it().rarity)]}`}>{props.title}</Text>
           </View>
         </ItemHover>

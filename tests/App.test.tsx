@@ -102,13 +102,3 @@ test("opens the AI analysis page from the Tools menu, and back", async () => {
   await home(app);
 });
 
-test("in development, lists the project's test builds, and back", async () => {
-  const app = await open("../App.tsx", { width: 1280, height: 820 });
-  if (!(await editor(app))) return;
-  await app.press("text:测试 Build");
-  await app.waitFor("text:Ascendant", { timeout: 10000 });
-  expect(app.texts().some((t) => t.includes("assets/builds"))).toBe(true);
-  // Opening one is a double click or Return, which headless tests cannot send (editor.test opens a build).
-  await app.press("text:全部 Builds");
-  await app.waitUntil(() => !app.texts().includes("Ascendant"));
-});

@@ -1,27 +1,18 @@
 // The editor's first screen: the builds Path of Building keeps, in its own builds folder and as its build list shows
 // them (Modules/BuildListHelpers.lua: folders first, POB's sort and search). Opening one and saving writes the same
 // file, so Path of Building and POBT share every build.
-import { effect, resource, signal, untracked, View } from "nsh";
+import { type ContextMenuEvent, effect, resource, signal, untracked, View } from "nsh";
 import { Tree, type TreeEntry, type TreeItem } from "nsh/base";
-import { shellInfo } from "nsh/updater";
-import { Pob } from "pobt/native";
-import { Button, EmptyState, Icon, Select, Text, TextField } from "../ui";
-import { BODY, BrassButton, C, DISPLAY, Gate, GoldRule, Plaque, PressButton, Subtitle, Title } from "../ui/launcher";
+import { Menu } from "nsh/desktop";
+import { Button, EmptyState, Icon, Modal, Select, Text, TextField } from "../ui";
+import { BODY, BrassButton, C, DISPLAY, Gate, GoldRule, Plaque, Subtitle, Title } from "../ui/launcher";
 import { WASH } from "../ui/motion";
 import { t, tr } from "./i18n";
-import { build, type BuildEntry, listBuilds, newBuild, openBuild, openFile, type SortMode } from "./session";
+import { build, type BuildEntry, deleteEntry, listBuilds, newBuild, newFolder, openFile, renameEntry, type SortMode } from "./session";
 
 /** The folders expanded and the sort: kept while the editor is open, as POB keeps them. */
 const expanded = signal<string[]>([]);
 const sort = signal<SortMode | undefined>(undefined);
-/** Development only (a run with no packaged version): the list shows the project's test builds (assets/builds). */
-const DEV = !shellInfo().version;
-const devShown = signal(false);
-function devEntries(filter: string): BuildEntry[] {
-  const list = JSON.parse(Pob.devBuilds()) as { name: string; path: string }[];
-  const f = filter.toLowerCase();
-  return list.filter((b) => !f || b.name.toLowerCase().includes(f)).map((b) => ({ name: b.name, path: b.path, subPath: "" }) as BuildEntry);
-}
 
 function ago(seconds?: number): string {
   if (!seconds) return "";
@@ -33,14 +24,14 @@ function ago(seconds?: number): string {
 /** A folder's id in the tree: its sub path ("Act/" for Builds/Act). */
 const folderId = (e: BuildEntry) => `${e.subPath}${e.folder}/`;
 
-function Row(props: { entry?: BuildEntry; tree: TreeEntry }) {
+function Row(props: { entry?: BuildEntry; tree: TreeEntry; onMenu?: (e: ContextMenuEvent) => void }) {
   const e = () => props.entry;
   const cls = () => {
     const a = e()?.ascendClassName;
     return tr(a && a !== "None" ? a : (e()?.className ?? ""));
   };
   return (
-    <View class="h-10 flex-1 flex-row items-center gap-3 pr-4" style={{ paddingLeft: 12 + props.tree.depth * 18 }}>
+    <View class="h-10 flex-1 flex-row items-center gap-3 pr-4" style={{ paddingLeft: 12 + props.tree.depth * 18 }} onContextMenu={props.onMenu}>
       <View class="w-4 items-center">
         <If when={props.tree.folder} else={<View style={{ width: 5, height: 5, backgroundColor: C.trim, transform: [{ rotate: "45deg" }] }} />}>
           <View class="transition-transform duration-180 group-aria-expanded:rotate-90 motion-reduce:transition-none">
@@ -105,7 +96,7 @@ export function BuildList(props: { onImport: () => void; onOpened: () => void })
       for (const sub of expanded()) load(sub);
     });
   });
-  const entries = () => (devShown() ? devEntries(filter()) : (top()?.list ?? []));
+  const entries = () => top()?.list ?? [];
   const byId = new Map<string, BuildEntry>();
   const itemsOf = (list: BuildEntry[]): TreeItem[] =>
     list.map((e) => {
@@ -130,7 +121,7 @@ export function BuildList(props: { onImport: () => void; onOpened: () => void })
     // The build screen shows at once (loading); POB reads the file behind it.
     error.set("");
     props.onOpened();
-    void (devShown() ? openBuild(Pob.readBuildFile(e.path), e.name) : openFile(e)).catch((err) =>
+    void openFile(e).catch((err) =>
       build.error.set(`${t("openFailed")}: ${String((err as Error).message ?? err)}`),
     );
   };
@@ -140,6 +131,68 @@ export function BuildList(props: { onImport: () => void; onOpened: () => void })
     { value: "EDITED", title: t("sortEdited") },
     { value: "LEVEL", title: t("sortLevel") },
   ];
+  // The toolbar's New folder makes one in the folder selected, or the selected build's, or the top.
+  const selected = signal<string | null>(null);
+  const target = () => {
+    const e = byId.get(selected() ?? "");
+    return e ? (e.folder ? folderId(e) : e.subPath) : "";
+  };
+  // The dialog open: a name for a new folder in `parent`, a new name for a build or a folder (or its copy), or deleting it.
+  const dialog = signal<Dialog | null>(null);
+  // Reads the top again and the folders open; `open` (a folder's id) is opened too.
+  const refresh = (open?: string) => {
+    top.refetch();
+    if (open && !expanded().includes(open)) expanded.set([...expanded(), open]);
+    for (const sub of expanded()) load(sub);
+  };
+  const named = async (name: string) => {
+    const d = dialog();
+    if (!d || d.kind === "delete") return;
+    if (d.kind === "newFolder") {
+      const sub = await newFolder(d.parent, name);
+      refresh(d.parent || undefined);
+      selected.set(sub);
+      return;
+    }
+    const path = await renameEntry(d.entry, name, d.kind === "copy");
+    if (d.kind === "rename" && d.entry.folder) {
+      // the folder's id changes: what was open in it is open under the new one
+      const was = folderId(d.entry);
+      const now = `${d.entry.subPath}${name}/`;
+      expanded.set(expanded().map((id) => (id.startsWith(was) ? now + id.slice(was.length) : id)));
+    }
+    refresh();
+    selected.set(d.entry.folder ? `${d.entry.subPath}${name}/` : path);
+  };
+  const remove = async (e: BuildEntry) => {
+    await deleteEntry(e);
+    if (e.folder) expanded.set(expanded().filter((id) => !id.startsWith(folderId(e))));
+    refresh();
+    selected.set(null);
+  };
+  // The right-click menu of a build, of a folder, or (no entry) of the list's empty space: POB's build list's actions.
+  const menu = (e: BuildEntry | undefined, ev: ContextMenuEvent) => {
+    if (e) selected.set(e.folder ? folderId(e) : e.path);
+    const newHere = { label: t("newFolder"), onSelect: () => dialog.set({ kind: "newFolder", parent: e ? (e.folder ? folderId(e) : e.subPath) : "" }) };
+    void Menu.popup(
+      e
+        ? [
+            !e.folder && { label: t("openBuild"), onSelect: () => open(e.path) },
+            !e.folder && { type: "separator" as const },
+            { label: t("rename"), onSelect: () => dialog.set({ kind: "rename", entry: e }) },
+            { label: t("copy"), onSelect: () => dialog.set({ kind: "copy", entry: e }) },
+            { label: t("delete"), onSelect: () => dialog.set({ kind: "delete", entry: e }) },
+            { type: "separator" as const },
+            newHere,
+          ]
+        : [newHere],
+      ev.pagePosition,
+    );
+  };
+  const nameDialog = () => {
+    const d = dialog();
+    return d && d.kind !== "delete" ? d : null;
+  };
   const create = () => {
     props.onOpened();
     void newBuild().catch((err) => build.error.set(String((err as Error).message ?? err)));
@@ -167,15 +220,10 @@ export function BuildList(props: { onImport: () => void; onOpened: () => void })
             <Text style={{ fontFamily: BODY, fontSize: 12, color: C.muted }}>{`${entries().length}`}</Text>
           </If>
           <View class="flex-1" />
+          {/* importing is what is done most; a new build less so */}
+          <BrassButton label={t("newFolder")} dark onPress={() => dialog.set({ kind: "newFolder", parent: target() })} />
+          <BrassButton label={t("create")} dark onPress={create} />
           <BrassButton label={t("importCode")} onPress={props.onImport} />
-          {/* New: the launcher's red banner */}
-          <PressButton onPress={create} style={{ width: 200 }}>
-            {(down) => (
-              <Plaque kind={() => "red"} height={44} pressed={down}>
-                <Text style={{ fontFamily: DISPLAY, fontSize: 16, fontWeight: "700", letterSpacing: 2, color: "#f6e6c2" }}>{t("create")}</Text>
-              </Plaque>
-            )}
-          </PressButton>
         </View>
         <If when={error() || build.error() || top.error()}>
           <Text style={{ fontFamily: BODY, fontSize: 12, color: C.red }}>{error() || build.error() || String(top.error())}</Text>
@@ -184,6 +232,7 @@ export function BuildList(props: { onImport: () => void; onOpened: () => void })
         <View class="flex-1" style={{ paddingTop: 22 }}>
           <View
             class="flex-1 overflow-hidden"
+            onContextMenu={(ev) => menu(undefined, ev)}
             style={{
               borderWidth: 1,
               borderColor: C.trimHi,
@@ -200,10 +249,12 @@ export function BuildList(props: { onImport: () => void; onOpened: () => void })
               onExpandedChange={(e) => expanded.set(e.expanded)}
               onExpand={(e) => load(e.id)}
               onAction={(e) => open(e.id)}
+              selected={selected()}
+              onSelectedChange={(e) => selected.set(e.selected)}
               accessibilityLabel={t("builds")}
               class="flex-1"
               itemClass={`group ${WASH} hover:bg-[rgba(177,141,78,0.10)] selected:bg-[rgba(177,141,78,0.22)] focus-visible:bg-[rgba(177,141,78,0.16)] disabled:opacity-60`}
-              renderItem={(e) => <Row entry={byId.get(e.id)} tree={e} />}
+              renderItem={(e) => <Row entry={byId.get(e.id)} tree={e} onMenu={(ev) => menu(byId.get(e.id), ev)} />}
               empty={<EmptyState title={top.loading() ? "" : t("emptyFolder")} detail={top.loading() ? "" : t("emptyFolderHint")} />}
             />
           </View>
@@ -211,7 +262,7 @@ export function BuildList(props: { onImport: () => void; onOpened: () => void })
             <View style={{ width: 260 }}>
               <Plaque kind={() => "dark"} height={46}>
                 <Text style={{ fontFamily: DISPLAY, fontSize: 19, fontWeight: "700", letterSpacing: 3, color: C.goldHi }}>
-                  {devShown() ? t("devBuilds") : t("builds")}
+                  {t("builds")}
                 </Text>
               </Plaque>
             </View>
@@ -219,15 +270,146 @@ export function BuildList(props: { onImport: () => void; onOpened: () => void })
         </View>
         <View class="flex-row items-center gap-3">
           <Text class="flex-1 truncate" style={{ fontFamily: BODY, fontSize: 12, color: C.muted }}>
-            {devShown() ? "assets/builds" : (top()?.buildPath ?? "")}
+            {top()?.buildPath ?? ""}
             {"  ·  "}
             {t("openHint")}
           </Text>
-          <If when={DEV}>
-            <Button label={devShown() ? t("allBuilds") : t("devBuilds")} variant="ghost" size="sm" onPress={() => devShown.set(!devShown())} />
-          </If>
         </View>
       </View>
+      <NameDialog
+        open={!!nameDialog()}
+        title={t(nameDialog()?.kind === "rename" ? "rename" : nameDialog()?.kind === "copy" ? "copy" : "newFolder")}
+        initial={(() => {
+          const d = nameDialog();
+          return d && d.kind !== "newFolder" ? (d.entry.folder ?? d.entry.name ?? "") : "";
+        })()}
+        where={(() => {
+          const d = nameDialog();
+          return d ? (d.kind === "newFolder" ? d.parent : d.entry.subPath) : "";
+        })()}
+        onClose={() => dialog.set(null)}
+        onName={named}
+      />
+      <ConfirmDelete entry={(() => {
+        const d = dialog();
+        return d?.kind === "delete" ? d.entry : null;
+      })()} onClose={() => dialog.set(null)} onDelete={remove} />
     </View>
+  );
+}
+
+type Dialog = { kind: "newFolder"; parent: string } | { kind: "rename" | "copy" | "delete"; entry: BuildEntry };
+
+
+/** A name for a new folder, or a new name for a build or a folder (or its copy), in `where` ("" for the top). */
+function NameDialog(props: { open: boolean; title: string; initial: string; where: string; onClose: () => void; onName: (name: string) => Promise<void> }) {
+  const name = signal("");
+  const error = signal("");
+  const busy = signal(false);
+  // each opening starts from the entry's name
+  effect(() => {
+    if (!props.open) return;
+    const first = props.initial;
+    untracked(() => {
+      name.set(first);
+      error.set("");
+    });
+  });
+  const done = async () => {
+    if (!name().trim()) return;
+    busy.set(true);
+    try {
+      await props.onName(name().trim());
+      props.onClose();
+    } catch (e) {
+      error.set(String((e as Error).message ?? e));
+    } finally {
+      busy.set(false);
+    }
+  };
+  return (
+    <Modal
+      open={props.open}
+      onClose={props.onClose}
+      title={props.title}
+      actions={
+        <View class="flex-row justify-end gap-2">
+          <Button label={tr("Cancel")} variant="ghost" onPress={props.onClose} />
+          <Button label={t("ok")} variant="primary" busy={busy()} disabled={!name().trim()} onPress={() => void done()} />
+        </View>
+      }
+    >
+      <View class="gap-2">
+        <If when={props.where}>
+          <Text tone="muted" variant="caption">
+            {props.where}
+          </Text>
+        </If>
+        <TextField
+          value={name()}
+          onChange={(v) => {
+            name.set(v);
+            error.set("");
+          }}
+          onSubmit={() => void done()}
+          accessibilityLabel={t("name")}
+          placeholder={t("name")}
+          autoFocus
+        />
+        <If when={error()}>
+          <Text tone="destructive" variant="caption">
+            {error()}
+          </Text>
+        </If>
+      </View>
+    </Modal>
+  );
+}
+
+/** Asks before deleting a build, or a folder with all it holds: it cannot be undone. */
+function ConfirmDelete(props: { entry: BuildEntry | null; onClose: () => void; onDelete: (e: BuildEntry) => Promise<void> }) {
+  const error = signal("");
+  const busy = signal(false);
+  const go = async () => {
+    const e = props.entry;
+    if (!e) return;
+    busy.set(true);
+    try {
+      await props.onDelete(e);
+      error.set("");
+      props.onClose();
+    } catch (err) {
+      error.set(String((err as Error).message ?? err));
+    } finally {
+      busy.set(false);
+    }
+  };
+  const close = () => {
+    error.set("");
+    props.onClose();
+  };
+  return (
+    <Modal
+      open={!!props.entry}
+      onClose={close}
+      title={t("delete")}
+      actions={
+        <View class="flex-row justify-end gap-2">
+          <Button label={tr("Cancel")} variant="ghost" onPress={close} />
+          <Button label={t("delete")} variant="destructive" busy={busy()} onPress={() => void go()} />
+        </View>
+      }
+    >
+      <View class="gap-2">
+        <Text>
+          {props.entry?.folder ? t("deleteFolder").replace("{name}", props.entry.folder) : t("deleteBuild").replace("{name}", props.entry?.name ?? "")}
+        </Text>
+        <If when={error()}>
+          <Text tone="destructive" variant="caption">
+            {error()}
+          </Text>
+        </If>
+      </View>
+    </Modal>
   );
 }

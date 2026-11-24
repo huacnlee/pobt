@@ -97,7 +97,21 @@ export function TreePage() {
       const id = asked();
       return id === null ? undefined : `${id}:${build.revision()}`;
     },
-    (key) => pob<NodeInfo>("tree.node", { id: Number(key.split(":")[0]) }),
+    // POB failing to say shows why in the tooltip (after its title line, which the tooltip skips), not "calculating"
+    (key) => {
+      const id = Number(key.split(":")[0]);
+      return pob<NodeInfo>("tree.node", { id }).catch(
+        (e): NodeInfo => ({
+          id,
+          alloc: false,
+          reachable: false,
+          path: [],
+          depends: [],
+          lines: [{ text: "" }, { text: `^xDD0022${String((e as Error).message ?? e)}` }],
+          masteries: [],
+        }),
+      );
+    },
   );
   const current = () => {
     const i = info();
@@ -394,6 +408,7 @@ export function TreePage() {
                 <Each of={mastery()?.effects ?? []} key={(e) => e.id}>
                   {(e) => (
                     <ListRow
+                      pressOnRelease
                       accessibilityLabel={e().label.split(" / ").map((s) => tr(s)).join(" / ")}
                       onPress={() => {
                         const m = mastery();

@@ -216,7 +216,7 @@ export function TreeView(props: TreeViewProps) {
     // the background, tiled from the tree's origin (bg.width × 1.33 × 2.5 a tile), over the tree only
     const bg = art.data.sprites[art.data.background - 1];
     if (bg) {
-      const tile = bg[5] * ART_SCALE * 2.5;
+      const tile = bg[5] * (art.data.artScale ?? ART_SCALE) * 2.5;
       const b = m.bounds;
       const x1 = Math.min(c.x1, b.x1);
       const y1 = Math.min(c.y1, b.y1);
@@ -226,7 +226,19 @@ export function TreeView(props: TreeViewProps) {
         }
       }
     }
-    for (const [classId, s, x, y] of art.data.classArt) if (classId === props.classId) drawSprite(cx, art, s, x, y);
+    // PoE2: an ascendancy's background in place of its class's ("*"), and the lit ring turned
+    const mine = art.data.classArt.filter((a) => a[0] === props.classId);
+    const ascShown = mine.some((a) => a[4] && a[4] !== "*" && own.has(a[4]));
+    for (const [, s, x, y, who, angle] of mine) {
+      if (who === "*" ? ascShown : who && !own.has(who)) continue;
+      if (angle) {
+        cx.save();
+        cx.translate(x, y);
+        cx.rotate(angle);
+        drawSprite(cx, art, s, 0, 0);
+        cx.restore();
+      } else drawSprite(cx, art, s, x, y);
+    }
     for (const g of art.data.groups) {
       const ext = spriteExtent(art, g[2]);
       if (!ext || !inside(c, g[0], g[1], Math.max(ext.hw, ext.hh * 2))) continue;
