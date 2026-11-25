@@ -189,7 +189,8 @@ impl Reverse {
             if record.len() < 2 {
                 continue;
             }
-            let en = String::from_utf8_lossy(&record[0]).trim_start_matches('\u{feff}').trim().to_string();
+            // a mod of several lines with "\n" between them, however git checked the file out
+            let en = String::from_utf8_lossy(&record[0]).trim_start_matches('\u{feff}').trim().replace("\r\n", "\n");
             let zh = String::from_utf8_lossy(&record[1]).trim().to_string();
             self.insert(en, &zh);
         }
