@@ -32,11 +32,12 @@ async function get(url, init) {
 const tencent = JSON.parse(
   await get(TENCENT, { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36" } }),
 );
-// Chinese by trade id, without the "(区域)" of a mod local to its item (the English has none).
+// Chinese by trade id, without the "(区域)" of a mod local to its item (the English has none). A mod of several lines
+// stays whole, as the English has it: Tencent breaks some of them elsewhere ("敌人每受到一种元素异常状态影响，\n击中和
+// 异常状态造成的元素伤害提高 #%").
 const zh = new Map();
 for (const group of tencent.result) {
   for (const e of group.entries) {
-    if (e.text.includes("\n")) continue;
     zh.set(e.id, e.text.replace(/\s*[(（]区域[)）]\s*$/, "").trim());
   }
 }

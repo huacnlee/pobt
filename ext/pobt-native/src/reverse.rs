@@ -58,9 +58,10 @@ fn unmark(s: &str) -> String {
 }
 
 /// Full-width forms as ASCII ("（辅）" as "(辅)"), with no whitespace: Tencent's
-/// text and the dictionary's differ in both; and no markup.
+/// text and the dictionary's differ in both; and no markup. A negative number
+/// after Tencent's "+" ("所有元素抗性 +-11%") as the number alone.
 fn normalize(s: &str) -> String {
-    unmark(s)
+    let t: String = unmark(s)
         .chars()
         .filter(|c| !c.is_whitespace() && *c != '\u{3000}')
         .map(|c| match c {
@@ -68,7 +69,8 @@ fn normalize(s: &str) -> String {
             '\u{3001}' => ',',
             c => c,
         })
-        .collect()
+        .collect();
+    t.replace("+-", "-")
 }
 
 /// The Chinese of a template made a key: `{N}` and `#` become holes, and so
@@ -342,5 +344,13 @@ mod tests {
         assert_eq!(r.english("瓦尔法衣").as_deref(), Some("Vaal Regalia"));
         assert_eq!(r.english("猎首").as_deref(), Some("Headhunter"));
         assert_eq!(r.english("+80 最大生命").as_deref(), Some("+80 to maximum Life"));
+        assert_eq!(r.english("所有元素抗性 +-11%").as_deref(), Some("-11% to all Elemental Resistances"));
+        assert_eq!(r.english("范围内的天赋技能无需连接到你的天赋树即可配置").as_deref(), Some("Passive Skills in Radius can be Allocated without being connected to your tree"));
+        assert_eq!(r.english("只影响 巨大 环形范围内的天赋").as_deref(), Some("Only affects Passives in Massive Ring"));
+        // a mod of two lines, which Tencent breaks elsewhere than the English
+        assert_eq!(
+            r.english("敌人每受到一种元素异常状态影响，\n击中和异常状态造成的元素伤害提高 30%").as_deref(),
+            Some("30% increased Elemental Damage with Hits and Ailments for\neach type of Elemental Ailment on Enemy")
+        );
     }
 }
