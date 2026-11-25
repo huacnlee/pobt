@@ -19,6 +19,14 @@ const FIRST: &[&str] = &[
     "passiveTree.csv",
 ];
 
+/// A cluster jewel's enchant as Tencent words its start, and the English of
+/// it: what follows it Tencent leaves in English ("增加的小天赋获得：12%
+/// increased Damage with Bows") or words in Chinese, as any other mod.
+const LEADS: &[(&str, &str)] = &[
+    ("增加的小天赋获得", "Added Small Passive Skills grant: "),
+    ("增加的小天赋还获得", "Added Small Passive Skills also grant: "),
+];
+
 fn rank(name: &str) -> usize {
     FIRST.iter().position(|f| name.starts_with(f)).unwrap_or(FIRST.len())
 }
@@ -216,7 +224,21 @@ impl Reverse {
         if let Some(en) = self.exact.get(&t) {
             return Some(en.clone());
         }
-        self.template(&t, true).or_else(|| self.template(&t, false))
+        self.template(&t, true).or_else(|| self.template(&t, false)).or_else(|| self.lead(zh))
+    }
+
+    /// `zh` as one of `LEADS` and the mod after it.
+    fn lead(&self, zh: &str) -> Option<String> {
+        let zh = zh.trim();
+        let (rest, en) = LEADS.iter().find_map(|(lead, en)| {
+            let rest = zh.strip_prefix(lead)?;
+            Some((rest.strip_prefix('：').or_else(|| rest.strip_prefix(':'))?.trim(), en))
+        })?;
+        if rest.is_empty() {
+            return None;
+        }
+        let rest = if rest.chars().any(|c| c as u32 >= 0x2e80) { self.english(rest)? } else { rest.to_string() };
+        Some(format!("{en}{rest}"))
     }
 
     /// The English of a gem's name: as `english`, or a support's name with
@@ -304,6 +326,12 @@ mod tests {
         assert_eq!(r.english("附加火焰伤害（辅）").as_deref(), Some("Added Fire Damage"));
         assert_eq!(r.english("2 换 1").as_deref(), Some("Swap 2 and 1"));
         assert_eq!(r.english("未知词缀 5"), None);
+        assert_eq!(
+            r.english("增加的小天赋获得：12% increased Damage with Bows").as_deref(),
+            Some("Added Small Passive Skills grant: 12% increased Damage with Bows")
+        );
+        assert_eq!(r.english("增加的小天赋还获得：生命上限提高 4%").as_deref(), Some("Added Small Passive Skills also grant: 4% increased maximum Life"));
+        assert_eq!(r.english("增加的小天赋获得：未知词缀 5"), None);
     }
 
     /// The real dictionary turns a few of Tencent's lines back.
