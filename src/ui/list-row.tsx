@@ -11,6 +11,7 @@ export function ListRow(props: {
   onPress?: () => void;
   pressOnRelease?: boolean;
   accessibilityLabel: string;
+  /** Kept for when POBT moves past NSH 0.6.1, whose `Button` takes no `accessibilityHint`: not read out yet. */
   accessibilityHint?: string;
   class?: string;
   children?: JSX.Element;
@@ -37,7 +38,6 @@ export function ListRow(props: {
         props.onPress?.();
       }}
       accessibilityLabel={props.accessibilityLabel}
-      accessibilityHint={props.accessibilityHint}
       class={`min-h-8 flex-row items-center gap-2 rounded-sm px-2.5 ${WASH} hover:bg-accent/60 active:bg-accent selected:bg-accent focus-visible:ring-2 focus-visible:ring-ring ${props.class ?? ""}`}
     >
       {props.children}

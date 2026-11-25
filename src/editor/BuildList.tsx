@@ -255,8 +255,13 @@ export function BuildList(props: { onImport: () => void; onOpened: () => void })
               class="flex-1"
               itemClass={`group ${WASH} hover:bg-[rgba(177,141,78,0.10)] selected:bg-[rgba(177,141,78,0.22)] focus-visible:bg-[rgba(177,141,78,0.16)] disabled:opacity-60`}
               renderItem={(e) => <Row entry={byId.get(e.id)} tree={e} onMenu={(ev) => menu(byId.get(e.id), ev)} />}
-              empty={<EmptyState title={top.loading() ? "" : t("emptyFolder")} detail={top.loading() ? "" : t("emptyFolderHint")} />}
             />
+            {/* An empty folder says so over the tree (NSH 0.6.1's Tree has no `empty` of its own) */}
+            <If when={!items().length && !top.loading()}>
+              <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, pointerEvents: "none" }}>
+                <EmptyState title={t("emptyFolder")} detail={t("emptyFolderHint")} />
+              </View>
+            </If>
           </View>
           <View style={{ position: "absolute", top: 0, left: 0, right: 0, alignItems: "center", pointerEvents: "box-none" }}>
             <View style={{ width: 260 }}>

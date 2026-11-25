@@ -196,7 +196,7 @@ export function ConfigPage() {
                   />
                 </View>
               </If>
-              <Text variant="caption" tone="muted" accessibilityLiveRegion="polite">
+              <Text variant="caption" tone="muted">
                 {summary(v().shown, v().modified, v().total)}
               </Text>
             </View>
