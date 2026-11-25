@@ -553,3 +553,34 @@ function __pobt_hookLaunch()
 	end
 	launch.__pobt = true
 end
+
+-- POB's sanitiseText (Modules/Common.lua), which every item's text goes through, makes each byte over 127 a "?": the
+-- Chinese of a Tencent rare's name ("劲风 束灵"), made of words no dictionary has, would be "??????". POBT draws
+-- Chinese, so POB's keeps the characters of Chinese, Japanese and Korean (U+2E80 to U+9FFF, U+AC00 to U+D7AF,
+-- U+F900 to U+FAFF, U+FF00 to U+FFEF) as they are, and does the rest as it does. It is wrapped as POB defines it.
+local function keepCJK(sanitise)
+	return function(text)
+		if type(text) ~= "string" or not text:find("[\226-\239]") then
+			return sanitise(text)
+		end
+		local kept = { }
+		local marked = text:gsub("[\226-\239][\128-\191][\128-\191]", function(ch)
+			local b1, b2, b3 = ch:byte(1, 3)
+			local cp = (b1 - 224) * 4096 + (b2 - 128) * 64 + (b3 - 128)
+			if (cp >= 0x2E80 and cp <= 0x9FFF) or (cp >= 0xAC00 and cp <= 0xD7AF) or (cp >= 0xF900 and cp <= 0xFAFF) or (cp >= 0xFF00 and cp <= 0xFFEF) then
+				kept[#kept + 1] = ch
+				return "\1" .. #kept .. "\2"
+			end
+		end)
+		local out = sanitise(marked)
+		return type(out) == "string" and (out:gsub("\1(%d+)\2", function(i) return kept[tonumber(i)] end)) or out
+	end
+end
+setmetatable(_G, {
+	__newindex = function(t, k, v)
+		if k == "sanitiseText" and type(v) == "function" then
+			v = keepCJK(v)
+		end
+		rawset(t, k, v)
+	end,
+})

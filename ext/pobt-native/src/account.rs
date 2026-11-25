@@ -994,6 +994,10 @@ mod tests {
                 { "typeLine": "火球", "socket": 0, "properties": [{ "name": "等级", "values": [["20", 0]] }] },
                 { "typeLine": "附加火焰伤害（辅）", "support": true, "socket": 1, "properties": [{ "name": "等级", "values": [["20", 0]] }] }
             ],
+        }, {
+            // a rare's name, which no dictionary has: kept in Chinese, not as "??????"
+            "id": "a2", "inventoryId": "Ring", "frameType": 2, "ilvl": 84, "name": "劲风 束灵",
+            "typeLine": "双玉戒指", "baseType": "双玉戒指", "explicitMods": ["+80 最大生命"],
         }]});
         let passives = serde_json::json!({ "hashes": [], "items": [], "mastery_effects": {}, "jewel_data": {} });
         let mut missed = 0;
@@ -1006,6 +1010,7 @@ mod tests {
         assert!(out.xml.contains("+80 to maximum Life"), "{}", out.xml);
         assert!(out.xml.contains("Fireball") && out.xml.contains("Added Fire Damage"), "{}", out.xml);
         assert!(out.xml.contains("Inquisitor"), "{}", out.xml);
+        assert!(out.xml.contains("劲风 束灵") && out.xml.contains("Two-Stone Ring"), "{}", out.xml);
         eprintln!("build path: {}", out.build_path);
     }
 }
