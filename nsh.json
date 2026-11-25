@@ -2,7 +2,7 @@
   "name": "POBT",
   "id": "com.huacnlee.pobt",
   "icon": "icon.png",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "build": 1,
   "updater": {
     "github": "huacnlee/pobt"
