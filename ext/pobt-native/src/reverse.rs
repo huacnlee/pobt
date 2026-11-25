@@ -36,9 +36,49 @@ pub struct Reverse {
     exact: HashMap<String, String>,
     /// Key: the Chinese with each number as a hole; value: the English, and
     /// per hole of the Chinese, the index of the number it holds.
-    templates: HashMap<String, (String, Vec<Option<usize>>)>,
+    /// Several for a key when the Chinese differ by a number they write out ("至少 500 点" / "至少 1000 点").
+    templates: HashMap<String, Vec<(String, Vec<Hole>)>>,
     /// Support gems by the name the game gives them in Chinese, without "(辅)".
     gems: HashMap<String, String>,
+    /// Mods with a name in them ("所有 {1} 宝石等级 +{0}"), a gem's or a passive's, which the English has in English.
+    named: Vec<Named>,
+}
+
+/// A mod's Chinese cut at its holes, and its English.
+struct Named {
+    /// The text between the holes: one more than the holes.
+    parts: Vec<String>,
+    /// Per hole, the index of the English's `{N}` it fills, and whether it holds a name, not a number.
+    holes: Vec<(usize, bool)>,
+    en: String,
+}
+
+impl Named {
+    /// `zh` (normalized) cut at its `{N}`, `names` the indexes of those that hold a name. None for two holes with
+    /// nothing between them, which no text tells apart.
+    fn new(zh: &str, en: String, names: &[usize]) -> Option<Self> {
+        let mut parts = vec![String::new()];
+        let mut holes = Vec::new();
+        let mut rest = zh;
+        while let Some(c) = rest.chars().next() {
+            if c == '{' {
+                let digits = rest[1..].chars().take_while(char::is_ascii_digit).count();
+                if digits > 0 && rest[1 + digits..].starts_with('}') {
+                    if !holes.is_empty() && parts.last().is_some_and(String::is_empty) {
+                        return None;
+                    }
+                    let n: usize = rest[1..1 + digits].parse().ok()?;
+                    holes.push((n, names.contains(&n)));
+                    parts.push(String::new());
+                    rest = &rest[digits + 2..];
+                    continue;
+                }
+            }
+            parts.last_mut()?.push(c);
+            rest = &rest[c.len_utf8()..];
+        }
+        (!holes.is_empty()).then_some(Named { parts, holes, en })
+    }
 }
 
 /// Tencent's markup as the text it shows: "[PlayerItemRarity|物品稀有度]" as
@@ -73,11 +113,19 @@ fn normalize(s: &str) -> String {
     t.replace("+-", "-")
 }
 
+/// A hole of a template's Chinese: the index of the English's number it holds, or the number the Chinese writes out
+/// ("获得 1 充能"), which the English does not have.
+#[derive(Clone, Debug, PartialEq)]
+enum Hole {
+    Number(usize),
+    Written(String),
+}
+
 /// The Chinese of a template made a key: `{N}` and `#` become holes, and so
 /// do the numbers it writes out ("获得 1 充能"), as an item's numbers do; and
 /// per hole, the number of the English it stands for (none for those written
 /// out, which the English does not have).
-fn template_key(zh: &str) -> Option<(String, Vec<Option<usize>>)> {
+fn template_key(zh: &str) -> Option<(String, Vec<Hole>)> {
     let mut key = String::with_capacity(zh.len());
     let mut order = Vec::new();
     let mut sequential = 0;
@@ -93,7 +141,7 @@ fn template_key(zh: &str) -> Option<(String, Vec<Option<usize>>)> {
             let digits = rest[1..].chars().take_while(char::is_ascii_digit).count();
             if digits > 0 && rest[1 + digits..].starts_with('}') {
                 key.push(HOLE);
-                order.push(Some(rest[1..1 + digits].parse().ok()?));
+                order.push(Hole::Number(rest[1..1 + digits].parse().ok()?));
                 holes = true;
                 rest = &rest[digits + 2..];
                 continue;
@@ -106,13 +154,13 @@ fn template_key(zh: &str) -> Option<(String, Vec<Option<usize>>)> {
                 _ => 0,
             };
             key.push(HOLE);
-            order.push(None);
+            order.push(Hole::Written(rest[..digits + decimals].to_string()));
             rest = &rest[digits + decimals..];
             continue;
         }
         if c == '#' {
             key.push(HOLE);
-            order.push(Some(sequential));
+            order.push(Hole::Number(sequential));
             sequential += 1;
             holes = true;
         } else {
@@ -163,8 +211,9 @@ impl Reverse {
     pub fn load(language: &str) -> Self {
         let mut files = crate::trs::files(language);
         files.sort_by(|a, b| rank(&a.0).cmp(&rank(&b.0)).then_with(|| a.0.cmp(&b.0)));
-        // The mods as Tencent words them now (`scripts/tencent-stats.mjs`), before all: in a folder of their own,
-        // which the translation of POB's screens does not read.
+        // The game's words (`game.csv`, `scripts/tencent-game.mjs`), then the mods as Tencent's trade site words them
+        // (`stats.csv`, `scripts/tencent-stats.mjs`), before all: in a folder of their own, which the translation of
+        // POB's screens does not read.
         files.splice(0..0, crate::trs::files(&format!("{language}/tencent")));
         let mut rev = Reverse::default();
         for (_, data) in files {
@@ -192,7 +241,13 @@ impl Reverse {
             // a mod of several lines with "\n" between them, however git checked the file out
             let en = String::from_utf8_lossy(&record[0]).trim_start_matches('\u{feff}').trim().replace("\r\n", "\n");
             let zh = String::from_utf8_lossy(&record[1]).trim().to_string();
-            self.insert(en, &zh);
+            // A third column: the holes that hold a name (`scripts/tencent-game.mjs`).
+            let names: Vec<usize> = record.get(2).map(|n| String::from_utf8_lossy(n).split_whitespace().filter_map(|n| n.parse().ok()).collect()).unwrap_or_default();
+            if names.is_empty() {
+                self.insert(en, &zh);
+            } else if let Some(named) = Named::new(&normalize(&zh), en, &names) {
+                self.named.push(named);
+            }
         }
     }
 
@@ -213,7 +268,10 @@ impl Reverse {
             }
         }
         if let Some((key, order)) = template_key(&zh) {
-            self.templates.entry(key).or_insert((en.clone(), order));
+            let same = self.templates.entry(key).or_default();
+            if !same.iter().any(|(_, o)| *o == order) {
+                same.push((en.clone(), order));
+            }
         }
         self.exact.entry(zh).or_insert(en);
     }
@@ -227,7 +285,32 @@ impl Reverse {
         if let Some(en) = self.exact.get(&t) {
             return Some(en.clone());
         }
-        self.template(&t, true).or_else(|| self.template(&t, false)).or_else(|| self.lead(zh))
+        self.template(&t, true).or_else(|| self.template(&t, false)).or_else(|| self.lead(zh)).or_else(|| self.named(&t))
+    }
+
+    /// `t` (normalized) as one of the mods with a name in them, the name in English.
+    fn named(&self, t: &str) -> Option<String> {
+        self.named.iter().find_map(|m| {
+            let mut rest = t.strip_prefix(m.parts[0].as_str())?;
+            let mut out = m.en.clone();
+            for (i, &(n, name)) in m.holes.iter().enumerate() {
+                let next = &m.parts[i + 1];
+                let end = if next.is_empty() { rest.len() } else { rest.find(next.as_str())? };
+                let value = &rest[..end];
+                let value = if name {
+                    self.gem(value)?
+                } else {
+                    let digits = value.strip_prefix(['+', '-']).unwrap_or(value);
+                    if digits.is_empty() || !digits.chars().all(|c| c.is_ascii_digit() || c == '.') {
+                        return None;
+                    }
+                    value.to_string()
+                };
+                out = out.replace(&format!("{{{n}}}"), &value);
+                rest = &rest[end + next.len()..];
+            }
+            rest.is_empty().then_some(out)
+        })
     }
 
     /// `zh` as one of `LEADS` and the mod after it.
@@ -265,7 +348,9 @@ impl Reverse {
         while i < b.len() {
             let start = i;
             let mut j = i;
-            if signed && (b[j] == b'+' || b[j] == b'-') && b.get(j + 1).is_some_and(u8::is_ascii_digit) {
+            // "10-20": a range, not 10 and -20.
+            let after_number = j > 0 && b[j - 1].is_ascii_digit();
+            if signed && !after_number && (b[j] == b'+' || b[j] == b'-') && b.get(j + 1).is_some_and(u8::is_ascii_digit) {
                 j += 1;
             }
             if b[j].is_ascii_digit() {
@@ -290,16 +375,23 @@ impl Reverse {
         if nums.is_empty() {
             return None;
         }
-        let (en, order) = self.templates.get(&key)?;
-        if order.len() != nums.len() {
-            return None;
-        }
+        let same = self.templates.get(&key)?;
+        let written = |o: &[Hole]| o.iter().filter(|h| matches!(h, Hole::Written(_))).count();
+        // The first whose written numbers are the item's; else the one that writes the fewest ("加快 30%"), which
+        // takes any item's.
+        let (en, order) = same
+            .iter()
+            .filter(|(_, o)| o.len() == nums.len())
+            .find(|(_, o)| o.iter().zip(&nums).all(|(h, n)| !matches!(h, Hole::Written(w) if w != n.trim_start_matches('+'))))
+            .or_else(|| same.iter().filter(|(_, o)| o.len() == nums.len()).min_by_key(|(_, o)| written(o)))?;
         // The numbers by the index the English gives them.
-        let mut by_index = vec![None; order.iter().flatten().max().map_or(0, |m| m + 1)];
-        for (hole, n) in order.iter().enumerate() {
+        let indexes = || order.iter().filter_map(|h| if let Hole::Number(n) = h { Some(*n) } else { None });
+        let mut by_index = vec![None; indexes().max().map_or(0, |m| m + 1)];
+        for (hole, h) in order.iter().enumerate() {
             // A number the Chinese writes out is not in the English.
-            let Some(n) = *n else { continue };
-            by_index[n] = Some(nums[hole]);
+            if let Hole::Number(n) = h {
+                by_index[*n] = Some(nums[hole]);
+            }
         }
         fill(en, &by_index)
     }
@@ -355,6 +447,23 @@ mod tests {
         assert_eq!(
             r.english("敌人每受到一种元素异常状态影响，\n击中和异常状态造成的元素伤害提高 30%").as_deref(),
             Some("30% increased Elemental Damage with Hits and Ailments for\neach type of Elemental Ailment on Enemy")
+        );
+        // the game's own mods (`tencent/game.csv`), which the trade site does not list
+        assert_eq!(r.english("插槽内的技能石被等级 20 的弹幕辅助").as_deref(), Some("Socketed Gems are Supported by Level 20 Barrage"));
+        assert_eq!(r.english("获得 20 级的狙击技能").as_deref(), Some("Grants Level 20 Snipe Skill"));
+        // a name in it
+        assert_eq!(r.english("所有 冰霜新星 宝石等级 +2").as_deref(), Some("+2 to Level of all Ice Nova Gems"));
+        assert_eq!(r.english("配置 圣战").as_deref(), Some("Allocates Crusader"));
+        // a range without spaces, not a negative number
+        assert_eq!(r.english("攻击你时附加17-23点火焰伤害").as_deref(), Some("Adds 17 to 23 Fire Damage to Attacks against you"));
+        // two mods that differ by a number the Chinese writes out
+        assert_eq!(
+            r.english("能量护盾上限至少 1000 时每秒再生 17 生命").as_deref(),
+            Some("Regenerate 17 Life per second if you have at least 1000 Maximum Energy Shield")
+        );
+        assert_eq!(
+            r.english("能量护盾上限至少 500 时每秒再生 17 生命").as_deref(),
+            Some("Regenerate 17 Life per second if you have at least 500 Maximum Energy Shield")
         );
     }
 }

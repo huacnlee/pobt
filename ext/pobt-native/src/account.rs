@@ -806,7 +806,7 @@ mod tests {
         assert_eq!(item["properties"][0]["name"], "Quality");
         assert_eq!(item["requirements"][0]["name"], "Level");
         assert_eq!(item["explicitMods"][0], "+80 to maximum Life");
-        assert_eq!(item["socketedItems"][0]["typeLine"], "Added Fire Damage");
+        assert_eq!(item["socketedItems"][0]["typeLine"], "Added Fire Damage Support");
         assert_eq!(missed, 1);
     }
 
