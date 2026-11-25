@@ -15,6 +15,7 @@ export function TabBar<K extends string>(props: {
 }) {
   return (
     <Tabs
+      orientation="horizontal"
       accessibilityLabel={props.accessibilityLabel}
       class={`flex-row items-stretch gap-1 ${props.class ?? ""}`}
       indicatorClass="bottom-0 h-0.5 mx-2 rounded-full bg-primary"
@@ -48,6 +49,7 @@ export function Segmented<K extends string>(props: {
 }) {
   return (
     <Tabs
+      orientation="horizontal"
       accessibilityLabel={props.accessibilityLabel}
       class="h-7 flex-row rounded-(--radius) border border-border bg-muted p-0.5"
       indicatorClass="inset-y-0.5 rounded-(--radius) bg-background border border-border"

@@ -14,8 +14,6 @@ env:
   CARGO_TERM_COLOR: always
   # No debug info: faster to build and link, smaller caches; a failing test still says where.
   CARGO_PROFILE_DEV_DEBUG: 0
-  # The NSH CLI of the crates Cargo.toml takes from crates.io.
-  NSH_VERSION: v0.6.1
 
 defaults:
   run:
@@ -40,14 +38,11 @@ jobs:
           path: |
             target
             .nsh/rust/Cargo.lock
-          key: nsh-target-${{ env.NSH_VERSION }}-${{ steps.toolchain.outputs.cachekey }}-${{ hashFiles('ext/pobt-native/Cargo.lock') }}
-          restore-keys: nsh-target-${{ env.NSH_VERSION }}-${{ steps.toolchain.outputs.cachekey }}-
+          key: nsh-target-${{ steps.toolchain.outputs.cachekey }}-${{ hashFiles('ext/pobt-native/Cargo.lock') }}
+          restore-keys: nsh-target-${{ steps.toolchain.outputs.cachekey }}-
 
-      - name: Install the NSH CLI
-        shell: pwsh
-        run: |
-          irm https://nsh.dev/install.ps1 | iex
-          Add-Content $env:GITHUB_PATH (Join-Path $env:LOCALAPPDATA 'nsh\bin')
+      - name: Install the NSH CLI of the nightly Cargo.lock locks
+        run: scripts/setup-nsh.sh
 
       - name: Check
         run: nsh check

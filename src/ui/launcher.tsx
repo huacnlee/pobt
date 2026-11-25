@@ -2,7 +2,8 @@
 // Exile 2's palette and faces, plaques cut from the atlas, the jewelled rule, its buttons and the gate behind.
 import { createAnimatedValue, Easing, Image, Shader, signal, Text, View, type ViewStyle } from "nsh";
 import { Checkbox } from "nsh/base";
-import { Icon } from "./icon";
+import { Icon } from "nsh-icon";
+import { Check } from "nsh-icon-lucide";
 import Cinzel from "../../assets/fonts/Cinzel-Bold.woff2";
 import "../../assets/fonts/Cinzel-SemiBold.woff2";
 import plaques from "../../assets/ui/plaques.png";
@@ -24,6 +25,8 @@ export const C = {
   unique: "#e6894a",
   red: "#e0604a",
 };
+/** The class that draws text and icons (nsh-icon draws in the text colour) in one of the launcher's colours. */
+export const textIn = (color: string) => `text-[${color}]`;
 export const DISPLAY = `${Cinzel}, Microsoft YaHei, Malgun Gothic, serif`;
 export const BODY = "Microsoft YaHei, Malgun Gothic, Segoe UI, sans-serif";
 
@@ -204,7 +207,7 @@ export function GoldCheckbox(props: { checked: boolean; onChange: (on: boolean) 
         backgroundColor: C.panel,
         boxShadow: "inset 0 0 0 2px rgba(0,0,0,0.7)",
       }}
-      indicator={props.checked ? <Icon name="check" size={13} color={C.goldHi} /> : undefined}
+      indicator={props.checked ? <Icon icon={Check} size={13} strokeWidth={3} class={textIn(C.goldHi)} /> : undefined}
     >
       <Text style={{ fontFamily: BODY, fontSize: 14, color: props.checked ? C.goldHi : C.text, textShadow: "0 0 3px #000, 0 1px 2px #000" }}>{props.label}</Text>
     </Checkbox>

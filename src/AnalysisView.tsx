@@ -3,7 +3,9 @@
 import { type JSX, Scroll, signal, Text, View, type ViewStyle } from "nsh";
 import { Pob } from "pobt/native";
 import { type AiProgress, AI_STEPS, aiErrorText, type AnalysisStrings, DIMENSIONS, type Dimension, type Report } from "./analysis";
-import { BODY, C, DISPLAY } from "./ui/launcher";
+import { BODY, C, DISPLAY, textIn } from "./ui/launcher";
+import { Icon } from "nsh-icon";
+import { ChevronRight, Minus, Plus } from "nsh-icon-lucide";
 
 export const PANEL: ViewStyle = {
   backgroundColor: "rgba(5,6,9,0.86)",
@@ -62,7 +64,7 @@ function Points(props: { label: string; items?: string[]; mark: string; color: s
         <Each of={props.items ?? []}>
           {(item) => (
             <View style={{ flexDirection: "row", gap: 6 }}>
-              <Text style={{ fontFamily: BODY, fontSize: 12, fontWeight: "700", color: props.color, lineHeight: 18 }}>{props.mark}</Text>
+              <Icon icon={props.mark} size={12} strokeWidth={3} class={textIn(props.color)} style={{ marginTop: 3 }} />
               <Text style={{ flex: 1, fontFamily: BODY, fontSize: 12, color: C.text, lineHeight: 18 }}>{item()}</Text>
             </View>
           )}
@@ -95,9 +97,9 @@ function DimensionCard(props: { s: AnalysisStrings; d: Dimension }) {
           </Each>
         </View>
       </If>
-      <Points label={props.s.strengths} items={props.d.strengths} mark="+" color="#8fc46a" />
-      <Points label={props.s.weaknesses} items={props.d.weaknesses} mark="−" color={C.red} />
-      <Points label={props.s.suggestions} items={props.d.suggestions} mark="›" color={C.unique} />
+      <Points label={props.s.strengths} items={props.d.strengths} mark={Plus} color="#8fc46a" />
+      <Points label={props.s.weaknesses} items={props.d.weaknesses} mark={Minus} color={C.red} />
+      <Points label={props.s.suggestions} items={props.d.suggestions} mark={ChevronRight} color={C.unique} />
     </View>
   );
 }

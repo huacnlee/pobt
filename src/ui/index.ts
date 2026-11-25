@@ -12,4 +12,5 @@ export { Modal } from "./modal";
 export { Backdrop, Framed, Rule } from "./art";
 export * from "./popover";
 export { HoverCard } from "./hovercard";
-export { Icon, type IconName } from "./icon";
+// Icons are nsh-icon's, drawn in the text colour: `<Icon icon={X} class="text-muted-foreground" />`.
+export { Icon } from "nsh-icon";

@@ -20,5 +20,9 @@
     }
   },
   "rust": "ext/pobt-native",
-  "theme": "theme.json"
+  "theme": "theme.json",
+  "dependencies": {
+    "nsh-icon": "^0.2.2",
+    "nsh-icon-lucide": "^0.2.1"
+  }
 }

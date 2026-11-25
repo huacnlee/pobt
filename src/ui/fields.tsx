@@ -1,6 +1,7 @@
 import { type InputRef, type JSX, View } from "nsh";
 import { Checkbox as BaseCheckbox, Input, NumberInput, Select as BaseSelect, Switch as BaseSwitch, type SelectItem } from "nsh/base";
-import { Icon } from "./icon";
+import { Icon } from "nsh-icon";
+import { Check, ChevronDown, ChevronUp } from "nsh-icon-lucide";
 import { POPUP, POPUP_END, POPUP_START, WASH } from "./motion";
 import { Text } from "./text";
 
@@ -122,7 +123,7 @@ export function Select(props: {
           >
             <View class="flex-1">{props.triggerContent}</View>
           </If>
-          <Icon name="chevron-down" size={14} />
+          <Icon icon={ChevronDown} size={14} class="text-muted-foreground" />
         </View>
       }
     />
@@ -157,7 +158,7 @@ export function Checkbox(props: { checked: boolean; onChange: (on: boolean) => v
       // nsh-base draws no mark: the check shows while checked, as shadcn's does.
       indicator={
         <If when={props.checked}>
-          <Icon name="check" size={12} class="tint-primary-foreground" />
+          <Icon icon={Check} size={12} strokeWidth={3} class="text-primary-foreground" />
         </If>
       }
     >
@@ -193,8 +194,8 @@ export function NumberField(props: {
       controlsClass="flex-col border-l border-input"
       incrementButtonClass={`flex-1 w-5 items-center justify-center ${WASH} hover:bg-accent`}
       decrementButtonClass={`flex-1 w-5 items-center justify-center ${WASH} hover:bg-accent`}
-      incrementButton={<Icon name="chevron-up" size={10} />}
-      decrementButton={<Icon name="chevron-down" size={10} />}
+      incrementButton={<Icon icon={ChevronUp} size={10} class="text-muted-foreground" />}
+      decrementButton={<Icon icon={ChevronDown} size={10} class="text-muted-foreground" />}
     />
   );
 }

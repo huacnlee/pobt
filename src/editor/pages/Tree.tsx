@@ -4,6 +4,7 @@
 // POB's own, stat changes included.
 import { computed, resource, Scroll, signal, View } from "nsh";
 import { Button, EmptyState, ListRow, Modal, Text, TextField, Icon } from "../../ui";
+import { TriangleAlert } from "nsh-icon-lucide";
 import { ColoredText, plain } from "../ColoredText";
 import { t, tr } from "../i18n";
 import { PobControl } from "../PobControl";
@@ -246,8 +247,8 @@ export function TreePage() {
         {/* TreeTab's line for an older tree version, with its two convert buttons */}
         <If when={state()?.convert}>
           {(c) => (
-            <View class="flex-row flex-wrap items-center gap-2 border-b border-border px-4 py-1.5" role="alert">
-              <Icon name="alert-triangle" size={14} class="tint-warning" />
+            <View class="flex-row flex-wrap items-center gap-2 border-b border-border px-4 py-1.5" role="alert" accessibilityLiveRegion="polite">
+              <Icon icon={TriangleAlert} size={14} class="text-warning" />
               <Text variant="caption" tone="warning" class="flex-1">
                 {tr(plain(c().text))}
               </Text>

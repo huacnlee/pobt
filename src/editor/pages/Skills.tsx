@@ -4,6 +4,7 @@
 // service/skills.lua), and every change goes through the Skills tab's own controls, so POB's rules apply.
 import { computed, resource, Scroll, signal, View } from "nsh";
 import { Badge, Button, EmptyState, FieldRow, Panel, Select, Text, Icon } from "../../ui";
+import { Star, X } from "nsh-icon-lucide";
 import { ListRow } from "../../ui/list-row";
 import { GameArt } from "../art";
 import { ColoredText, plain } from "../ColoredText";
@@ -167,7 +168,8 @@ export function SkillsPage() {
                   <Button
                     size="sm"
                     variant={isMain() ? "primary" : "secondary"}
-                    label={isMain() ? `★ ${s("isMain")}` : s("setMain")}
+                    icon={isMain() ? Star : undefined}
+                    label={isMain() ? s("isMain") : s("setMain")}
                     disabled={isMain()}
                     onPress={() => void edit("setMain")}
                   />
@@ -291,7 +293,7 @@ export function SkillsPage() {
                           disabled={!detail()?.imbuedClear?.enabled || !detail()?.imbued?.text}
                           onPress={() => void edit("clearImbued")}
                         >
-                          <Icon name="x" size={14} />
+                          <Icon icon={X} size={14} class="text-muted-foreground" />
                         </Button>
                       </PobHover>
                     </View>
@@ -466,9 +468,7 @@ function GroupRow(props: { group: Group; index: number; main: boolean; selected:
         <GemIcon name={props.group.activeGem} size={24} />
         <View class="w-3 items-center">
           <If when={props.main}>
-            <Text variant="label" tone="primary">
-              ★
-            </Text>
+            <Icon icon={Star} size={12} class="text-primary" />
           </If>
         </View>
         <View class="flex-1 gap-0.5" classList={{ "opacity-50": off() }}>
@@ -608,7 +608,7 @@ function GemRow(props: {
               disabled={!c().delete.enabled}
               onPress={() => props.edit("removeGem", {})}
             >
-              <Icon name="x" size={14} />
+              <Icon icon={X} size={14} class="text-muted-foreground" />
             </Button>
           </If>
         </PobHover>
