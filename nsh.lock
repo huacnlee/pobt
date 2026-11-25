@@ -3,10 +3,10 @@
   "packages": [
     {
       "name": "nsh-icon",
-      "version": "0.2.0",
+      "version": "0.2.2",
       "source": "crates.io",
-      "checksum": "sha256-b2066d5f89ad3901e5def596dbcdfb10b986a15b29e9c524b4a146fb61ec28d5",
-      "dir": "nsh-icon/0.2.0",
+      "checksum": "sha256-638773b01e553407287797cc85f42a697ae9f86e5189746a784d18c5eaab37ac",
+      "dir": "nsh-icon/0.2.2",
       "module": "nsh-icon"
     },
     {
