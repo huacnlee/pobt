@@ -246,7 +246,7 @@ export function TreePage() {
         {/* TreeTab's line for an older tree version, with its two convert buttons */}
         <If when={state()?.convert}>
           {(c) => (
-            <View class="flex-row flex-wrap items-center gap-2 border-b border-border px-4 py-1.5" role="alert" accessibilityLiveRegion="polite">
+            <View class="flex-row flex-wrap items-center gap-2 border-b border-border px-4 py-1.5" role="alert">
               <Icon name="alert-triangle" size={14} class="tint-warning" />
               <Text variant="caption" tone="warning" class="flex-1">
                 {tr(plain(c().text))}

@@ -39,7 +39,6 @@ export function Button(props: {
   return (
     <BaseButton
       disabled={props.disabled || props.busy}
-      busy={props.busy}
       selected={props.selected}
       accessibilityLabel={props.accessibilityLabel ?? props.label}
       tooltip={props.tooltip}
