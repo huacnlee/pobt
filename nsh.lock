@@ -1,0 +1,27 @@
+{
+  "version": 2,
+  "packages": [
+    {
+      "name": "nsh-icon",
+      "version": "0.2.0",
+      "source": "crates.io",
+      "checksum": "sha256-b2066d5f89ad3901e5def596dbcdfb10b986a15b29e9c524b4a146fb61ec28d5",
+      "dir": "nsh-icon/0.2.0",
+      "module": "nsh-icon"
+    },
+    {
+      "name": "nsh-icon-lucide",
+      "version": "0.2.1",
+      "source": "crates.io",
+      "checksum": "sha256-aa2647c3cd43f805a5290ea165148044690fa0450bd956af96da9f26faecd8f5",
+      "dir": "nsh-icon-lucide/0.2.1",
+      "module": "nsh-icon-lucide/native",
+      "exports": {
+        "nsh-icon-lucide": "tsx/index.ts"
+      },
+      "dependencies": [
+        "nsh-icon"
+      ]
+    }
+  ]
+}

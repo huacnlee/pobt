@@ -23,8 +23,6 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
-  # The NSH CLI of the crates Cargo.toml takes from crates.io.
-  NSH_VERSION: v0.6.1
 
 defaults:
   run:
@@ -66,17 +64,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y clang libclang-dev libgtk-4-dev libwebkitgtk-6.0-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
 
-      - name: Install the NSH CLI
-        if: matrix.platform == 'windows'
-        shell: pwsh
-        run: |
-          irm https://nsh.dev/install.ps1 | iex
-          Add-Content $env:GITHUB_PATH (Join-Path $env:LOCALAPPDATA 'nsh\bin')
-      - name: Install the NSH CLI
-        if: matrix.platform != 'windows'
-        run: |
-          curl -fsSL https://nsh.dev/install.sh | sh
-          echo "$HOME/.nsh/bin" >> "$GITHUB_PATH"
+      - name: Install the NSH CLI of the nightly Cargo.lock locks
+        run: scripts/setup-nsh.sh
 
       - name: Test
         run: cargo test --lib --manifest-path ext/pobt-native/Cargo.toml
@@ -167,10 +156,8 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - name: Install the NSH CLI
-        run: |
-          curl -fsSL https://nsh.dev/install.sh | sh
-          echo "$HOME/.nsh/bin" >> "$GITHUB_PATH"
+      - name: Install the NSH CLI of the nightly Cargo.lock locks
+        run: scripts/setup-nsh.sh
 
       - name: Write the update manifest
         run: |

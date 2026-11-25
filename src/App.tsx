@@ -5,9 +5,10 @@ import { Input, Menu, MenuItem, MenuSeparator } from "nsh/base";
 import { Pob, PobCanvas } from "pobt/native";
 import title from "../assets/ui/title.png";
 import { GATE } from "./gate";
-import { BODY, BrassButton as Button, C, DISPLAY, ENGRAVED, Gate, GoldCheckbox, GoldRule as Rule, Plaque, PressButton, PrimaryButton } from "./ui/launcher";
+import { BODY, BrassButton as Button, C, DISPLAY, ENGRAVED, Gate, GoldCheckbox, GoldRule as Rule, Plaque, PressButton, PrimaryButton, textIn } from "./ui/launcher";
 import { BuildEditor, editorBack, editorBackLabel } from "./editor/BuildEditor";
-import { Icon } from "./ui/icon";
+import { Icon } from "nsh-icon";
+import { Check, ChevronDown, ChevronLeft, ChevronRight, X } from "nsh-icon-lucide";
 import { t as editorT, useLanguage } from "./editor/i18n";
 import {
   accountLabel,
@@ -369,10 +370,16 @@ function UpdateBadge(props: { t: () => Strings }) {
         </If>
         <Text style={{ fontFamily: BODY, fontSize: 12, color: found() ? C.text : hover() ? "#fff3d0" : C.gold }}>{text()}</Text>
         <If when={updateState() === "ready"}>
-          <Text style={{ fontFamily: BODY, fontSize: 12, color: C.unique }}>{props.t().restart} ›</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
+            <Text style={{ fontFamily: BODY, fontSize: 12, color: C.unique }}>{props.t().restart}</Text>
+            <Icon icon={ChevronRight} size={12} class={textIn(C.unique)} />
+          </View>
         </If>
         <If when={updateState() === "failed"}>
-          <Text style={{ fontFamily: BODY, fontSize: 12, color: C.unique }}>{props.t().manual} ›</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
+            <Text style={{ fontFamily: BODY, fontSize: 12, color: C.unique }}>{props.t().manual}</Text>
+            <Icon icon={ChevronRight} size={12} class={textIn(C.unique)} />
+          </View>
         </If>
       </View>
     </If>
@@ -595,7 +602,7 @@ function TitleBar(props: {
             onMouseLeave={() => backHover.set(false)}
             style={{ flexDirection: "row", alignItems: "center", gap: 6, marginLeft: 18, paddingVertical: 4 }}
           >
-            <Text style={{ fontSize: 9, color: backHover() ? "#fff3d0" : C.trimHi }}>◀</Text>
+            <Icon icon={ChevronLeft} size={12} strokeWidth={3} class={textIn(backHover() ? "#fff3d0" : C.trimHi)} />
             <Text
               style={{
                 fontFamily: DISPLAY,
@@ -640,7 +647,7 @@ function TitleBar(props: {
                 >
                   {props.t().tools.toUpperCase()}
                 </Text>
-                <Icon name="chevron-down" size={10} color={toolsHover() ? "#fff3d0" : C.trimHi} />
+                <Icon icon={ChevronDown} size={10} class={textIn(toolsHover() ? "#fff3d0" : C.trimHi)} />
               </View>
             }
           >
@@ -892,9 +899,7 @@ function Toast() {
               justifyContent: "center",
             }}
           >
-            <Text style={{ fontFamily: BODY, fontSize: 12, fontWeight: "700", lineHeight: 14, color: t().error ? C.red : C.goldHi }}>
-              {t().error ? "✕" : "✓"}
-            </Text>
+            <Icon icon={t().error ? X : Check} size={12} strokeWidth={3} class={textIn(t().error ? C.red : C.goldHi)} />
           </View>
           <Text style={{ flexShrink: 1, fontFamily: BODY, fontSize: 13, color: C.text }}>{t().text}</Text>
         </View>

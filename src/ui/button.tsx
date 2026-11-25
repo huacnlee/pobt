@@ -1,5 +1,6 @@
 import { type JSX, Text, View } from "nsh";
 import { Button as BaseButton } from "nsh/base";
+import { Icon } from "nsh-icon";
 import { ENGRAVED, Plaque } from "./launcher";
 import { PRESS, WASH } from "./motion";
 
@@ -20,9 +21,10 @@ const SIZE: Record<ButtonSize, { box: string; text: string }> = {
   md: { box: "h-7 px-3 gap-1.5", text: "text-sm" },
 };
 
-/** POBT's button: a label (or `children`), in a variant and a size; `busy` shows it working and takes no presses. */
+/** POBT's button: an icon of nsh-icon's sets and a label (or `children`), in a variant and a size; `busy` shows it working and takes no presses. */
 export function Button(props: {
   label?: string;
+  icon?: string;
   variant?: ButtonVariant;
   size?: ButtonSize;
   disabled?: boolean;
@@ -39,6 +41,7 @@ export function Button(props: {
   return (
     <BaseButton
       disabled={props.disabled || props.busy}
+      busy={props.busy}
       selected={props.selected}
       accessibilityLabel={props.accessibilityLabel ?? props.label}
       tooltip={props.tooltip}
@@ -52,6 +55,7 @@ export function Button(props: {
           </Plaque>
         </View>
       </If>
+      <If when={props.icon}>{(icon) => <Icon icon={icon()} size={12} class={v().text} />}</If>
       {props.children}
       <If when={props.label}>
         <Text class={`${s().text} font-medium truncate ${v().text}`} style={props.variant === "primary" ? { textShadow: ENGRAVED } : undefined}>

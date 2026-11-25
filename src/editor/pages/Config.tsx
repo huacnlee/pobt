@@ -4,6 +4,7 @@
 import { cleanup, computed, resource, Scroll, signal, View } from "nsh";
 import { Button, Checkbox, EmptyState, HoverCard, Panel, Select, Text, TextField } from "../../ui";
 import { WASH } from "../../ui/motion";
+import { RotateCcw } from "nsh-icon-lucide";
 import { ColoredText, plain } from "../ColoredText";
 import { type TipLine, TipLines } from "../PobTip";
 import { page } from "../BuildEditor";
@@ -196,7 +197,7 @@ export function ConfigPage() {
                   />
                 </View>
               </If>
-              <Text variant="caption" tone="muted">
+              <Text variant="caption" tone="muted" accessibilityLiveRegion="polite">
                 {summary(v().shown, v().modified, v().total)}
               </Text>
             </View>
@@ -305,7 +306,7 @@ function OptionRow(props: { option: OptionView }) {
           <Button
             variant="ghost"
             size="sm"
-            label="↺"
+            icon={RotateCcw}
             accessibilityLabel={`${s("reset")}: ${name()}`}
             tooltip={s("reset")}
             onPress={() => void change("config.reset", { var: key })}

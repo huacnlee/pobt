@@ -5,7 +5,8 @@ import { type ContextMenuEvent, effect, resource, signal, untracked, View } from
 import { Tree, type TreeEntry, type TreeItem } from "nsh/base";
 import { Menu } from "nsh/desktop";
 import { Button, EmptyState, Icon, Modal, Select, Text, TextField } from "../ui";
-import { BODY, BrassButton, C, DISPLAY, Gate, GoldRule, Plaque, Subtitle, Title } from "../ui/launcher";
+import { ChevronRight } from "nsh-icon-lucide";
+import { BODY, BrassButton, C, DISPLAY, Gate, GoldRule, Plaque, Subtitle, textIn, Title } from "../ui/launcher";
 import { WASH } from "../ui/motion";
 import { t, tr } from "./i18n";
 import { build, type BuildEntry, deleteEntry, listBuilds, newBuild, newFolder, openFile, renameEntry, type SortMode } from "./session";
@@ -35,7 +36,7 @@ function Row(props: { entry?: BuildEntry; tree: TreeEntry; onMenu?: (e: ContextM
       <View class="w-4 items-center">
         <If when={props.tree.folder} else={<View style={{ width: 5, height: 5, backgroundColor: C.trim, transform: [{ rotate: "45deg" }] }} />}>
           <View class="transition-transform duration-180 group-aria-expanded:rotate-90 motion-reduce:transition-none">
-            <Icon name="chevron-right" size={14} color={C.trimHi} />
+            <Icon icon={ChevronRight} size={14} class={textIn(C.trimHi)} />
           </View>
         </If>
       </View>
@@ -255,13 +256,8 @@ export function BuildList(props: { onImport: () => void; onOpened: () => void })
               class="flex-1"
               itemClass={`group ${WASH} hover:bg-[rgba(177,141,78,0.10)] selected:bg-[rgba(177,141,78,0.22)] focus-visible:bg-[rgba(177,141,78,0.16)] disabled:opacity-60`}
               renderItem={(e) => <Row entry={byId.get(e.id)} tree={e} onMenu={(ev) => menu(byId.get(e.id), ev)} />}
+              empty={<EmptyState title={top.loading() ? "" : t("emptyFolder")} detail={top.loading() ? "" : t("emptyFolderHint")} />}
             />
-            {/* An empty folder says so over the tree (NSH 0.6.1's Tree has no `empty` of its own) */}
-            <If when={!items().length && !top.loading()}>
-              <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, pointerEvents: "none" }}>
-                <EmptyState title={t("emptyFolder")} detail={t("emptyFolderHint")} />
-              </View>
-            </If>
           </View>
           <View style={{ position: "absolute", top: 0, left: 0, right: 0, alignItems: "center", pointerEvents: "box-none" }}>
             <View style={{ width: 260 }}>
