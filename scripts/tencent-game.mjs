@@ -9,7 +9,7 @@
 //   rewords here and there, of every league as it comes out.
 // A row whose Chinese has a name in it ("所有 {1} 宝石等级 +{0}") has a third column: the holes that hold a name, a
 // gem's or a passive's, not a number. Run again when a league comes out:
-//   node scripts/tencent-game.mjs
+//   bun scripts/tencent-game.mjs
 import { mkdirSync, writeFileSync } from "fs";
 import { brotliDecompressSync } from "zlib";
 
