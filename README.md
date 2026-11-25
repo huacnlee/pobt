@@ -40,14 +40,25 @@ a character's build code or save it among Path of Building's builds.
   Building 2 does. Tencent's, by a WeGame share link: in WeGame's Path of Exile 2 helper, open the character's data and
   press Share (一键分享).
 
-## The build editor
+## Two interfaces: classic Lua and redrawn in NSH
 
-POBT opens on its own build screens: the passive tree, skills, items, calculations,
-configuration and notes, in a new interface, translated. The numbers are Path of Building's own: the Path of Building
-you have installed runs with no window behind the screens and does every calculation, so it stays exact and follows
-each update of Path of Building. Its first screen lists Path of Building's builds folder; saving writes the same file,
-so both see every build. The classic Path of Building, in its own window, stays under **Tools → Classic Path of
-Building (legacy)**.
+POBT has had two interfaces.
+
+**The classic interface (POBT 0.1–0.4).** POBT started as a translator for Path of Building's own window. Path of
+Building is written in Lua and draws its interface through a small graphics runtime. POBT replaced that runtime with
+its own program, ran the same Lua code, and translated every string on its way to the screen. The layout, controls and
+fonts stayed Path of Building's.
+
+<p align="center"><img src="website/public/screenshots/classic-zh.webp" alt="The classic interface: Path of Building's own Lua screens, translated" width="800"></p>
+
+**The new interface (POBT 0.5 and later).** The build screens are now drawn entirely in
+[Native Shell](https://nsh.dev): the passive tree, skills, items, calculations, configuration and notes, with real
+text, inputs, menus and scrolling instead of a translated bitmap UI. Path of Building's Lua code still does every
+calculation: it runs with no window behind the screens, so the numbers stay exact and follow each update of Path of
+Building. The build list reads Path of Building's builds folder and saving writes the same file, so both see every
+build.
+
+The classic window is still there under **Tools → Classic Path of Building (legacy)**.
 
 ## Performance
 

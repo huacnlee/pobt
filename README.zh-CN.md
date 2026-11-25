@@ -39,12 +39,22 @@ Path of Building 的构筑列表。
   分享链接：在 WeGame 的流放之路 2 助手里打开角色数据，点右上角「一键分享」。
 
 
-## 构建编辑器
+## 两代界面：Lua 经典版与 NSH 重绘版
 
-POBT 启动后直接进入自己的构建界面：天赋树、技能、物品、计算、配置与备注，全新界面并已翻译。所有数字都出自
-Path of Building 本身：你安装的 Path of Building 在后台无窗口运行，承担全部计算，因此结果准确，并随 Path of Building
-的每次更新自动跟进。第一个界面列出 Path of Building 的构建文件夹，保存时写回同一个文件，两边共享所有构建。经典版
-Path of Building（原窗口界面）仍可从**工具 → 经典版 Path of Building（旧版）**进入。
+POBT 先后有过两代界面。
+
+**经典版（POBT 0.1–0.4）**：POBT 最初是 Path of Building 原窗口的翻译器。Path of Building 用 Lua 编写，界面经由一个
+小型图形运行时绘制。POBT 用自己的程序替换了这个运行时，运行同一套 Lua 代码，在文字上屏前完成翻译。布局、控件和字体
+仍是 Path of Building 原来的样子。
+
+<p align="center"><img src="website/public/screenshots/classic-zh.webp" alt="经典版：翻译后的 Path of Building 原 Lua 界面" width="800"></p>
+
+**新版（POBT 0.5 起）**：构建界面全部用 [Native Shell](https://nsh.dev) 重新绘制：天赋树、技能、物品、计算、配置与
+备注，文字、输入框、菜单和滚动都是真正的界面控件，不再是翻译后的位图界面。所有计算仍由 Path of Building 的 Lua 代码
+完成：它在后台无窗口运行，结果准确，并随 Path of Building 的每次更新自动跟进。构建列表读取 Path of Building 的构建
+文件夹，保存时写回同一个文件，两边共享所有构建。
+
+经典版窗口仍可从**工具 → 经典版 Path of Building（旧版）**进入。
 
 ## 性能
 
