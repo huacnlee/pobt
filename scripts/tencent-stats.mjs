@@ -42,7 +42,9 @@ for (const group of tencent.result) {
   }
 }
 
-// English by trade id: the text, and its other way when it has one.
+// English by trade id: the text, and its other way when it has one. Without the zero-width space Awakened PoE Trade
+// puts before a gem's name ("Grants Level # ​Precision"), which Path of Building would take as part of the name.
+const clean = (s) => s?.replaceAll("​", "").trim();
 const en = new Map();
 for (const line of (await get(ENGLISH)).split("\n")) {
   if (!line.trim()) continue;
@@ -51,7 +53,7 @@ for (const line of (await get(ENGLISH)).split("\n")) {
     const plain = stat.matchers.find((m) => !m.negate && m.value === undefined)?.string ?? stat.ref;
     const negated = stat.matchers.find((m) => m.negate && m.value === undefined)?.string;
     for (const ids of Object.values(stat.trade?.ids ?? {})) {
-      for (const id of ids) if (!en.has(id)) en.set(id, { plain: plain.trim(), negated: negated?.trim() });
+      for (const id of ids) if (!en.has(id)) en.set(id, { plain: clean(plain), negated: clean(negated) });
     }
   }
 }

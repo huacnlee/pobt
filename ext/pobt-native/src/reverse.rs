@@ -348,6 +348,9 @@ mod tests {
         assert_eq!(r.english("所有元素抗性 +-11%").as_deref(), Some("-11% to all Elemental Resistances"));
         assert_eq!(r.english("范围内的天赋技能无需连接到你的天赋树即可配置").as_deref(), Some("Passive Skills in Radius can be Allocated without being connected to your tree"));
         assert_eq!(r.english("只影响 巨大 环形范围内的天赋").as_deref(), Some("Only affects Passives in Massive Ring"));
+        // a skill's name with nothing before it, which Path of Building looks up
+        assert_eq!(r.english("赋予 21 级 精准").as_deref(), Some("Grants Level 21 Precision"));
+        assert_eq!(r.english("镶嵌的宝石被 20 级 齐射(辅) 辅助").as_deref(), Some("Socketed Gems are Supported by Level 20 Volley Support"));
         // a mod of two lines, which Tencent breaks elsewhere than the English
         assert_eq!(
             r.english("敌人每受到一种元素异常状态影响，\n击中和异常状态造成的元素伤害提高 30%").as_deref(),
