@@ -29,6 +29,9 @@
 "# Life gained when you Block","在你格挡时获得 # 生命"
 "# Life per 4 Dexterity","每 4 点敏捷 +# 生命"
 "# Lightning Damage taken from Hits","被击中时承受 +# 闪电伤害"
+"# Lightning Damage taken per second per Power Charge if
+your Skills have dealt a Critical Strike Recently","你的技能在近期内造成过暴击的情况下
+按照每个暴击球每秒承受 # 点闪电伤害"
 "# Mana gained on Killing a Frozen Enemy","击败 1 个被冻结敌人时 +# 魔力"
 "# Mana gained when you Block","在你格挡时获得 # 魔力"
 "# Mana per 4 Strength","每 4 点力量 +# 魔力"
@@ -52,8 +55,6 @@
 "# Suffix Modifier allowed","允许的后缀 +#"
 "# Suffix Modifier cannot be changed","# 个后缀不能改变"
 "# Suffix Modifiers","# 后缀"
-"# additional Curses can be applied to you","你可以受到一个额外诅咒"
-"# additional Rooms are revealed on the Sanctum Map","禁域地图上揭晓了一个额外的房间"
 "# maximum Energy Shield per 5 Strength","每 5 点力量使最大能量护盾提高 +#"
 "# metre to Melee Strike Range if you have Killed Recently","若你最近消灭过敌人，近战打击范围 +# 米"
 "# metre to Melee Strike Range per White Socket","每个白色插槽使近战打击范围 +# 米"
@@ -124,8 +125,20 @@
 "# to # Added Spell Physical Damage while wielding a Two Handed Weapon","持双手武器时附加 # 到 # 点物理法术伤害"
 "# to # Fire Damage per Endurance Charge","每个耐力球附加 # - # 基础火焰伤害"
 "# to # Lightning Damage per Power Charge","每个暴击球造成 # - # 闪电伤害"
+"# to # added Cold Damage
+Players and their Minions have # to # added Cold Damage","附加 # 到 # 点冰霜伤害
+玩家和他们的召唤生物附加 # 到 # 点冰霜伤害"
+"# to # added Fire Damage
+Players and their Minions have # to # added Fire Damage","附加 # 到 # 点火焰伤害
+玩家和他们的召唤生物附加 # 到 # 点火焰伤害"
 "# to # added Fire Damage against Burning Enemies","对燃烧的敌人附加 # - # 火焰伤害"
 "# to # added Fire Damage per 100 of Maximum Life or Maximum Mana, whichever is lower","每 100 点最大生命或最大魔力（取其低值）附加 # 到 # 点火焰伤害"
+"# to # added Lightning Damage
+Players and their Minions have # to # added Lightning Damage","附加 # 到 # 点闪电伤害
+玩家和他们的召唤生物附加 # 到 # 点闪电伤害"
+"# to # added Physical Damage
+Players and their Minions have # to # added Physical Damage","附加 # 到 # 点物理伤害
+玩家和他们的召唤生物附加 # 到 # 点物理伤害"
 "# to Accuracy Rating per 10 Dexterity on Unallocated Passives in Radius","范围内每有 10 点未配置的敏捷，便 +# 命中值"
 "# to Accuracy Rating per 10 Intelligence on Unallocated Passives in Radius","命中值按照范围内未配置的天赋上每 10 点智慧 +#"
 "# to Accuracy Rating per Frenzy Charge","命中值按照每个狂怒球 +#"
@@ -564,6 +577,9 @@
 "# to maximum number of Raging Spirits","+# 愤怒狂灵数量上限"
 "# to maximum number of Raised Spectres per Socketed Ghastly Eye Jewel","每镶嵌一个苍白之凝珠宝，灵体数量上限 +#"
 "# to maximum number of Raised Zombies","+# 魔卫复苏数量上限"
+"# to maximum number of Sacred Wisps
+# to number of Sacred Wisps Summoned","圣洁鬼灵的数量上限 +#
+召唤鬼灵的数量 +#"
 "# to maximum number of Sentinels of Purity","+# 纯净哨兵数量上限"
 "# to maximum number of Skeletons","+# 魔侍数量上限"
 "# to maximum number of Spectres","+# 灵体数量上限"
@@ -621,7 +637,6 @@
 "#% Chance to Cause Monster to Flee on Block","格挡时有 #% 的几率使怪物逃跑"
 "#% Chance to cause Bleeding Enemies to Flee on hit","击中流血敌人时有 #% 的几率使敌人逃跑"
 "#% Chance to contain a Vaal Side Area","你地图中有腐化地图的几率 +#%"
-"#% Chance to gain up to maximum Endurance Charges when you take a Critical Strike","当你受到暴击时获得最大数量的耐力球"
 "#% Chaos Resistance against Damage Over Time","对持续伤害有 +#% 混沌抗性"
 "#% Critical Strike Chance while at maximum Power Charges","当暴击球达到上限时，+#% 暴击率"
 "#% Critical Strike Multiplier while a Rare or Unique Enemy is within 6 metres","6 米范围内有一个稀有或传奇敌人时，暴击伤害加成 +#%"
@@ -657,7 +672,6 @@
 "#% chance for Energy Shield Recharge to start when you Suppress Spell Damage","你在压制法术伤害时，有#%几率给能量护盾充能"
 "#% chance for Energy Shield Recharge to start when you use a Skill","当你使用技能时，能量护盾有 #% 的几率开始充能"
 "#% chance for Impales on Enemies you Kill to Reflect Damage to Enemies within 2.2 metres","被你击败的敌人身上的穿刺效果有 #% 的几率对 2.2 米内的敌人反射伤害"
-"#% chance for Ore Deposits in your Maps to be replaced by Lost Shipments","你地图中的矿脉被替换为失落的货物。"
 "#% chance for Poisons inflicted with this Weapon to deal 100% more Damage","使用此武器攻击所造成的中毒效果有 #% 的几率使中毒伤害总增 100%"
 "#% chance for Poisons inflicted with this Weapon to deal 300% more Damage","该武器施加的中毒效果有 #% 的几率使中毒伤害总增 300%"
 "#% chance for Rare Monsters to Fracture on death","稀有怪物被击败时有 #% 的几率分裂"
@@ -667,6 +681,9 @@
 "#% chance for Timeless Splinters to drop as Timeless Emblems instead in your Maps","在你的地图中，永恒裂片有#%的几率改为掉落永恒印记"
 "#% chance for a Coin Shower on Kill","击败敌人时有 #% 的几率产生撒钱效果"
 "#% chance for a Synthesis Map to drop from Final Map Boss in each Map (Tier 14+)","每张地图（14 阶以上）的地图最终首领掉落虚空忆境地图的几率 +#%"
+"#% chance for a damaging Retaliation skill to
+become usable for every 100 life removed this way","每以该方式移除 100 点生命，伤害性反击技能
+有 #% 的几率变为可用"
 "#% chance for dropped Maps to convert to Atlas Memories","掉落的地图有 #% 的几率转化为异界回忆"
 "#% chance for dropped Maps to convert to Conqueror Maps","掉落的地图有 #% 的几率转化为征服者地图"
 "#% chance for dropped Maps to convert to Elder Maps","掉落的地图有 #% 的几率转化为裂界者地图"
@@ -702,6 +719,9 @@
 "#% chance in Heists for Regal Orbs to drop as Divine Orbs instead","夺宝冒险中有 #% 的几率将掉落的富豪石变为神圣石"
 "#% chance on Hitting an Enemy for all Impales on that Enemy to last for an additional Hit","击中敌人时有 #% 的几率使该敌人受到的所有穿刺额外持续一次击中"
 "#% chance on Melee Hit for the Strongest Impale on target to last for 1 additional Hit","近战击中时有 #% 几率使目标身上最强的穿刺额外持续 1 次击中"
+"#% chance on Skill use to not Sacrifice Life but
+still gain benefits as though you had","使用技能有 #% 的几率不牺牲生命，
+但依然获得牺牲时的效果"
 "#% chance on completing a Heist to generate an additional Reveal with Whakano","和瓦卡诺一同完成夺宝冒险时有 #% 的几率产生一次额外破解"
 "#% chance on opening a Chest to not generate Alert Level","开启宝箱有 #% 的几率不产生警报等级"
 "#% chance that if you would gain Endurance Charges, you instead gain up to maximum Endurance Charges","若你可以获得耐力球，则有 #% 的几率直接获得最大数量的耐力球"
@@ -746,7 +766,6 @@ your maximum number of Crab Barriers","有 #% 的几率在你获得 1 个深海�
 "#% chance to Avoid being Shocked","#% 几率避免被感电"
 "#% chance to Avoid being Stunned","#% 几率避免被晕眩"
 "#% chance to Avoid gaining an Affliction","#% 几率避免获得一个痛苦"
-"#% chance to Blind Chilled Enemies on Hit","击中冰缓的敌人时使其致盲"
 "#% chance to Blind Enemies on Critical Strike","暴击时有 #% 的几率致盲敌人"
 "#% chance to Blind Enemies on Hit with Attacks","攻击击中有 #% 的几率致盲敌人"
 "#% chance to Blind Enemies on Hit with Melee Weapons","近战武器击中时有 #% 的几率致盲敌人"
@@ -769,11 +788,8 @@ your maximum number of Crab Barriers","有 #% 的几率在你获得 1 个深海�
 "#% chance to Curse Enemies with Enfeeble on Hit","有 #% 的几率在击中时用衰弱诅咒敌人"
 "#% chance to Curse Enemies with Punishment on Hit","有 #% 的几率在击中时用惩戒诅咒敌人"
 "#% chance to Curse Enemies with Socketed Hex Curse Gem on Hit","击中时有 #% 的几率用插入的魔蛊诅咒敌人"
-"#% chance to Curse Enemies with Temporal Chains on Hit","击中时用时空锁链诅咒敌人"
 "#% chance to Curse Enemies with Vulnerability on Hit","有 #% 几率击中时对敌人附加脆弱诅咒。"
-"#% chance to Curse Non-Cursed Enemies with Enfeeble on Hit","击中时对未受诅咒的敌人附加衰弱诅咒。"
 "#% chance to Curse non-Cursed Enemies with a random Hex on Hit","击中有 #% 的几率用一种随机魔蛊诅咒非诅咒敌人"
-"#% chance to Debilitate Enemies you Hit that are on Full Life for 4 seconds","击中满血的敌人时使其疲惫 4 秒"
 "#% chance to Defend with 200% of Armour","护甲值有 #% 的几率以 200% 进行防御"
 "#% chance to Eat a Soul when you Consume the corpse of a Rare Monster","消耗稀有怪物的灵柩时有 #% 的几率吞噬一个灵魂"
 "#% chance to Evade Attack Hits while affected by Grace","受优雅影响时，+#% 闪避攻击击中率"
@@ -845,8 +861,6 @@ your maximum number of Crab Barriers","有 #% 的几率在你获得 1 个深海�
 "#% chance to Trigger Explosive Toad when you kill an Enemy","击败敌人时有 #% 的几率触发爆破蟾蜍"
 "#% chance to Trigger Level 1 Blood Rage when you Kill an Enemy","击败敌人时有 #% 的几率触发 1 级的狂野怒火"
 "#% chance to Trigger Level 1 Create Lesser Shrine when you Kill an Enemy","击败敌人时有 #% 的几率触发 1 级创造低等神龛"
-"#% chance to Trigger Level 1 Lesser Raise Spiders on Kill","击败敌人时触发 20 级次级召唤毒蛛"
-"#% chance to Trigger Level 1 Raise Spiders on Kill","击败敌人时触发 20 级召唤毒蛛"
 "#% chance to Trigger Level 10 Summon Raging Spirit on Kill","击败敌人时有 #% 的几率触发 10 级的召唤愤怒狂灵"
 "#% chance to Trigger Level 16 Molten Burst on Melee Hit","近战击中有 #% 的几率触发 16 级的熔岩爆破"
 "#% chance to Trigger Level 18 Animate Guardian's Weapon when Animated Weapon Kills an Enemy","当幻化武器击败一个敌人时，有 #% 的几率触发 18 级的幻化守卫武器"
@@ -855,7 +869,6 @@ your maximum number of Crab Barriers","有 #% 的几率在你获得 1 个深海�
 "#% chance to Trigger Level 20 Arcane Wake after Spending a total of 200 Mana","消耗总计 200 魔力后有 #% 的几率触发 20 级的秘术苏醒"
 "#% chance to Trigger Level 20 Glimpse of Eternity when Hit","被击中时有 #% 的几率触发 20 级的永恒窥视"
 "#% chance to Trigger Level 20 Moonfall on Melee Critical Strike","近战暴击时有 #% 的几率触发 20 级月陨"
-"#% chance to Trigger Level 20 Shade Form when Hit","击中时触发等级 30 暗影姿态"
 "#% chance to Trigger Level 20 Shade Form when you Use a Socketed Skill","使用插入的技能时，有 #% 的几率触发 20 级暗影姿态"
 "#% chance to Trigger Level 20 Starfall on Melee Critical Strike","近战暴击时有 #% 的几率触发 20 级星辰坠落"
 "#% chance to Trigger Level 20 Summon Volatile Anomaly on Kill","击败敌人时有 #% 的几率触发 20 级召唤异动奇点"
@@ -864,6 +877,12 @@ your maximum number of Crab Barriers","有 #% 的几率在你获得 1 个深海�
 "#% chance to Trigger Socketed Curse Spell when you Cast a Curse Spell, with a 0.25 second Cooldown","当你施放一个诅咒法术时，有#% 几率触发插槽诅咒法术，有 0.25 秒的冷却时间"
 "#% chance to Trigger Socketed Spell on Kill, with a 0.5 second Cooldown","击败敌人时有 #% 的几率触发镶嵌的法术，冷却时间 0.5 秒"
 "#% chance to Trigger Socketed Spells when you Focus, with a 0.25 second Cooldown","你在专注时有 #% 的几率触发插入的法术，它有 0.25 秒冷却时间"
+"#% chance to Trigger Socketed Spells when you Spend at least # Life on an
+Upfront Cost to Use or Trigger a Skill, with a 0.1 second Cooldown","有 #% 的几率在消耗至少 # 点预支花费的生命
+或触发一个技能时触发插入的法术，它有 0.1 秒冷却时间"
+"#% chance to Trigger Socketed Spells when you Spend at least # Mana on an
+Upfront Cost to Use or Trigger a Skill, with a 0.1 second Cooldown","有 #% 的几率在消耗至少 # 点预支花费的魔力
+或触发一个技能时触发插入的法术，它有 0.1 秒冷却时间"
 "#% chance to Trigger Summon Spirit of Ahuana on Kill","击败敌人时有 #% 的几率触发召唤阿华纳之魂"
 "#% chance to Trigger Summon Spirit of Akoya on Kill","击败敌人时有 #% 的几率触发召唤阿寇亚之魂"
 "#% chance to Trigger Summon Spirit of Ikiaho on Kill","击败敌人时有 #% 的几率触发召唤伊基阿霍之魂"
@@ -881,7 +900,6 @@ your maximum number of Crab Barriers","有 #% 的几率在你获得 1 个深海�
 "#% chance to Trigger a Socketed Warcry Skill when you lose Endurance Charges, with a 0.25 second Cooldown","有 #% 的几率触发一个插入的战吼技能，它有 0.25 秒冷却时间"
 "#% chance to Unnerve Enemies for 4 seconds on Hit","击中时有 #% 的几率恐惧敌人 4 秒"
 "#% chance to avoid Corrupted Blood","#% 的几率免疫腐化之血的流血"
-"#% chance to avoid Maim","你无法被瘫痪"
 "#% chance to avoid Projectiles if you've taken Projectile Damage Recently","若你近期内承受过投射物伤害，则有 #% 的几率避开投射物"
 "#% chance to avoid Projectiles that have Chained","#% 的几率避免被连锁弹射的投射物击中"
 "#% chance to avoid Projectiles","#% 的几率免疫投射物"
@@ -918,14 +936,19 @@ Strike if Intelligence is your highest Attribute","若智慧是你最高的属�
 "#% chance to deal Triple Damage","有 #% 的几率造成三倍伤害"
 "#% chance to double Stun Duration","有 #% 的几率使晕眩时间延长 1 倍"
 "#% chance to gain 25% of Non-Chaos Damage with Hits as Extra Chaos Damage","有 #% 的几率获得额外混沌伤害，其数值等同于非混沌伤害的 25%"
+"#% chance to gain Adrenaline for 2 Seconds when Leech is
+removed by Filling Unreserved Life","填满未保留的生命而移除偷取时，
+有 #% 的几率获得肾上腺素，持续 2 秒"
 "#% chance to gain Alchemist's Genius when you use a Flask","你使用药剂时有 #% 的几率获得炼金奇才效果"
 "#% chance to gain Arcane Surge when you Kill an Enemy","你击败敌人时有 #% 的几率获得秘术增强"
 "#% chance to gain Chaotic Might for 10 seconds on Kill","击败敌人时有 #% 的几率获得混沌之威，持续 10 秒"
-"#% chance to gain Chaotic Might for 4 seconds on Critical Strike","暴击时获得混沌之威，持续 4 秒"
 "#% chance to gain Elusive on Critical Strike","暴击时有 #% 的几率获得灵巧"
 "#% chance to gain Elusive on Kill","击败敌人有 #% 的几率获得灵巧"
 "#% chance to gain Her Blessing for 3 seconds when you Ignite an Enemy","点燃敌人时有 #% 的几率获得女神的祝福 3 秒"
 "#% chance to gain Onslaught for 10 seconds on Kill","击败敌人时有 #% 的几率获得猛攻状态，持续 10 秒"
+"#% chance to gain Onslaught for 4 Seconds when Leech is
+removed by Filling Unreserved Life","填满未保留的生命而移除偷取时，
+有 #% 的几率获得猛攻，持续 4 秒"
 "#% chance to gain Onslaught for 4 seconds on Kill","击败敌人时有 #% 的几率获得 4 秒猛攻状态"
 "#% chance to gain Phasing for # seconds when your Trap is triggered by an Enemy","陷阱被敌人触发时，有 #% 的几率获得 # 秒迷踪状态"
 "#% chance to gain Phasing for 4 seconds on Kill","击败敌人时有 #% 的几率获得 4 秒迷踪状态"
@@ -961,7 +984,6 @@ Strike if Intelligence is your highest Attribute","若智慧是你最高的属�
 "#% chance to gain a Power Charge on hitting an Enemy affected by a Spider's Web","击中被 1 层蜘蛛网影响的敌人时，有 #% 的几率获得 1 个暴击球"
 "#% chance to gain a Power Charge when you Block","格挡时有 #% 的几率获得暴击球"
 "#% chance to gain a Power Charge when you Cast a Curse Spell","当你施放诅咒法术时，有 #% 的几率获得一个暴击球"
-"#% chance to gain a Power Charge when you Hit a Frozen Enemy","你击中冻结的敌人时，获得一个暴击球"
 "#% chance to gain a Power Charge when you Stun","晕眩时有 #% 的几率获得暴击球"
 "#% chance to gain a Power Charge when you Throw a Trap","投掷陷阱时，有 #% 的几率获得一个暴击球"
 "#% chance to gain a Power Charge when you use a Vaal Skill","你使用瓦尔技能时有 #% 的几率获得 1 个暴击球"
@@ -985,9 +1007,7 @@ of your Traps are Triggered by an Enemy","当你的任何陷阱被敌人触发�
 "#% chance to grant Chaotic Might to Enemies within 2 metres on Kill","击败敌人时，2 米范围内的敌人有 #% 的几率获得混沌之威"
 "#% chance to grant Onslaught to Enemies within 2 metres on Kill","击败敌人时，2 米范围内的敌人有 #% 的几率获得猛攻"
 "#% chance to grant a Frenzy Charge to Allies within 4 metres on Hit","击中敌人时，4 米范围内的友军有 #% 的几率获得一个狂怒球"
-"#% chance to grant a Frenzy Charge to Allies within 4 metres on Kill","击败敌人时，4 米范围内的友军获得一个狂怒球"
 "#% chance to grant a Power Charge to Allies within 4 metres on Kill","击败敌人时，4 米范围内的友军有 #% 的几率获得一个暴击球"
-"#% chance to grant an Endurance Charge to Allies within 4 metres on Hit","击中怪物时，4 米范围内的友军获得一个耐力球"
 "#% chance to inflict Bleeding on Critical Strike with Attacks","攻击打出暴击时，有 #% 的几率造成流血"
 "#% chance to inflict Brittle on Enemies when you Block their Damage","你格挡敌人的伤害时，有 #% 的几率给它们施加易碎"
 "#% chance to inflict Brittle","#% 的几率造成易碎"
@@ -1030,7 +1050,9 @@ of your Traps are Triggered by an Enemy","当你的任何陷阱被敌人触发�
 "#% chance to spawn a Searing Exarch Altar when the Influence of The Searing Exarch first appears in your Maps","当焚界者的影响初次出现在你的地图中时，有#%的几率生成一个焚界者祭坛"
 "#% chance to take 50% less Area Damage from Hits","有 #% 的几率使受到的范围伤害总降 50%"
 "#% chance to throw up to 4 additional Traps","有 #% 的几率投掷 4 个额外陷阱"
-"#% chance when you Kill a Magic Monster to gain its Modifiers for 60 seconds","当你击败魔法怪物时，会获得该怪物属性修正 60 秒"
+"#% chance when you Kill a Scorched Enemy to Burn Each surrounding
+Enemy for 4 seconds, dealing 8% of the Killed Enemy's Life as Fire Damage per second","你击败烧灼的敌人时有 #% 的几率使周围所有敌人燃烧 4 秒，
+每秒造成被击败敌人 8% 生命的火焰伤害"
 "#% chance when you pay a Skill's Cost to gain that much Mana","你施放技能时有 #% 的几率得到等于其花费的魔力"
 "#% faster Restoration of Ward","结界复原速度加快 #%"
 "#% faster start of Energy Shield Recharge during any Flask Effect","能量护盾在任意药剂生效期间充能时间延后 #%"
@@ -1292,6 +1314,9 @@ of your Traps are Triggered by an Enemy","当你的任何陷阱被敌人触发�
 "#% increased Critical Strike Chance per socketed Hypnotic Eye Jewel","每颗插上的安睡之凝珠宝使暴击几率提高 #%"
 "#% increased Critical Strike Chance while Physical Aegis is depleted","物理神盾消散时，暴击率提高 #%"
 "#% increased Critical Strike Chance while affected by Wrath","受到雷霆影响时，暴击率提高 #%"
+"#% increased Critical Strike Chance while area is not in Lockdown
+Players have #% increased Critical Strike Chance while area is not in Lockdown","暴击率在区域未封锁时提高 #%
+玩家暴击率在区域未封锁时提高 #%"
 "#% increased Critical Strike Chance while you have Avatar of Fire","当你获得火之化身时，暴击率提高 #%"
 "#% increased Critical Strike Chance while you have at least 200 Intelligence","至少有 200 点智慧时，暴击率提高 #%"
 "#% increased Critical Strike Chance with Bows","弓类攻击的暴击率提高 #%"
@@ -1364,6 +1389,9 @@ of your Traps are Triggered by an Enemy","当你的任何陷阱被敌人触发�
 "#% increased Damage while Leeching Mana","偷取魔力时伤害提高 #%"
 "#% increased Damage while Leeching","偷取时伤害提高 #%"
 "#% increased Damage while Shocked","感电时伤害提高 #%"
+"#% increased Damage while area is not in Lockdown
+Players deal #% increased Damage while area is not in Lockdown","伤害在区域未封锁时提高 #%
+玩家伤害在区域未封锁时提高 #%"
 "#% increased Damage while in Blood Stance","血姿态下，伤害提高 #%"
 "#% increased Damage while on Consecrated Ground","在奉献地面上时，伤害提高 #%"
 "#% increased Damage while you have no Frenzy Charges","伤害在你没有狂怒球时提高 #%"
@@ -1465,6 +1493,8 @@ Hypnotic Eye Jewel affecting you, up to a maximum of 40%","每个影响你的安
 "#% increased Effect of Freeze on you","增加 #% 你身上的冻结效果"
 "#% increased Effect of Herald Buffs on you","你身上的捷增益效果提高 #%"
 "#% increased Effect of Impales inflicted with Spells","法术造成的穿刺效果提高 #%"
+"#% increased Effect of Jewel Socket Passive Skills containing Corrupted Magic Jewels","若非来自星团珠宝，含有已腐化的魔法珠宝的
+珠宝插槽天赋效果提高 #%"
 "#% increased Effect of Lightning Ailments","闪电异常状态效果提高 #%"
 "#% increased Effect of Non-Curse Auras from your Skills on Enemies","你的技能施加给敌人的非诅咒光环效果提高 #%"
 "#% increased Effect of Non-Curse Auras from your Skills while you have a Linked Target","有羁绊目标时，你的技能的非诅咒光环效果提高 #%"
@@ -1503,6 +1533,9 @@ Hypnotic Eye Jewel affecting you, up to a maximum of 40%","每个影响你的安
 "#% increased Elemental Damage if you've Warcried Recently","若你近期使用过战吼，造成的元素伤害提高 #%"
 "#% increased Elemental Damage if you've dealt a Critical Strike Recently","近期若打出过暴击，则元素伤害提高 #%"
 "#% increased Elemental Damage per 1% Fire, Cold, or Lightning Resistance above 75%","高于 75% 的每 1% 火焰、冰霜或闪电抗性使元素伤害提高 #"
+"#% increased Elemental Damage per 1% Missing
+Fire, Cold, or Lightning Resistance, up to a maximum of 450%","每缺失 1% 火焰、冰霜或闪电抗性，元素伤害提高 #%，
+上限为 450%"
 "#% increased Elemental Damage per 10 Devotion","每 10 点奉献使元素伤害提高 #%"
 "#% increased Elemental Damage per 10 Dexterity","每 10 点敏捷可使元素伤害提高 #%"
 "#% increased Elemental Damage per Frenzy Charge","每个狂怒球使元素伤害提高 #%"
@@ -1514,6 +1547,9 @@ Hypnotic Eye Jewel affecting you, up to a maximum of 40%","每个影响你的安
 "#% increased Elemental Damage with Attack Skills per Power Charge","每个暴击球使攻击技能的元素伤害提高 #%"
 "#% increased Elemental Damage with Attack Skills","#% 攻击技能元素伤害提高"
 "#% increased Elemental Damage with Attack Skills","攻击技能的元素伤害提高 #%"
+"#% increased Elemental Damage with Hits and Ailments for
+each type of Elemental Ailment on Enemy","敌人每受到一种元素异常状态影响，
+击中和异常状态造成的元素伤害提高 #%"
 "#% increased Elemental Damage with Melee Weapons","近战武器造成的元素伤害提高 #%"
 "#% increased Elemental Damage","#% 元素伤害提高"
 "#% increased Elemental Damage","元素伤害提高 #%"
@@ -1679,6 +1715,9 @@ Hypnotic Eye Jewel affecting you, up to a maximum of 40%","每个影响你的安
 "#% increased Lightning Spell Damage","#% 法术技能闪电伤害提高"
 "#% increased Lockpicking speed","解密术速度加快 #%"
 "#% increased Magic Monsters","你地图内的魔法怪物数量提高 #%"
+"#% increased Main Hand Critical Strike Chance per
+Murderous Eye Jewel affecting you, up to a maximum of 200%","每有一个影响你的凶残之凝珠宝，
+你的主手暴击几率提高 #%，最多 200%"
 "#% increased Mana Burn rate","魔力燃烧速度减慢 #%"
 "#% increased Mana Cost Efficiency for 2 seconds after Spending a total of 800 Mana","在合计消耗 800 点魔力后的 2 秒内，魔力消耗效能提高 #%"
 "#% increased Mana Cost Efficiency of Minion Skills","召唤生物技能的魔力消耗效能提高 #%"
@@ -1787,6 +1826,9 @@ Hypnotic Eye Jewel affecting you, up to a maximum of 40%","每个影响你的安
 "#% increased Movement Speed while Shocked","感电时移动速度加快 #%"
 "#% increased Movement Speed while affected by Grace","受到优雅影响时，移动速度加快 #%"
 "#% increased Movement Speed while affected by a Magic Abyss Jewel","受到魔法深渊珠宝影响时，移动速度加快 #%"
+"#% increased Movement Speed while area is not in Lockdown
+Players have #% increased Movement Speed while area is not in Lockdown","移动速度在区域未封锁时加快 #%
+玩家移动速度在区域未封锁时加快 #%"
 "#% increased Movement Speed while on Burning Ground","在燃烧地面上时，移动速度加快 #%"
 "#% increased Movement Speed while on Full Energy Shield","能量护盾全满时，移动速度加快 #%"
 "#% increased Movement Speed while you have Cat's Stealth","你获得猫之隐匿时移动速度加快 #%"
@@ -1854,7 +1896,6 @@ to a maximum of 100%","近期内你施加的每层中毒效果都使中毒持续
 "#% increased Quantity of Relics Dropped by Monsters","怪物掉落的遗物数量提高 #%"
 "#% increased Quantity of Tainted Currency dropped by Beyond Demons in your Maps","超越恶魔在你的地图中掉落的污秽通货的数量增加#%"
 "#% increased Quantity of Vendor Refresh Currencies dropped by Monsters in your Maps","你的地图中的怪物掉落的商人刷新通货的数量提高#%"
-"#% increased Radius of Consecrated Ground created by this Flask","该药剂产生三倍范围的奉献地面"
 "#% increased Rage Cost Efficiency","怒火消耗效能提高 #%"
 "#% increased Rage Cost of Skills","技能的怒火消耗提高 #%"
 "#% increased Rage Effect","怒火效果提高 #%"
@@ -1957,6 +1998,9 @@ to a maximum of 100%","近期内你施加的每层中毒效果都使中毒持续
 "#% increased bonuses gained from Equipped Gloves","装备手套获得的加成提高 #%"
 "#% increased bonuses gained from Equipped Quiver","装备箭袋获得的加成提高 #%"
 "#% increased chance for Equipment Items dropped in your Maps to have Memory Strands","你地图内掉落的装备物品具有回忆束丝的几率提高 #%"
+"#% increased chance for Immortal Syndicate Members in your Maps
+to offer to Bargain for Items","在地图中与不朽辛迪加成员
+谈判物品的几率提高 #%"
 "#% increased chance for Legion Encounters in your Maps to include a General","你地图中的战乱之殇遭遇战包含将军的几率提高 #%"
 "#% increased chance for Maps found in your Maps to have Memory Influence","你地图中找到的地图具有回忆影响的几率提高 #%"
 "#% increased chance for Memory Traces to lead towards the Incarnation of Dread","回忆轨迹通向惊怖化形的几率提高 #%"
@@ -2012,6 +2056,9 @@ to a maximum of 100%","近期内你施加的每层中毒效果都使中毒持续
 "#% more Area of Effect with Bow Attacks that fire a single Projectile","发射单个投射物的弓类攻击效果范围总增 #%"
 "#% more Attack Speed with Unarmed Melee Attacks","徒手近战攻击速度总增 #%"
 "#% more Attack Speed","攻击速度总增 #%"
+"#% more Basic Currency Items found from Beyond Demons in your Maps
+that are followers of Beidat","从你地图中追随贝达特的超越恶魔处
+获得的基础通货物品总增 #%"
 "#% more Burning Damage","燃烧伤害总增 #%"
 "#% more Critical Strike Chance while Insane","疯狂状态下，总暴击率总增 #%"
 "#% more Critical Strike Chance","暴击率总降 #%"
@@ -2022,6 +2069,9 @@ to a maximum of 100%","近期内你施加的每层中毒效果都使中毒持续
 "#% more Damage with Arrow Hits at Close Range","近距离用弓击中后的伤害总增 #%"
 "#% more Damage with Arrow Hits not at Close Range","非近距离的箭矢击中伤害总增 #%"
 "#% more Damage","伤害总增 #%"
+"#% more Divination Cards found from Beyond Demons in your Maps
+that are followers of K'Tash","从你地图中追随科塔席的超越恶魔处
+获得的命运卡总增 #%"
 "#% more Duration of Ignites you inflict","你施加的点燃持续时间总增 #%"
 "#% more Duration","持续时间总增 #%"
 "#% more Effect of your Curses","你的诅咒效果总增 #%"
@@ -2048,6 +2098,9 @@ to a maximum of 100%","近期内你施加的每层中毒效果都使中毒持续
 "#% more Quantity of Items found","物品掉落数量总增 #%"
 "#% more Recovery if used while on Low Life","恢复效果在低血状态下使用时总增 #%"
 "#% more Rogue's Marker value of primary Heist Target","主要赏金目标的赏金猎人印记总增 #%"
+"#% more Unique Items found from Beyond Demons in your Maps
+that are followers of Ghorr","从你地图中追随咕尔的超越恶魔处
+获得的传奇物品总增 #%"
 "#% more Ward during Effect","生效期间，结界总增 #%"
 "#% more effect of Curses on Monsters","对怪物的诅咒总效果总降 #%"
 "#% of Armour also applies to Chaos Damage taken from Hits","对击中时受到的混沌伤害施加#%的护甲效果"
@@ -2208,7 +2261,6 @@ affected by Purity of Lightning","被闪电净化影响时，受到火焰和冰�
 "#% of Physical Damage taken as Fire Damage if 4 Warlord Items are Equipped","若装备 4 件督军物品，受到物理伤害的 #% 转化为火焰伤害"
 "#% of Physical Damage taken as Fire Damage","受到物理伤害的 #% 视作火焰伤害"
 "#% of Physical Damage taken as Lightning Damage if 4 Crusader Items are Equipped","若装备 4 件圣战者物品，受到物理伤害的 #% 转化为闪电伤害"
-"#% of Physical Damage taken bypasses Energy Shield","受到的物理伤害穿透能量护盾"
 "#% of Recovery applied Instantly","立即回复#% 回复量"
 "#% of Spell Damage Leeched as Energy Shield during Effect","生效期间，#% 的法术伤害转化为能量护盾偷取"
 "#% of Spell Damage Leeched as Energy Shield for each Curse on Enemy","敌人身上每有 1 个诅咒，法术伤害的 #% 便转化为能量护盾偷取"
@@ -2438,6 +2490,9 @@ affected by Purity of Lightning","被闪电净化影响时，受到火焰和冰�
 "#% reduced Critical Strike Chance per Frenzy Charge","每个狂怒球使暴击率降低 #%"
 "#% reduced Critical Strike Chance while Physical Aegis is depleted","物理神盾消散时，暴击率降低 #%"
 "#% reduced Critical Strike Chance while affected by Wrath","受到雷霆影响时，暴击率降低 #%"
+"#% reduced Critical Strike Chance while area is not in Lockdown
+Players have #% reduced Critical Strike Chance while area is not in Lockdown","暴击率在区域未封锁时降低 #%
+玩家暴击率在区域未封锁时提高 #%"
 "#% reduced Critical Strike Chance while you have Avatar of Fire","当你获得火之化身时，暴击率降低 #%"
 "#% reduced Critical Strike Chance while you have at least 200 Intelligence","至少有 200 点智慧时，暴击率降低 #%"
 "#% reduced Critical Strike Chance with Bows","弓类攻击的暴击率降低 #%"
@@ -2498,6 +2553,9 @@ affected by Purity of Lightning","被闪电净化影响时，受到火焰和冰�
 "#% reduced Damage while Leeching Mana","偷取魔力时伤害降低 #%"
 "#% reduced Damage while Leeching","偷取时伤害降低 #%"
 "#% reduced Damage while Shocked","感电时伤害降低 #%"
+"#% reduced Damage while area is not in Lockdown
+Players deal #% reduced Damage while area is not in Lockdown","伤害在区域未封锁时降低 #%
+玩家伤害在区域未封锁时提高 #%"
 "#% reduced Damage while in Blood Stance","血姿态下，伤害降低 #%"
 "#% reduced Damage while on Consecrated Ground","在奉献地面上时，伤害降低 #%"
 "#% reduced Damage while you have no Frenzy Charges","伤害在你没有狂怒球时降低 #%"
@@ -2591,6 +2649,8 @@ Hypnotic Eye Jewel affecting you","每个影响你的安睡之凝珠宝都使你
 "#% reduced Effect of Freeze on you","减少 #% 你身上的冻结效果"
 "#% reduced Effect of Herald Buffs on you","你身上的捷增益效果降低 #%"
 "#% reduced Effect of Impales inflicted with Spells","法术造成的穿刺效果降低 #%"
+"#% reduced Effect of Jewel Socket Passive Skills containing Corrupted Magic Jewels","若非来自星团珠宝，含有已腐化的魔法珠宝的
+珠宝插槽天赋效果降低 #%"
 "#% reduced Effect of Lightning Ailments","闪电异常状态效果降低 #%"
 "#% reduced Effect of Non-Curse Auras from your Skills on Enemies","你的技能施加给敌人的非诅咒光环效果降低 #%"
 "#% reduced Effect of Non-Curse Auras from your Skills while you have a Linked Target","有羁绊目标时，你的技能的非诅咒光环效果降低 #%"
@@ -2625,6 +2685,9 @@ Hypnotic Eye Jewel affecting you","每个影响你的安睡之凝珠宝都使你
 "#% reduced Elemental Ailment Duration on you","自身受到的元素异常状态时间缩短 #%"
 "#% reduced Elemental Damage during any Flask Effect","药剂持续期间，元素伤害降低 #%"
 "#% reduced Elemental Damage if you've dealt a Critical Strike Recently","近期若打出过暴击，则元素伤害降低 #%"
+"#% reduced Elemental Damage per 1% Missing
+Fire, Cold, or Lightning Resistance, up to a maximum of 450%","每缺失 1% 火焰、冰霜或闪电抗性，元素伤害降低 #%，
+上限为 450%"
 "#% reduced Elemental Damage per 10 Devotion","每 10 点奉献使元素伤害降低 #%"
 "#% reduced Elemental Damage per 10 Dexterity","每 10 点敏捷可使元素伤害降低 #%"
 "#% reduced Elemental Damage per Power charge","每个暴击球使元素伤害降低 #%"
@@ -2633,6 +2696,9 @@ Hypnotic Eye Jewel affecting you","每个影响你的安睡之凝珠宝都使你
 "#% reduced Elemental Damage with Attack Skills per Power Charge","每个暴击球使攻击技能的元素伤害降低 #%"
 "#% reduced Elemental Damage with Attack Skills","#% 攻击技能元素伤害降低"
 "#% reduced Elemental Damage with Attack Skills","攻击技能的元素伤害降低 #%"
+"#% reduced Elemental Damage with Hits and Ailments for
+each type of Elemental Ailment on Enemy","敌人每受到一种元素异常状态影响，
+击中和异常状态造成的元素伤害降低 #%"
 "#% reduced Elemental Damage with Melee Weapons","近战武器造成的元素伤害降低 #%"
 "#% reduced Elemental Damage","#% 元素伤害降低"
 "#% reduced Elemental Damage","元素伤害降低 #%"
@@ -2864,6 +2930,9 @@ Hypnotic Eye Jewel affecting you","每个影响你的安睡之凝珠宝都使你
 "#% reduced Movement Speed while Shocked","感电时移动速度减慢 #%"
 "#% reduced Movement Speed while affected by Grace","受到优雅影响时，移动速度减慢 #%"
 "#% reduced Movement Speed while affected by a Magic Abyss Jewel","受到魔法深渊珠宝影响时，移动速度减慢 #%"
+"#% reduced Movement Speed while area is not in Lockdown
+Players have #% reduced Movement Speed while area is not in Lockdown","移动速度在区域未封锁时减慢 #%
+玩家移动速度在区域未封锁时加快 #%"
 "#% reduced Movement Speed while on Burning Ground","在燃烧地面上时，移动速度减慢 #%"
 "#% reduced Movement Speed while on Full Energy Shield","能量护盾全满时，移动速度减慢 #%"
 "#% reduced Movement Speed while you have Cat's Stealth","你获得猫之隐匿时移动速度减慢 #%"
@@ -3103,6 +3172,9 @@ Hypnotic Eye Jewel affecting you","每个影响你的安睡之凝珠宝都使你
 "#% to Critical Strike Multiplier while Dual Wielding","双持时附加 +#% 基础暴击伤害加成"
 "#% to Critical Strike Multiplier while affected by Anger","受到愤怒影响时，+#% 暴击伤害加成"
 "#% to Critical Strike Multiplier while affected by Precision","受到精准影响时，+#% 暴击伤害加成"
+"#% to Critical Strike Multiplier while area is not in Lockdown
+Players have #% to Critical Strike Multiplier while area is not in Lockdown","区域未封锁时，暴击伤害加成 +#%
+区域未封锁时，玩家的暴击伤害加成 +#%"
 "#% to Critical Strike Multiplier with Axes","斧类攻击 +#% 暴击伤害加成"
 "#% to Critical Strike Multiplier with Bows","弓类攻击 +#% 暴击伤害加成"
 "#% to Critical Strike Multiplier with Claws","爪类攻击 +#% 暴击伤害加成"
@@ -3168,6 +3240,9 @@ Hypnotic Eye Jewel affecting you","每个影响你的安睡之凝珠宝都使你
 "#% to Off Hand Critical Strike Chance per 10 Maximum Energy Shield on Shield","盾牌上每有 10 点最大能量护盾都使副手暴击率 +#%"
 "#% to Off Hand Critical Strike Chance while Dual Wielding","副手暴击率在双持武器时 +#%"
 "#% to Off Hand Critical Strike Chance","副手暴击率 +#%"
+"#% to Off Hand Critical Strike Multiplier per
+Murderous Eye Jewel affecting you, up to a maximum of +100%","每有一个影响你的凶残之凝珠宝，你的
+副手暴击加成 +#%，最多 100%"
 "#% to Off Hand Critical Strike Multiplier per 10 Maximum Energy Shield on Shield","盾牌上每有 10 点最大能量护盾都使副手暴击伤害加成 +#%"
 "#% to Physical Damage over Time Multiplier while Bleeding","流血时，+#% 物理持续伤害加成"
 "#% to Physical Damage over Time Multiplier with Attack Skills","攻击技能的持续物理伤害加成 +#%"
@@ -3694,7 +3769,7 @@ Hypnotic Eye Jewel affecting you","每个影响你的安睡之凝珠宝都使你
 "1 added passive skill is Depth Perception","其中 1 个增加的天赋为 潜意识"
 "1 added passive skill is Dervish","其中 1 个增加的天赋为 修行之刃"
 "1 added passive skill is Destroyer","其中 1 个增加的天赋为 破坏者"
-"1 added passive skill is Destructive Apparatus","其中 1 个增加的天赋为 毁灭装置"
+"1 added passive skill is Devastating Devices","其中 1 个增加的天赋为 毁灭装置"
 "1 added passive skill is Devotion","其中 1 个增加的天赋为 奉献"
 "1 added passive skill is Diamond Skin","其中 1 个增加的天赋为 晶钻之肤"
 "1 added passive skill is Dire Torment","其中 1 个增加的天赋为 恐怖折磨"
@@ -4051,12 +4126,12 @@ Hypnotic Eye Jewel affecting you","每个影响你的安睡之凝珠宝都使你
 "1% less Damage Taken per # Strength","承受伤害按照每 # 点力量总降 1%"
 "1% reduced Melee Physical Damage with Unarmed Attacks per # Dexterity Allocated in Radius","徒手攻击的近战物理伤害按照范围内每配置 # 点敏捷降低 1%"
 "35% chance to avoid being Stunned for each Herald Buff affecting you","每有一个影响你的捷增益效果，都使你有 35% 的几率避免眩晕"
-"A Map Boss is granted # random Essence Modifiers from any Imprisoned Monsters slain in your Maps","地图首领会获得你在地图中击败的任意禁锢怪物的一个随机精华词缀"
 "Absolution","赦罪"
 "Abyss Cracks in your Maps have #% chance to spawn 100% increased Monsters","你地图中深渊裂隙有 #% 几率使产生的怪物提高100%"
 "Abyss Cracks in your Maps have #% chance to spawn all Monsters as at least Magic","你地图中深渊裂隙有 #% 几率使产生的所有怪物至少为魔法怪物"
 "Abyss Jewels found in your Maps have #% chance to be Corrupted
-and have 5 or 6 random Modifiers","找到的深渊珠宝有#%的几率被腐化，并且带5-6个随机词缀"
+and have 5 or 6 random Modifiers","你地图中找到的深渊珠宝有#%的几率被腐化
+并且拥有 5 至 6 个随机词缀"
 "Abyss Monsters in your Maps grant #% increased Experience","地图内深渊怪物提供的经验值提高 #%"
 "Abyss Pits in your Maps have #% chance to be guarded by 5 additional Rare Monsters","地图中的深渊巨坑有 #% 的几率被 5 个额外稀有怪物保卫"
 "Abyss Pits in your Maps have #% chance to spawn 100% increased Monsters","你地图中深渊巨坑有 #% 几率使产生的怪物提高100%"
@@ -4139,6 +4214,9 @@ at least Magic for each prior Pit closed","此前每有一个巨坑关闭，你�
 "Added Small Passive Skills grant: 10% increased Damage while affected by a Herald","增加的小天赋获得：受捷影响时，伤害提高 10%"
 "Added Small Passive Skills grant: 10% increased Effect of Non-Damaging Ailments","增加的小天赋获得：非伤害型异常状态效果提高 10%"
 "Added Small Passive Skills grant: 10% increased Elemental Damage","增加的小天赋获得：元素伤害提高 10%"
+"Added Small Passive Skills grant: 10% increased Life Recovery from Flasks
+Added Small Passive Skills grant: 10% increased Mana Recovery from Flasks","增加的小天赋获得：药剂给予的生命恢复提高 10%
+增加的小天赋获得：药剂给予的魔力恢复提高 10%"
 "Added Small Passive Skills grant: 10% increased Projectile Damage","增加的小天赋获得：投射物伤害提高 10%"
 "Added Small Passive Skills grant: 10% increased Spell Damage","增加的小天赋获得：法术伤害提高 10%"
 "Added Small Passive Skills grant: 12% increased Attack Damage while Dual Wielding","增加的小天赋获得：攻击伤害在双持武器时提高 12%"
@@ -4149,12 +4227,18 @@ at least Magic for each prior Pit closed","此前每有一个巨坑关闭，你�
 "Added Small Passive Skills grant: 12% increased Chaos Damage","增加的小天赋获得：混沌伤害提高 12%"
 "Added Small Passive Skills grant: 12% increased Cold Damage over Time","增加的小天赋获得：持续冰霜伤害提高 12%"
 "Added Small Passive Skills grant: 12% increased Cold Damage","增加的小天赋获得：冰霜伤害提高 12%"
+"Added Small Passive Skills grant: 12% increased Damage with Bows
+Added Small Passive Skills grant: 12% increased Damage Over Time with Bow Skills","增加的小天赋获得：弓类伤害提高 12%
+增加的小天赋获得：弓类技能的持续伤害效果提高 12%"
 "Added Small Passive Skills grant: 12% increased Damage with Two Handed Weapons","增加的小天赋获得：双手武器的攻击伤害提高 12%"
 "Added Small Passive Skills grant: 12% increased Fire Damage","增加的小天赋获得：火焰伤害提高 12%"
 "Added Small Passive Skills grant: 12% increased Lightning Damage","增加的小天赋获得：闪电伤害提高 12%"
 "Added Small Passive Skills grant: 12% increased Physical Damage over Time","增加的小天赋获得：持续物理伤害提高 12%"
 "Added Small Passive Skills grant: 12% increased Physical Damage","增加的小天赋获得：物理伤害提高 12%"
 "Added Small Passive Skills grant: 12% increased Totem Damage","增加的小天赋获得：图腾伤害提高 12%"
+"Added Small Passive Skills grant: 12% increased Trap Damage
+Added Small Passive Skills grant: 12% increased Mine Damage","增加的小天赋获得：陷阱伤害提高 12%
+增加的小天赋获得：地雷伤害提高 12%"
 "Added Small Passive Skills grant: 15% increased Armour","增加的小天赋获得：该装备的护甲提高 15%"
 "Added Small Passive Skills grant: 15% increased Critical Strike Chance","增加的小天赋获得：暴击率提高 15%"
 "Added Small Passive Skills grant: 15% increased Evasion Rating","增加的小天赋获得：该装备的闪避值提高 15%"
@@ -4166,11 +4250,20 @@ at least Magic for each prior Pit closed","此前每有一个巨坑关闭，你�
 "Added Small Passive Skills grant: 6% increased Mana Reservation Efficiency of Skills","增加的小天赋获得：技能的魔力保留效能提高 6%"
 "Added Small Passive Skills grant: 6% increased maximum Energy Shield","增加的小天赋获得：能量护盾上限提高 6%"
 "Added Small Passive Skills grant: 6% increased maximum Mana","增加的小天赋获得：魔力上限提高 6%"
+"Added Small Passive Skills grant: Axe Attacks deal 12% increased Damage with Hits and Ailments
+Added Small Passive Skills grant: Sword Attacks deal 12% increased Damage with Hits and Ailments","增加的小天赋获得：斧类攻击造成的击中和异常状态伤害提高 12%
+增加的小天赋获得：剑类攻击造成的击中和异常状态伤害提高 12%"
 "Added Small Passive Skills grant: Channelling Skills deal 12% increased Damage","增加的小天赋获得：持续吟唱技能伤害提高 12%"
+"Added Small Passive Skills grant: Claw Attacks deal 12% increased Damage with Hits and Ailments
+Added Small Passive Skills grant: Dagger Attacks deal 12% increased Damage with Hits and Ailments","增加的小天赋获得：爪类攻击造成的击中和异常状态伤害提高 12%
+增加的小天赋获得：匕首攻击造成的击中和异常状态伤害提高 12%"
 "Added Small Passive Skills grant: Exerted Attacks deal 20% increased Damage","增加的小天赋获得：增助攻击的伤害提高 20%"
 "Added Small Passive Skills grant: Minions deal 10% increased Damage while you are affected by a Herald","增加的小天赋获得：你受捷影响时，召唤生物的伤害提高 10%"
 "Added Small Passive Skills grant: Minions deal 10% increased Damage","增加的小天赋获得：召唤生物的伤害提高 10%"
 "Added Small Passive Skills grant: Minions have 12% increased maximum Life","增加的小天赋获得：召唤生物的最大生命提高 12%"
+"Added Small Passive Skills grant: Staff Attacks deal 12% increased Damage with Hits and Ailments
+Added Small Passive Skills grant: Mace or Sceptre Attacks deal 12% increased Damage with Hits and Ailments","增加的小天赋获得：长杖攻击造成的击中和异常状态伤害提高 12%
+增加的小天赋获得：锤类或短杖攻击造成的击中和异常状态伤害提高 12%"
 "Added Small Passive Skills grant: Wand Attacks deal 12% increased Damage with Hits and Ailments","增加的小天赋获得：法杖攻击造成的击中和异常状态伤害提高 12%"
 "Added Small Passive Skills have #% increased Effect","增加的小天赋效果提高 #%"
 "Adds # Jewel Socket Passive Skills","增加 # 个珠宝插槽天赋"
@@ -5157,6 +5250,9 @@ at least Magic for each prior Pit closed","此前每有一个巨坑关闭，你�
 "Animated Guardian deals #% increased Damage per Animated Weapon","每把幻化武器可使幻化守卫的伤害提高 #%"
 "Animated Guardian deals #% reduced Damage per Animated Weapon","每把幻化武器可使幻化守卫的伤害降低 #%"
 "Animated and Manifested Minions' Melee Strikes deal #% more Splash Damage","已幻化和已显化的召唤生物的近战攻击造成的扩散伤害总降 #%"
+"Animated and Manifested Minions' Melee Strikes deal Splash
+Damage to surrounding targets","已幻化和已显化的召唤生物的近战攻击
+对周围目标造成扩散伤害"
 "Anomaly Research Lab (Tier 1)","内有房间：分裂研究实验室（1 阶）"
 "Antechamber","内有房间：接待厅"
 "Apex of Ascension (Tier 3)","内有房间：晋升之巅（3 阶）"
@@ -5167,20 +5263,9 @@ at least Magic for each prior Pit closed","此前每有一个巨坑关闭，你�
 "Arctic Armour","极地装甲"
 "Area Skills have #% chance to deal Double Damage","区域技能有 #% 的几率造成双倍伤害"
 "Area can contain Breaches","该地图可能包含裂隙"
-"Area contains # additional Abysses","该地图会出现 1 个额外深渊"
 "Area contains # additional Chest Marker","区域内额外有 # 个宝箱之印"
-"Area contains # additional Harbingers","地图内有一个额外的先驱者"
-"Area contains # additional Imprisoned Monsters","地图内有一个额外的禁锢怪物"
-"Area contains # additional Legion Encounters","该地图会额外出现 1 个战乱之殇事件"
-"Area contains # additional Magic Monster packs","地图中有一个额外的魔法怪物群"
-"Area contains # additional Shrines","地图内有一个额外的神龛"
 "Area contains # additional Strongboxes","地图内有 # 个额外的保险箱"
-"Area contains # additional Underground Areas","区域内额外有一个地下区域"
-"Area contains # additional guarded Exquisite Vaal Vessels","区域内额外有一个受到保护的精美瓦尔容器"
-"Area contains # additional guarded Vaal Vessels","区域内额外有一个被守卫的瓦尔容器"
 "Area contains # additional pack of Corrupted Vaal Monsters","你的地图额外包含#个腐化的瓦尔怪物群"
-"Area contains # additional packs with a Rare monster","地图中有一个额外的怪物群，其中有一个稀有怪物"
-"Area contains # additional unstable Breaches","你的地图包含一个额外的不稳定裂隙"
 "Area contains #% increased number of Monster Markers","区域内怪物之印的数量提高 #%"
 "Area contains #% increased number of Remnants","区域内残骸数量提高 #%"
 "Area contains #% increased number of Runic Monster Markers","地图内符纹怪物之印的数量提高 #%"
@@ -5227,11 +5312,8 @@ at least Magic for each prior Pit closed","此前每有一个巨坑关闭，你�
 "Area is Tormented","区域内受到罪魂影响"
 "Area is affected by # additional random Unallocated Notable Atlas Passives","你开启的地图额外具有 # 个随机的未配置的异界核心天赋"
 "Area is dominated by Terror Shrines","区域被恐惧神龛支配"
-"Area is haunted by # additional Tormented Spirit","你的地图额外被 1 个罪魂纠缠"
 "Area is influenced by The Elder","该区域被裂界者影响"
 "Area is influenced by The Shaper","该区域被塑界者影响"
-"Area is inhabited by # additional Invasion Bosses","该地图会出现 1 个额外侵略联盟的首领"
-"Area is inhabited by # additional Rogue Exiles","该地图会出现 1 位额外的盗贼流放者"
 "Area is inhabited by Abominations","该区域会出现大量被创造的生物"
 "Area is inhabited by Animals","区域内有许多动物"
 "Area is inhabited by Cultists of Kitava","该区域会出现许多奇塔弗的狂信者"
@@ -5261,7 +5343,6 @@ at least Magic for each prior Pit closed","此前每有一个巨坑关闭，你�
 "Arrow Nova","飞箭新星 （等阶 3）"
 "Arrows Chain # times","箭矢连锁 +# 次"
 "Arrows Fork","箭矢分裂"
-"Arrows Pierce # additional Targets","箭矢会穿透 1 个额外目标"
 "Arrows Pierce all Targets after Chaining","箭矢在连锁后贯穿所有目标"
 "Arrows Pierce all Targets after Forking","箭矢在分叉后贯穿所有目标"
 "Arrows Pierce all Targets","箭矢贯穿所有目标"
@@ -5279,7 +5360,6 @@ at least Magic for each prior Pit closed","此前每有一个巨坑关闭，你�
 "Ashen Fissure","灰烬裂缝"
 "Aspect of the Avian also grants Avian's Might and Avian's Flight to Allies within 6 metres","鸟之势也会使 6 米范围内的友军获得鸟之力量和鸟之斗魄"
 "Aspect of the Cat has no Reservation","猫之势没有保留效果"
-"Aspect of the Spider can inflict Spider's Web on Enemies # additional times","蛛之势可对敌人额外造成 1 层蜘蛛网"
 "Aspect of the Spider inflicts Spider's Webs and Hinder every # Seconds instead","蛛之势改为每 # 秒喷出蜘蛛网和缓速效果"
 "Aspect of the Spider","蛛之势"
 "Assassin's Mark","刺客印记"
@@ -5292,14 +5372,11 @@ at least Magic for each prior Pit closed","此前每有一个巨坑关闭，你�
 "Attack Skills gain #% of Physical Damage as Extra Fire Damage per Socketed Red Gem","每个插入的红色技能石都使 #% 的物理伤害转化为额外火焰伤害"
 "Attack Skills have # to maximum number of Summoned Totems","攻击的技能 +# 召唤图腾数量上限"
 "Attack Skills have Added Lightning Damage equal to #% of maximum Mana","攻击技能附加闪电伤害，等于最大魔力的 #%"
-"Attacks Chain # additional times when in Main Hand","装备于主手时，攻击额外连锁弹射 1 次"
 "Attacks Cost Life instead of Mana","攻击消耗生命而非魔力"
 "Attacks Exerted by Ancestral Cry deal #% increased Damage","被先祖战吼增助的攻击伤害提高 #%"
 "Attacks Exerted by Seismic Cry deal #% increased Damage","被震地战吼增助的攻击的伤害提高 #%"
 "Attacks always inflict Bleeding while you have Cat's Stealth","拥有猫之隐匿时，你的攻击必定造成流血"
 "Attacks fire # additional Projectile when in Off Hand","在副手时攻击额外发射 # 个投射物"
-"Attacks fire # additional Projectiles when in Off Hand","装备在副手时，攻击可以额外发射 1 个投射物"
-"Attacks fire # additional Projectiles","攻击可以额外发射 1 个投射物"
 "Attacks have #% chance to Maim on Hit","攻击击中时有 #% 的几率造成瘫痪"
 "Attacks have #% chance to Poison while at maximum Frenzy Charges","拥有最大数量的狂怒球时，攻击有 #% 的几率使敌人中毒"
 "Attacks have #% chance to cause Bleeding","攻击有 #% 的几率导致流血"
@@ -5334,7 +5411,6 @@ Enemies affected by at least 5 Poisons","该武器攻击至少有 5 层中毒的
 "Attacks with this Weapon have Added Fire Damage equal to #% of Player's Maximum Life","此武器的攻击附加相当于玩家最大生命值 #% 的火焰伤害"
 "Attacks with this Weapon have Added Maximum Lightning Damage equal to #% of Player's Maximum Energy Shield","该武器的攻击附加相当于玩家能量护盾上限 #% 的最大闪电伤害"
 "Attacks with this weapon inflict Hallowing Flame on Hit","使用此武器的攻击在击中时施加崇敬烈焰"
-"Attacks you use yourself Repeat # additional times","你自身使用的攻击额外重复 1 次"
 "Attacks you use yourself have #% more Attack Speed","你自身使用的攻击使攻击速度总增 #%"
 "Attribute Requirements can be satisfied by #% of Omniscience","属性需求可由 #% 的全知满足"
 "Aura Skills other than Anger are Disabled","禁用除愤怒之外的其他光环技能"
@@ -5387,6 +5463,11 @@ Passives in radius are Conquered by the Vaal","以夏巴夸亚的名义用 # 名
 "Beacons of Faith","信仰道标"
 "Bear Trap","捕熊陷阱"
 "Beasts in your Maps are more likely to be less common varieties","地图内的魔物更可能不是普通品种"
+"Beasts in your Maps have a #% chance to break free
+Beasts which break free in your Maps gain Bestial Rage
+Defeating Beasts grants Hunters' Cunning per Bestial Rage on the defeated Beast","你地图内的魔物有 #% 的几率挣脱
+你的地图中的挣脱魔物获得兽性狂怒
+被击败的魔物每有一种兽性狂怒，便可获得猎手之诈"
 "Beyond Demons in your Maps grant #% increased Experience","地图内超越恶魔提供的经验值提高 #%"
 "Beyond Demons in your Maps have #% increased chance to be followers of Beidat","你地图中的超越恶魔追随贝达特的几率提高 #%"
 "Beyond Demons in your Maps have #% increased chance to be followers of Ghorr","你地图中的超越恶魔追随咕尔的几率提高 #%"
@@ -5401,6 +5482,9 @@ Passives in radius are Conquered by the Vaal","以夏巴夸亚的名义用 # 名
 "Beyond Portals in your Maps have #% reduced chance to spawn a Unique Boss","你的地图中的超越传送门生成传奇首领的几率降低#%。"
 "Binding # souls to phylacteries to sustain Zorath
 Passives affected are Conquered by the Abyssal","将 # 个灵魂绑定于护符匣以供养佐拉斯"
+"Bismuth Ore Deposits in your Maps have #% chance to
+add an additional Modifier to Monsters they affect","你地图中的铋矿矿脉有 #% 的几率
+为受其影响的怪物额外增加一个词缀"
 "Bitter Frost","苦寒"
 "Black Scythe Mercenaries","有日志派系：黑镰佣兵"
 "Blade Trap","剑刃陷阱"
@@ -5439,6 +5523,9 @@ their Maximum Life as Physical Damage","击败流血的敌人时产生爆炸，�
 "Blind does not affect your Light Radius","被致盲不影响你的照亮范围"
 "Blind you inflict is Reflected to you","你施加的致盲被反射"
 "Blind you inflict is permanent","你施加的致盲为永久效果"
+"Blinding a non-Blinded Pinnacle Atlas Boss with this Weapon will
+steal a Modifier for this item (# Modifier remaining)","使用此武器致盲一个未被致盲的巅峰异界图鉴首领时，
+会为此物品窃取一个词缀（剩余 # 个词缀）"
 "Blink Arrow","闪现射击"
 "Blood Magic","血魔法"
 "Blood Mortar","鲜血巨炮"
@@ -5486,6 +5573,9 @@ their Maximum Life as Physical Damage","击败流血的敌人时产生爆炸，�
 "Call of Steel","钢铁呼唤"
 "Call to Arms","武装召唤"
 "Can Attack as though using a Claw while main hand is empty","主手为空的状态下，攻击时视作使用爪类攻击"
+"Can be Allflame Crafted as if Rare
+Cannot gain Intangibility","可进行永火工艺（视同稀有）
+无法获得虚化"
 "Can be Anointed","可以涂油"
 "Can be Enchanted by a Kalguuran Runesmith","可以被卡古兰符文匠附魔"
 "Can be Runesmithed as though it were all One Handed Melee Weapon Types","可视作所有单手武器类型并进行符文锻造"
@@ -5494,7 +5584,6 @@ their Maximum Life as Physical Damage","击败流血的敌人时产生爆炸，�
 "Can have # additional Crafted Modifier","可以有 # 个额外工艺词缀"
 "Can have # additional Enchantment Modifiers","可以有额外 # 个附魔词缀"
 "Can have # additional Runesmithing Enchantment","可拥有 # 个额外的符文锻造附魔"
-"Can have up to # Implicit Modifiers while Item has this Modifier","具有该词缀时，最多可以有 1 个基底词缀"
 "Can have up to # additional Trap placed at a time","同时可以放置最多 # 个额外陷阱"
 "Can have up to 3 Crafted Modifiers","可以最多拥有 3 个工艺属性"
 "Can roll Minion Modifiers","可以附着召唤生物属性"
@@ -5653,7 +5742,6 @@ Passives in radius are Conquered by the Eternal Empire","授予 # 纪念卡斯�
 "Commissioned # coins to commemorate Victario
 Passives in radius are Conquered by the Eternal Empire","授予 # 纪念维多里奥的金币"
 "Completing a Blight Encounter in your Maps grants all Players Blightreach","完成地图中的菌潮遭遇战会使所有玩家获得菌潮之触"
-"Completing a Heist generates # additional Reveals","完成夺宝奇兵冒险会产生一个额外破解"
 "Completing the final Ritual Altar in your Maps has #% chance to drop a Blood-filled Vessel","在地图内完成最终驱灵祭坛有 #% 的几率掉落一个浸血法器"
 "Completing your Maps grants # Intelligence for a random Immortal Syndicate Safehouse","完成地图可获得一个随机不朽辛迪加安全屋的#情报"
 "Concentrated Effect","集中效应 （等阶 2）"
@@ -5671,7 +5759,6 @@ Passives in radius are Conquered by the Eternal Empire","授予 # 纪念维多�
 "Consecrated Ground you create while affected by Zealotry causes enemies to take #% increased Damage","当你受到奋锐光环影响时，创造的奉献地面可以使敌人受到的伤害提高 #%"
 "Consecrated Ground you create while affected by Zealotry causes enemies to take #% reduced Damage","当你受到奋锐光环影响时，创造的奉献地面可以使敌人受到的伤害降低 #%"
 "Consecrated Path","奉献之路"
-"Consumes # Frenzy Charges on use","使用时消耗 1 个狂怒球"
 "Consumes Maximum Charges to use","使用会消耗最大充能"
 "Consumes a Void Charge to Trigger Level # Void Shot when you fire Arrows with a Non-Triggered Skill","你使用非触发型技能发射箭矢时，消耗一枚虚空之矢可以触发 # 级的虚空射击"
 "Contains additional waves of Undead Monsters","会额外出现多波亡灵怪物"
@@ -5686,6 +5773,11 @@ Passives in radius are Conquered by the Eternal Empire","授予 # 纪念维多�
 "Corrupted Soul","腐化的灵魂"
 "Corruption Chamber (Tier 1)","内有房间：腐化之间（1 阶）"
 "Count as Blocking Attack Damage from the first target Hit with each Shield Attack","每次盾牌攻击视为格挡击中的第一个目标"
+"Count as having maximum number of Endurance Charges
+Count as having maximum number of Frenzy Charges
+Count as having maximum number of Power Charges","视作拥有最大数量的耐力球
+视作拥有最大数量的狂怒球
+视作拥有最大数量的暴击球"
 "Count as having maximum number of Endurance Charges","视作拥有最大数量的耐力球"
 "Count as having maximum number of Frenzy Charges","视作拥有最大数量的狂怒球"
 "Count as having maximum number of Power Charges","视作拥有最大数量的暴击球"
@@ -5702,7 +5794,6 @@ Passives in radius are Conquered by the Eternal Empire","授予 # 纪念维多�
 "Creates a Smoke Cloud on Use","使用时产生一片烟雾"
 "Creeping Frost Trap","电光寒霜陷阱"
 "Crimson Dance","玫红之舞"
-"Crimson Iron Ore Deposits in your Maps are guarded by # additional Corrupted Growths","你地图中的绯红铁矿矿脉被 1 个额外的腐化增生守卫"
 "Critical Chance","暴击率 （等阶 2）"
 "Critical Damage","暴击伤害 （等阶 2）"
 "Critical Strike Chance is #% for Hits with this Weapon","用该武器击中时，暴击率为 #%"
@@ -5777,6 +5868,9 @@ Passives in radius are Conquered by the Eternal Empire","授予 # 纪念维多�
 "Damage of Enemies Hitting you is Unlucky while you are on Low Life","低血时，敌人击中你的伤害会特别不幸"
 "Damage of Enemies Hitting you is Unlucky while you have a Magic Ring Equipped","你装备魔法戒指时，敌人击中你的伤害会特别不幸"
 "Damage of Enemies Hitting you is Unlucky","敌人击中你的伤害特别不幸"
+"Damage taken from Blocked Hits cannot bypass Energy Shield
+Damage taken from Unblocked hits always bypasses Energy Shield","受到来自格挡的击中伤害无法忽略能量护盾
+受到来自未格挡的击中伤害始终忽略能量护盾"
 "Damage with Hits from Socketed Vaal Skills is Lucky","插入的瓦尔技能击中时伤害特别幸运"
 "Damage with Hits is Lucky while your Offhand is Magic","副手装备魔法武器时，击中伤害为幸运"
 "Damage with Hits of Allies within 5 metres is Lucky","5 米范围内友军的击中伤害为幸运"
@@ -5829,6 +5923,13 @@ Passives in radius are Conquered by the Eternal Empire","授予 # 纪念维多�
 "Delirium Fog in your Maps dissipates #% faster","地图内的惊悸迷雾消散速度加快 #%"
 "Delirium Fog in your Maps dissipates #% slower","地图内的惊悸迷雾消散速度减慢 #%"
 "Delirium Fog in your Maps lasts # additional seconds before dissipating","地图内的惊悸迷雾消散前持续额外 # 秒"
+"Delirium Fog in your Maps never dissipates
+Delirium in your Maps has doubled difficulty scaling with distance from the mirror
+Simulacrum Splinters cannot be found in your Maps
+Delirium Orbs cannot be found in your Maps","你地图中的惊悸迷雾永不消散
+根据与镜子的距离，区域内的惊悸迷雾的难度翻倍
+你的地图中无法找到梦魇拟像裂片
+你的地图中无法找到雾魇宝珠"
 "Delirium Monsters in your Maps have #% increased Pack Size","你地图中惊悸迷雾怪物的怪物群规模提高 #%"
 "Delirium Monsters in your Maps have #% increased chance to drop Cluster Jewels","地图内惊悸迷雾怪物掉落星团珠宝的几率提高 #%"
 "Delirium Monsters in your Maps have #% reduced Pack Size","你地图中惊悸迷雾怪物的怪物群规模降低 #%"
@@ -5882,18 +5983,20 @@ Passives in radius are Conquered by the Maraketh","在娜斯玛的阿卡拉中�
 "During Effect, #% increased Damage taken of each Element for which your Uncapped Elemental Resistance is lowest","生效期间，你绝对元素抗性中最低的一个会使你承受该元素的伤害降低 #%"
 "During Effect, Damage Penetrates #% Resistance of each Element for which your Uncapped Elemental Resistance is highest","生效期间，你绝对元素抗性中最高的一个会使你该元素的伤害穿透 #% 抗性"
 "Each Legion in your Maps contains an additional War Hoard","地图内每个战乱之殇军势都有一个战争秘术箱"
+"Each Projectile created by Attacks you make with a Melee Weapon has
+between #% more and #% less Projectile Speed at random","你的近战武器攻击创造的每个投射物
+的投射物速度在总增 #% 或总降 #% 之间浮动"
 "Each Rage also grants #% to Damage over Time Multiplier for Bleeding while wielding an Axe","装备斧类武器时，每一点怒火还会使流血的持续伤害加成 +#%"
 "Each Rage also grants #% to Fire Damage Over Time Multiplier","每点怒火也使持续火焰伤害加成 +#%"
 "Each Summoned Phantasm grants you Phantasmal Might","每个召唤的幻灵都给你幽影之力"
 "Earthquake of Amplification","增幅之地震"
 "Earthquake of Winter","凛冬之震地"
-"Eat # Souls when you Kill a Rare or Unique Enemy with this Weapon","使用该武器击杀稀有或传奇怪物时吞噬一个灵魂"
-"Eat a Soul when you Hit a Rare or Unique Enemy, no more than once every # seconds","击中稀有或传奇敌人时吞噬一个灵魂，每秒最多触发一次"
 "Eater of Worlds Implicit Modifier (#)","灭界者基底词缀（#）"
+"Effect is not removed when Unreserved Mana is Filled
+Effect does not Queue","未保留的魔力充满时，效果不会消失
+效果不会堆叠"
 "Effect is removed when Ward Breaks","结界破碎时效果结束"
-"Effects of Consecrated Ground you create Linger for # seconds","你产生的奉献地面效果延续 1 秒"
 "Effects of Consecrated Ground you create while affected by Zealotry Linger for # seconds","受到奋锐光环影响时，你创造的奉献地面效果可延续 # 秒"
-"Effects of Profane Ground you create Linger for # seconds","你创造的渎神地面效果延续 1 秒"
 "Einhar deals #% more Damage to Unique Monsters in your Maps","伊恩哈尔在地图内对传奇怪物的伤害总增 #%"
 "Einhar has #% increased Cooldown Recovery Rate in your Maps","伊恩哈尔在地图内的冷却回复率提高 #%"
 "Einhar has #% reduced Cooldown Recovery Rate in your Maps","伊恩哈尔在地图内的冷却回复率降低 #%"
@@ -5934,8 +6037,6 @@ Passives in radius are Conquered by the Maraketh","在娜斯玛的阿卡拉中�
 "Enemies Chilled by your Hits can be Shattered as though Frozen","被你击中而冰缓的敌人可以像冻结一样击碎"
 "Enemies Chilled by your Hits have Damage taken increased by Chill Effect","被你的击中冰缓的敌人受到的伤害提高，效果相当于冰缓效果"
 "Enemies Chilled by your Hits lessen their Damage dealt by half of Chill Effect","被你击中而冰缓的敌人造成的伤害降低，效果相当于冰缓效果的一半"
-"Enemies Cursed by you are Hindered with #% reduced Movement
-Speed if 25% of Curse Duration expired","如果诅咒持续时间已经过去 25%，则你诅咒的敌人会被缓速"
 "Enemies Cursed by you cannot deal Critical Strikes","被你诅咒的敌人无法造成暴击"
 "Enemies Cursed by you take #% increased Damage if 75% of Curse Duration expired","若持续时间耗减了 75%，则被你诅咒的敌人受到的伤害提高 #%"
 "Enemies Cursed by you take #% reduced Damage if 75% of Curse Duration expired","若持续时间耗减了 75%，则被你诅咒的敌人受到的伤害降低 #%"
@@ -5976,13 +6077,24 @@ Speed if 25% of Curse Duration expired","如果诅咒持续时间已经过去 25
 "Enemies inflict Elemental Ailments on you instead of Allies within 6 metres","敌人对 6 米范围内的友军施加的元素异常状态改为由你承受"
 "Enemies inside Glacial Cage take #% increased Damage","冰笼内的敌人受到的伤害提高 #%"
 "Enemies inside Glacial Cage take #% reduced Damage","冰笼内的敌人受到的伤害降低 #%"
+"Enemies near corpses affected by your Curses are Blinded
+Enemies Killed near corpses affected by your Curses explode, dealing
+#% of their Life as Physical Damage","被你诅咒的灵柩周围的敌人会被致盲
+被你诅咒的灵柩周围的敌人被击败时会爆炸，造成生命它们
+#% 的物理伤害"
 "Enemies near your Banner take #% increased Cold Damage","旗帜周围的敌人承受的冰霜伤害提高 #%"
 "Enemies near your Banner take #% increased Fire Damage","旗帜周围的敌人承受的火焰伤害提高 #%"
 "Enemies near your Banner take #% reduced Cold Damage","旗帜周围的敌人承受的冰霜伤害降低 #%"
 "Enemies near your Banner take #% reduced Fire Damage","旗帜周围的敌人承受的火焰伤害降低 #%"
 "Enemies on Fungal Ground you Kill have #% chance to Explode, dealing 10% of their Life as Chaos Damage","在真菌地表上被你击败的敌人有 #% 的几率爆炸，造成它们 10% 生命的混沌伤害"
 "Enemies take #% increased Damage for each type of Ailment you have inflicted on them","你每使敌人受到一种异常状态，它们受到的伤害便提高 #%"
+"Enemies take #% increased Elemental Damage from your Hits for
+each Withered you have inflicted on them","给敌人施加的每个死亡凋零
+都使它们从你的击中中受到的元素伤害提高 #%"
 "Enemies take #% reduced Damage for each type of Ailment you have inflicted on them","你每使敌人受到一种异常状态，它们受到的伤害便降低 #%"
+"Enemies take #% reduced Elemental Damage from your Hits for
+each Withered you have inflicted on them","给敌人施加的每个死亡凋零
+都使它们从你的击中中受到的元素伤害降低 #%"
 "Enemies within 2.5 metres are Intimidated","2.5 米范围内的敌人被威吓"
 "Enemies within 3 metres are Blinded while Physical Aegis is not depleted","物理护盾未耗尽时，3 米范围内的敌人会被致盲"
 "Enemies within 3 metres are Chilled","3 米范围内的敌人被冰缓"
@@ -6015,6 +6127,9 @@ Speed if 25% of Curse Duration expired","如果诅咒持续时间已经过去 25
 "Enemies within 6 metres have #% to Lightning Resistance","6 米范围内敌人的闪电抗性 +#%"
 "Enemies within 6 metres have #% to all Resistances","6 米范围内的敌人所有抗性 #%"
 "Enemies within 6 metres have Lightning Resistance equal to yours","6 米范围内敌人获得的闪电抗性等同于你的闪电抗性"
+"Enemies within 6 metres of corpses you spawned Recently
+have #% reduced Life Regeneration Rate","敌人若位于你近期生成的灵柩周围 6 米范围内，
+则生命回复速度降低 #%"
 "Enemies within 6 metres take #% increased Elemental Damage","6 米范围内敌人承受的元素伤害提高 #%"
 "Enemies within 6 metres take #% increased Physical Damage per two Fortification on you","你每具有两层护体，6 米范围内敌人承受的物理伤害提高 #%"
 "Enemies within 6 metres take #% increased Physical Damage","6 米范围内敌人承受的物理伤害提高 #%"
@@ -6027,6 +6142,12 @@ Speed if 25% of Curse Duration expired","如果诅咒持续时间已经过去 25
 "Enemies you Kill have a #% chance to Explode, dealing a quarter of their maximum Life as Chaos Damage","你击败的敌人有 #% 的几率爆炸，造成等同该敌人最大生命四分之一的混沌伤害"
 "Enemies you Kill have a #% chance to Explode, dealing a tenth of their maximum Life as Damage of a Random Element","你击败的敌人有 #% 的几率爆炸，造成等同于其生命上限十分之一的随机元素伤害"
 "Enemies you Kill have a #% chance to Explode, dealing a tenth of their maximum Life as Physical Damage","被你击败的敌人有 #% 的几率爆炸，造成等同该敌人最大生命十分之一的物理伤害"
+"Enemies you Kill that are affected by Elemental Ailments
+grant #% increased Flask Charges","击败受元素异常状态影响的敌人
+提高 #% 药剂充能"
+"Enemies you Kill that are affected by Elemental Ailments
+grant #% reduced Flask Charges","击败受元素异常状态影响的敌人
+降低 #% 药剂充能"
 "Enemies you Kill while affected by Glorious Madness have a #% chance to Explode, dealing a quarter of their Life as Chaos Damage","受疯狂荣光影响时，被你击败的敌人有 #% 的几率爆炸，造成其生命四分之一的混沌伤害"
 "Enemies you Kill while using Pride have #% chance to Explode, dealing a tenth of their maximum Life as Physical Damage","使用尊严时消灭的敌人有#%的几率爆炸，造成相当于最大生命值十分之一的物理伤害"
 "Enemies you Shock have #% increased Cast Speed","被你感电的敌人施法速度减慢 #%"
@@ -6055,6 +6176,11 @@ Speed if 25% of Curse Duration expired","如果诅咒持续时间已经过去 25
 "Ethereal Knives","虚空匕首"
 "Evasion Rating is increased by Overcapped Cold Resistance","闪避值随超量冰霜抗性提高"
 "Everlasting Sacrifice","永恒献祭"
+"Every 10 seconds:
+Gain 2% of Life per Enemy Hit with Attacks for 5 seconds
+Gain 5% of Life per Enemy Killed for 5 seconds","每隔 10 秒：
+在 5 秒内攻击每击中一个敌人获得 2% 的生命
+在 5 秒内每击败一个敌人获得 5% 的生命"
 "Every 16 seconds you gain Elemental Overload for 8 seconds","每 16 秒获得一次元素超载，持续 8 秒"
 "Every 16 seconds you gain Iron Reflexes for 8 seconds","每 16 秒获得一次霸体，持续 8 秒"
 "Every 3 seconds, Consume a Corpse within 5 metres to Recover #% of Life","每 3 秒消耗 5 米范围内的一个灵柩，并回复 #% 的生命"
@@ -6062,17 +6188,32 @@ Speed if 25% of Curse Duration expired","如果诅咒持续时间已经过去 25
 "Every 4 seconds, Regenerate #% of Life over one second if 2 Hunter Items are Equipped","若装备 2 件狩猎者物品，每隔 4 秒便在一秒内再生 #% 生命"
 "Every 4 seconds, Regenerate #% of Life over one second","每隔 4 秒便在一秒内再生 #% 生命"
 "Every 4 seconds, remove Curses and Ailments from you","每 4 秒移除你身上的诅咒和异常状态"
+"Every 5 seconds, gain one of the following for 5 seconds:
+Your Hits are always Critical Strikes
+Hits against you are always Critical Strikes
+Attacks cannot Hit you
+Attacks against you always Hit
+Your Damage with Hits is Lucky
+Damage of Hits against you is Lucky","每隔 5 秒，获得以下效果之一，持续 5 秒：
+你的击中始终为暴击
+对你的击中始终为暴击
+攻击无法击中你
+对你的攻击必定击中
+你的击中伤害特别幸运
+对你的击中伤害特别幸运"
 "Every 8 seconds, gain Avatar of Fire for 4 seconds","每 8 秒获得一次火之化身，持续 4 秒"
 "Every Rage also grants #% of Physical Damage as Extra Fire Damage","每一点怒火使你获得相当于物理伤害 #% 的额外火焰伤害"
 "Every fourth time you cast each Spell, Damage of its Hits is Lucky","每当你第四次施放每个法术时，该法术的击中伤害为幸运"
 "Every second time you cast each Spell, gain Mana equal to its Upfront Cost","每当你第二次施放每个法术时，获得等同于其预支花费的魔力"
 "Every second, inflict Withered on Enemies within 6 metres for # seconds","每秒对 6 米范围内的敌人施加死亡凋零，持续 # 秒"
+"Every sixth time you cast each Spell, All Hits are Critically Strikes
+These effects do not apply to Reservation, Duration or Channelling Spells","每当你第六次施放每个法术时，该法术的所有击中均为暴击
+这些效果不适用于保留、持续时间或吟唱法术"
 "Excavated Chests have a #% chance to contain twice as many Items","发掘的箱子有 #% 的几率使其中的物品翻倍"
 "Excommunicate Enemies on Melee Hit for # second","近战击中时驱逐敌人 # 秒"
 "Excommunicate","神圣驱逐 （等阶 2）"
 "Exerted Attacks deal #% increased Damage","增助攻击的伤害提高 #%"
 "Exerted Attacks deal #% reduced Damage","增助攻击的伤害降低 #%"
-"Exerted Attacks have a #% chance to Knock Enemies Back on Hit","增助攻击击中时击退敌人"
 "Expedition Detonation Chains in your Maps travel #% slower","你地图中先祖秘藏爆破链的延伸速度减缓 #%"
 "Expedition Monsters in your Maps spawn with an additional #% of Life missing","你地图中产生的先祖秘藏怪物额外失去 #% 生命值"
 "Expeditions in your Maps have # Remnants","地图内先祖秘藏残骸 +#"
@@ -6145,6 +6286,9 @@ Speed if 25% of Curse Duration expired","如果诅咒持续时间已经过去 25
 "For each corpse within 6 metres, Regenerate # Life per second","6 米范围内每有一个灵柩，每秒回复 # 点生命"
 "For each corpse within 6 metres, Regenerate #% Life per second, up to 3%","6 米范围内每有一个灵柩，每秒回复 #% 生命，上限为 3%"
 "Forbidden Rite Totem","禁断典仪图腾"
+"Fortune Favours the Brave applies an additional random Option
+100% more cost of the Fortune Favours the Brave Map Crafting Option","天佑勇者额外使用一个随机选项
+天佑勇者地图工艺选项的成本总增 100%"
 "Found Items have #% chance to drop Corrupted in Area","你的地图中找到的物品有#%的几率被腐化"
 "Found Items with Memory Strands have # Memory Strands","具有回忆束丝的物品的回忆束丝 +#"
 "Found Magic Items drop Identified","掉落鉴定过的魔法物品"
@@ -6168,21 +6312,18 @@ Speed if 25% of Curse Duration expired","如果诅咒持续时间已经过去 25
 "Gain # Aureus Coins at the start of the Sanctum","每个禁域开始时获得 # 枚耀金币"
 "Gain # Aureus Coins when you complete a Room","当你完成一个房间时获得 # 枚耀金币"
 "Gain # Charge when you are Hit by an Enemy","你被敌人击中时获得 # 次充能"
+"Gain # Endurance Charge every second if you've been Hit Recently and
+4 Warlord Items are Equipped","若装备 4 件督军物品切近期被击中，
+每秒获得 # 个耐力球"
 "Gain # Endurance Charge every second if you've been Hit Recently","若你近期被击中，则每秒获得 # 个耐力球"
 "Gain # Endurance Charge on use","使用时获得 # 个耐力球"
-"Gain # Endurance Charges each second","每秒获得一个耐力球"
-"Gain # Endurance Charges every 4 seconds while Stationary","静止时每 4 秒获得 1 个耐力球"
-"Gain # Endurance, Frenzy or Power Charges every 6 seconds","每 6 秒获得一个耐力球、狂怒球或暴击球"
 "Gain # Energy Shield for each Enemy you Hit which is affected by a Spider's Web","你每击中 1 个被蜘蛛网覆盖的敌人，便获得 # 能量护盾"
 "Gain # Energy Shield per Enemy Hit while affected by Discipline","受纪律影响时每击中一名敌人获得#点能量护盾"
 "Gain # Energy Shield per Enemy Hit with Attacks","攻击每击中一名敌人获得#点能量护盾"
 "Gain # Energy Shield per Enemy Killed","每击败一名敌人获得#点能量护盾"
 "Gain # Energy Shield when you Block","在你格挡时获得 # 能量护盾"
-"Gain # Flask Charges when you deal a Critical Strike","暴击时获得 1 点充能"
 "Gain # Fragile Regrowth each second","每秒获得 # 层脆弱重生"
 "Gain # Frenzy Charge on use","使用时获得 # 个狂怒球"
-"Gain # Frenzy Charges after Spending a total of 200 Mana","消耗总计 200 魔力后获得 1 个狂怒球"
-"Gain # Frenzy Charges each second","每秒获得一个狂怒球"
 "Gain # Inspiration at the start of each Floor","每个楼层开始时获得 # 层启迪"
 "Gain # Inspiration at the start of the Sanctum","每个禁域开始时获得 # 层启迪"
 "Gain # Inspiration when you receive an Affliction","当你获得痛苦时，获得 # 层启迪"
@@ -6213,7 +6354,6 @@ Speed if 25% of Curse Duration expired","如果诅咒持续时间已经过去 25
 "Gain # Maximum Resolve when you kill a Boss","当你消灭首领时，获得 # 最大坚毅"
 "Gain # Maximum Resolve when you use a Fountain","每次你使用喷泉时，获得 # 最大坚毅"
 "Gain # Power Charge on use","使用时获得 # 个暴击球"
-"Gain # Power Charges each second","每秒获得一个暴击球"
 "Gain # Power Charges when you Warcry","使用战吼时获得 # 个暴击球"
 "Gain # Rage after Spending a total of 200 Mana","总共消耗 200 点魔力后获得 # 点怒火"
 "Gain # Rage on Attack Hit","攻击击中时获得 # 点怒火"
@@ -6261,6 +6401,9 @@ used a Sapphire Flask Recently","若你近期内使用过蓝玉药剂，则获�
 "Gain #% of Physical Damage as Extra Cold Damage","获得额外冰霜伤害，其数值等同于物理伤害的 #%"
 "Gain #% of Physical Damage as Extra Damage of a random Element while you are Ignited","物理伤害的 #% 在你被点燃时视为一种随机元素额外伤害"
 "Gain #% of Physical Damage as Extra Damage of a random Element","获得等同 #% 物理伤害的 1 个随机元素伤害"
+"Gain #% of Physical Damage as Extra Damage of each Element if
+6 Shaper Items are Equipped","若装备 6 件塑界者物品，额外获得相当于
+物理伤害 #% 的每一种元素伤害"
 "Gain #% of Physical Damage as Extra Damage of each Element per Spirit Charge","每个精神能量球使你额外造成等同于物理伤害 #% 的每一种元素伤害"
 "Gain #% of Physical Damage as Extra Fire Damage if you've
 used a Ruby Flask Recently","若你近期内使用过红玉药剂，则获得物理伤害 #% 的额外火焰伤害"
@@ -6278,9 +6421,18 @@ used a Topaz Flask Recently","若你近期内使用过黄玉药剂，则获得�
 "Gain #% to Critical Strike Chance for 2 seconds after Spending a total of 800 Mana","当你总计消耗超过 800 点魔力后， +#% 暴击率，持续 2 秒"
 "Gain 1 Endurance Charge per Second during Effect","生效期间，每秒获得 1 个耐力球"
 "Gain 1 Rage on Critical Strike with Attacks","攻击造成暴击时获得 1 点怒火"
+"Gain 1 Remembrance when you spend a total of # Energy
+Shield with no Shaper Memory Summoned","未召唤塑界者的记忆时，
+总共消耗 # 能量护盾后获得 1 铭记"
 "Gain Absorption Charges instead of Power Charges","获得榨取球替代暴击球"
 "Gain Accuracy Rating equal to your Strength","获得等同于你力量数值的命中值"
 "Gain Added Chaos Damage equal to #% of Ward","获得附加混沌伤害，等于结界的 #%"
+"Gain Added Spell Damage equal to #% of Damage of Equipped Dagger
+If two Daggers are Equipped, each contributes 60% as much Added Damage","获得等同于已装备匕首伤害 #% 的附加法术伤害
+若装备两把匕首，每把提供 60% 的附加伤害"
+"Gain Added Spell Damage equal to #% of Damage of Equipped Wand
+If two Wands are Equipped, each contributes half as much Added Damage","获得等同于已装备法杖伤害 #% 的附加法术伤害
+若装备两把法杖，每把提供一半的附加伤害"
 "Gain Adrenaline for # second on Kill","击败敌人时能获得肾上腺素，持续#秒"
 "Gain Adrenaline for # second when Ward Breaks","结界破坏时，获得 # 秒肾上腺素"
 "Gain Adrenaline for # seconds when you reach Low Life","在你处于濒死状态时获得肾上腺素#秒"
@@ -6290,7 +6442,6 @@ used a Topaz Flask Recently","若你近期内使用过黄玉药剂，则获得�
 "Gain Arcane Surge for 4 seconds when you create Consecrated Ground while affected by Zealotry","当受到奋锐光环影响时，你创造奉献地面会获得秘术增强，持续 4 秒"
 "Gain Arcane Surge when you or your Totems Hit an Enemy with a Spell","当你或你的图腾使用法术击中 1 名敌人，便获得秘术增强效果"
 "Gain Arcane Surge when you use a Movement Skill","你使用位移技能时获得秘术增强"
-"Gain Bitterblood equal to #% of Life spent","获得等同于所消耗生命的苦血"
 "Gain Brutal Charges instead of Endurance Charges","获得残暴球替代耐力球"
 "Gain Demonic Power on defeating a Beyond Boss in your Maps","在你的地图中击败超越首领时获得魔化之力"
 "Gain Elusive on reaching Low Life","低血时获得灵巧"
@@ -6329,13 +6480,12 @@ at #% of the value","从已装备护甲物品获得最大生命而非最大能�
 "Gain a Power Charge for each Enemy you hit with a Critical Strike","每个被暴击的敌人给予你 1 个暴击球"
 "Gain a Power Charge on Hit while Bleeding","流血时击中获得一个暴击球"
 "Gain a Power Charge on Non-Critical Strike","非暴击时获得一个暴击球"
-"Gain a Spirit Charge every # seconds","每秒获得一个精神球"
 "Gain a Void Charge every # seconds","每 # 秒获得 1 枚虚空之矢"
-"Gain a random Blood Shrine buff every # seconds","每秒获得一个随机鲜血神龛增益"
+"Gain a random Shrine Buff for # seconds when you Blind a
+non-Blinded Rare or Unique Enemy","致盲一个未被致盲的稀有或传奇敌人时，
+获得一个随机神龛增益，持续 # 秒"
 "Gain a random Shrine Buff for # seconds when you Kill a Rare or Unique Enemy","消灭稀有或传奇敌人时获得一个随机神龛增益，持续 # 秒"
-"Gain a random shrine buff every # seconds","每 1 秒获得一个随机神龛增益"
 "Gain additional Elemental Damage Reduction equal to half your Chaos Resistance","获得等于你混沌抗性一半的额外元素伤害减免。"
-"Gain an Endurance Charge every # seconds while Stationary","静止时每秒获得一个耐力球"
 "Gain an Endurance Charge every # seconds","每 # 秒获得一个耐力球"
 "Gain an Endurance Charge if an Attack Freezes an Enemy","若攻击冻结了敌人，则获得一个耐力球"
 "Gain an Endurance Charge when you lose a Power Charge","当你失去一个暴击球时，获得一个耐力球"
@@ -6479,7 +6629,19 @@ at #% of the value","从已装备护甲物品获得最大生命而非最大能�
 "Grants #% to Fire Resistance per 2% Quality","每 2% 品质 +#% 火焰抗性"
 "Grants #% to Lightning Resistance per 2% Quality","每 2% 品质 +#% 闪电抗性"
 "Grants Armour equal to #% of your Reserved Mana to you and Allies within 6 metres","你和 6 米范围内的友军获得等同于你 #% 保留魔力的护甲"
+"Grants Immunity to Bleeding for # seconds if used while Bleeding
+Grants Immunity to Corrupted Blood for # seconds if used while affected by Corrupted Blood","在流血时使用可以在接下来 # 秒免疫流血
+被腐化之血影响时使用可以在接下来 # 秒免疫腐化之血"
+"Grants Immunity to Chill for # seconds if used while Chilled
+Grants Immunity to Freeze for # seconds if used while Frozen","被冰缓时使用可以在接下来 # 内免疫冰缓
+被冻结时使用可以在接下来 # 秒免疫冻结"
 "Grants Immunity to Hinder for # seconds if used while Hindered","缓速时使用可以在接下来 # 秒免疫缓速"
+"Grants Immunity to Ignite for # seconds if used while Ignited
+Removes all Burning when used","被点燃时使用可以在接下来 # 秒免疫点燃
+使用时移除所有燃烧效果"
+"Grants Immunity to Ignite for 4 seconds if used while Ignited
+Removes all Burning when used","被点燃时使用可以在 4 秒内免疫点燃
+使用时移除所有燃烧效果"
 "Grants Immunity to Maim for # seconds if used while Maimed","瘫痪时使用可以在接下来 # 秒免疫瘫痪"
 "Grants Immunity to Poison for # seconds if used while Poisoned","中毒时使用可以在接下来 # 秒免疫中毒"
 "Grants Immunity to Shock for # seconds if used while Shocked","遭受感电时使用可以在接下来 # 秒免疫感电"
@@ -6500,6 +6662,18 @@ at #% of the value","从已装备护甲物品获得最大生命而非最大能�
 "Grants Level # Purity of Fire Skill","提供 # 级火焰净化"
 "Grants Level # Purity of Ice Skill","提供 # 级冰霜净化"
 "Grants Level # Purity of Lightning Skill","提供 # 级闪电净化"
+"Grants Level # Summon Doedre's Effigy Skill
+Socketed Hex Curse Skills are Triggered by Doedre's Effigy when Summoned
+Hexes from Socketed Skills can apply 5 additional Curses
+20% less Effect of Curses from Socketed Hex Skills","提供 # 级召唤德瑞的塑像
+召唤德瑞的塑像时候触发插入的魔蛊技能
+插入的技能可任意施加 5 次额外诅咒
+插入的魔蛊技能产生的诅咒效果总降 20%"
+"Grants Level # Summon Doedre's Effigy Skill
+Socketed Hex Curse Skills are Triggered by Doedre's Effigy when Summoned
+Hexes from Socketed Skills can apply 5 additional Curses","提供 # 级召唤德瑞的塑像
+召唤德瑞的塑像时候触发插入的魔蛊技能
+插入的技能可任意施加 5 次额外诅咒"
 "Grants Level # Vulnerability Curse Aura during Effect","效果期间获得 # 级脆弱诅咒光环"
 "Grants Level # Wrath Skill","提供 # 级雷霆"
 "Grants Level # Zealotry Skill","提供 # 级奋锐光环"
@@ -6520,7 +6694,6 @@ at #% of the value","从已装备护甲物品获得最大生命而非最大能�
 "Grants Level # ​Blood Offering","赋予 # 级 血脉奉献"
 "Grants Level # ​Blood Sacrament","赋予 # 级 赤色誓言"
 "Grants Level # ​Brandsurge","赋予 # 级 烙印喷涌"
-"Grants Level # ​Call of Steel","赋予 钢铁呼唤"
 "Grants Level # ​Clarity","赋予 # 级 清晰"
 "Grants Level # ​Conductivity","赋予 # 级 导电"
 "Grants Level # ​Convocation","赋予 # 级 号召"
@@ -6532,7 +6705,6 @@ at #% of the value","从已装备护甲物品获得最大生命而非最大能�
 "Grants Level # ​Determination","赋予 # 级 坚定"
 "Grants Level # ​Discipline","赋予 # 级 纪律"
 "Grants Level # ​Doryani's Touch","赋予 # 级 多里亚尼之触"
-"Grants Level # ​Embrace Madness","赋予 疯狂之拥"
 "Grants Level # ​Enduring Cry","赋予 # 级 坚决战吼"
 "Grants Level # ​Envy","赋予 # 级 嫉妒"
 "Grants Level # ​Flammability","赋予 # 级 易燃"
@@ -6569,18 +6741,6 @@ at #% of the value","从已装备护甲物品获得最大生命而非最大能�
 "Grants Level # ​Summon Bestial Rhoa","赋予 # 级 召唤兽化恐喙鸟"
 "Grants Level # ​Summon Bestial Snake","赋予 # 级 召唤兽化巨蛇"
 "Grants Level # ​Summon Bestial Ursa","赋予 # 级 召唤兽化之爪"
-"Grants Level # ​Summon Greater Harbinger of Brutality","赋予 召唤高等残暴先驱者"
-"Grants Level # ​Summon Greater Harbinger of Directions","赋予 召唤高等射术先驱者"
-"Grants Level # ​Summon Greater Harbinger of Focus","赋予 召唤高等不屈先驱者"
-"Grants Level # ​Summon Greater Harbinger of Storms","赋予 召唤高等冰雷先驱者"
-"Grants Level # ​Summon Greater Harbinger of Time","赋予 召唤高等时空先驱者"
-"Grants Level # ​Summon Greater Harbinger of the Arcane","赋予 召唤高等秘法先驱者"
-"Grants Level # ​Summon Harbinger of Brutality","赋予 召唤残暴先驱者"
-"Grants Level # ​Summon Harbinger of Directions","赋予 召唤射术先驱者"
-"Grants Level # ​Summon Harbinger of Focus","赋予 召唤不屈先驱者"
-"Grants Level # ​Summon Harbinger of Storms","赋予 召唤冰雷先驱者"
-"Grants Level # ​Summon Harbinger of Time","赋予 召唤时空先驱者"
-"Grants Level # ​Summon Harbinger of the Arcane","赋予 召唤秘法先驱者"
 "Grants Level # ​Summon Stone Golem","赋予 # 级 召唤巨石魔像"
 "Grants Level # ​Thirst for Blood","赋予 # 级 鲜血渴求"
 "Grants Level # ​Unhinge","赋予 # 级 精神失常"
@@ -6667,6 +6827,9 @@ at #% of the value","从已装备护甲物品获得最大生命而非最大能�
 "Greater Warcry Speed","高等战吼速度 （等阶 3）"
 "Greater Wither on Hit","高等击中产生死亡凋零 （等阶 3）"
 "Ground Slam","裂地之击"
+"Grows four random Passive Skills when Anointed
+Passive Skills grown are influenced by Oils used when Anointing","涂膏时会生成四个随机天赋
+生成的天赋会受到涂膏时所用的圣油影响"
 "Guardhouse (Tier 1)","内有房间：护卫间（1 阶）"
 "Guards deal #% increased Damage","守卫的伤害提高 #%"
 "Guards deal #% reduced Damage","守卫的伤害降低 #%"
@@ -6688,6 +6851,9 @@ at #% of the value","从已装备护甲物品获得最大生命而非最大能�
 "Hall of War (Tier 3)","内有房间：战争大厅（3 阶）"
 "Hallow","圣化 （等阶 3）"
 "Halls","内有房间：大厅"
+"Harvest Crops in your Maps contain only Tier 1 Plants
+Harvesting Crops in your Maps has a chance to upgrade the Tier of Plants of different colours","你地图中的庄园农作物只包含 1 级植物
+在你的地图中收割作物有几率升级与其不同颜色的作物等级"
 "Harvest Crops in your Maps have #% increased chance to grow Blue Plants","你地图中庄园农作物长出蓝色植物的几率提高 #%"
 "Harvest Crops in your Maps have #% increased chance to grow Purple Plants","你地图中庄园农作物长出紫色植物的几率提高 #%"
 "Harvest Crops in your Maps have #% increased chance to grow Yellow Plants","你地图中庄园农作物长出黄色植物的几率提高 #%"
@@ -6697,7 +6863,6 @@ at #% of the value","从已装备护甲物品获得最大生命而非最大能�
 "Harvests in your Maps have #% chance for the unchosen Crop to not wilt","在地图内收割有 #% 几率使未被选择的作物不枯萎"
 "Has # Abyssal Sockets","拥有 # 个深渊插槽"
 "Has # Influences","有#影响效果"
-"Has # Sockets","有 1 个插槽"
 "Has # White Sockets","有 # 个白色插槽"
 "Has Crusader Influence","有圣战者影响效果"
 "Has Elder Influence","有裂界者影响效果"
@@ -6723,6 +6888,15 @@ at #% of the value","从已装备护甲物品获得最大生命而非最大能�
 "Has Room: Cradle of Creation (Tier 2)","内有房间：创生摇篮（2 阶）"
 "Has Shaper Influence","有塑界者影响效果"
 "Has Warlord Influence","有督军影响效果"
+"Has a Crucible Passive Skill Tree
+Crucible Passive Skill Tree is removed if this Modifier is removed","拥有一套熔炉天赋树
+若该词缀被移除，熔炉天赋树会被移除"
+"Has a Crucible Passive Skill Tree with only Support Passive Skills
+Crucible Passive Skill Tree is removed if this Modifier is removed","拥有一套仅包含辅助天赋的熔炉天赋树
+若该词缀被移除，熔炉天赋树会被移除"
+"Has a Two Handed Sword Crucible Passive Skill Tree
+Crucible Passive Skill Tree is removed if this Modifier is removed","拥有一套双手剑熔炉天赋树
+若该词缀被移除，熔炉天赋树会被移除"
 "Has no Attribute Requirements","穿戴对人物属性无需求"
 "Has no Blue Sockets","没有蓝色插槽"
 "Has no Energy Shield","没有能量护盾"
@@ -6879,12 +7053,21 @@ at #% of the value","从已装备护甲物品获得最大生命而非最大能�
 "Imbalanced Guard","失衡卫士"
 "Immortal Ambition","不朽野望"
 "Immortal Syndicate Leaders in your Maps drop an additional Veiled Item","地图内不朽辛迪加首领额外掉落一个加密物品"
+"Immortal Syndicate Members Executed in your Maps have #% chance
+to gain an additional Rank","地图中被处决的不朽辛迪加成员
+有 #% 的几率额外提升一级"
 "Immortal Syndicate Members in your Maps are #% more likely
 to be accompanied by their Leader","地图内不朽辛迪加成员有首领相伴的几率总增 #%"
 "Immortal Syndicate Members in your Maps drop #% more
 Items when Bargained with for Items","在地图内跟不朽辛迪加成员谈判物品时，物品掉落量总增 #%"
 "Immortal Syndicate Members in your Maps have #% chance to
 drop an additional Veiled Item","你的地图中的不朽辛迪加成员有#%的几率额外掉落一个加密物品"
+"Immortal Syndicate Members in your Maps have #% increased chance
+to be accompanied by reinforcements","地图内的不朽辛迪加成员
+有援军的几率再提高 #%"
+"Immortal Syndicate Members in your Maps have #% reduced chance
+to be accompanied by reinforcements","地图内的不朽辛迪加成员
+有援军的几率再降低 #%"
 "Immune to Burning Ground, Shocked Ground and Chilled Ground","免疫燃烧地面，感电地面和冰缓地面"
 "Immune to Chill","免疫冰缓"
 "Immune to Curses if Corrupted","腐化后免疫诅咒"
@@ -6902,12 +7085,14 @@ drop an additional Veiled Item","你的地图中的不朽辛迪加成员有#%的
 "Immunity to Bleeding and Corrupted Blood during Effect","生效期间免疫流血和腐化之血"
 "Immunity to Freeze and Chill during Effect","生效期间免疫冻结和冰缓"
 "Immunity to Freeze, Chill, Curses and Stuns during Effect","生效期间免疫冻结、冻缓、诅咒和晕眩"
+"Immunity to Ignite during Effect
+Removes Burning on use","药剂持续期间免疫点燃
+使用时移除燃烧效果"
 "Immunity to Poison during Effect","生效期间免疫中毒"
 "Immunity to Shock during Effect","生效期间免疫感电"
 "Impale Chance","穿刺几率 （等阶 2）"
 "Impale Damage dealt to Enemies Impaled by you Overwhelms #% Physical Damage Reduction","你对已穿刺的敌人造成的穿刺伤害压制 #% 物理伤害减免"
 "Impales you inflict last # additional Hits while using Pride","使用尊严时，你造成的穿刺效果会造成 # 次额外击中"
-"Impales you inflict last # additional Hits","你施加的穿刺效果持续 1 次额外击中"
 "Impenetrable Bastion","不破坚堡"
 "Implicit Modifier magnitudes are doubled","基底词缀幅度变为双倍"
 "Implicit Modifier magnitudes are tripled","基底词缀幅度变为三倍"
@@ -6915,32 +7100,42 @@ drop an additional Veiled Item","你的地图中的不朽辛迪加成员有#%的
 "Imprisoned Monsters in your Maps have #% chance to drop an additional Rare Item with an Essence Modifier","地图内被囚禁的怪物有 #% 的几率额外掉落一个有精华词缀的稀有物品"
 "Imprisoned Monsters in your Maps have #% chance to have 3 additional Essences","地图内被囚禁的怪物有 #% 的几率有 3 个额外的精华"
 "Imprisoned Monsters in your Maps have #% chance to have an additional Essence","地图内被囚禁的怪物有 #% 的几率有一个额外精华"
-"Imprisoned Monsters in your Maps have at least # Essences at the highest possible tier","你的地图中的禁锢怪物至少有 1 个精华尽可能为最高等级"
 "Incite","激励"
 "Increased Area of Effect","效果区域扩大 （等阶 2）"
 "Increases and Reductions to Cast Speed also Apply to Trap Throwing Speed","施法速度的提高和降低也同样作用于陷阱投掷速度"
-"Increases and Reductions to Cast Speed apply to Attack Speed at #% of their value","对施法速度的提高与降低也作用于攻击速度"
+"Increases and Reductions to Chaos Damage also apply to Effect of
+Auras from Chaos Skills at #% of their value, up to a maximum of 150%","对混沌伤害的增减效果，
+有 #% 也作用于来自混沌技能的光环效果，上限 150%"
+"Increases and Reductions to Cold Damage also apply to Effect of
+Auras from Cold Skills at #% of their value, up to a maximum of 150%","对冰霜伤害的增减效果，
+有 #% 也作用于来自冰霜技能的光环效果，上限 150%"
 "Increases and Reductions to Cold Damage in Radius are Transformed to apply to Physical Damage","范围内冰霜伤害的增减转换成物理伤害"
 "Increases and Reductions to Damage with Vaal Skills also apply to Non-Vaal Skills","对瓦尔技能伤害的增强与减弱效果也作用于非瓦尔技能"
 "Increases and Reductions to Energy Shield in Radius are Transformed to apply to Armour at 200% of their value","范围内能量护盾的增减转换成 200% 的护甲"
 "Increases and Reductions to Evasion Rating in Radius are Transformed to apply to Armour","范围内对闪避值的提高和降低效果转化为对护甲生效"
+"Increases and Reductions to Fire Damage also apply to Effect of
+Auras from Fire Skills at #% of their value, up to a maximum of 150%","对火焰伤害的增减效果，
+有#% 也作用于来自火焰技能的光环效果，上限 150%"
 "Increases and Reductions to Life in Radius are Transformed to apply to Energy Shield","范围内生命的增减转换成能量护盾"
 "Increases and Reductions to Life in Radius are Transformed to apply to Mana at 200% of their value","范围内增减的生命转换成 200% 魔力"
 "Increases and Reductions to Light Radius also apply to Accuracy","照亮范围的扩大和缩小也同样作用于命中值"
 "Increases and Reductions to Light Radius also apply to Area of Effect at #% of their value","照亮范围的扩大和缩小也同样作用于效果区域，等于其数值的 #%"
 "Increases and Reductions to Light Radius also apply to Damage","对照亮范围的增强与减弱效果也作用于伤害"
 "Increases and Reductions to Light Radius also apply to Life Regeneration Rate at #% value","照亮范围的提高和降低也按 #% 数值作用于生命回复速度"
-"Increases and Reductions to Mana Regeneration Rate also apply to Energy
-Shield Recharge Rate at #% of their value","魔力回复速度的提高和降低也作用于能量护盾充能速度"
+"Increases and Reductions to Lightning Damage also apply to Effect of
+Auras from Lightning Skills at #% of their value, up to a maximum of 150%","对闪电伤害的增减效果，
+有 #% 也作用于来自闪电技能的光环效果，上限 150%"
 "Increases and Reductions to Maximum Energy Shield instead apply to Ward","对最大能量护盾的增强与减弱效果改为作用于结界"
 "Increases and Reductions to Minion Attack Speed also affect you","你能获得召唤生物攻击速度的增强与减弱效果"
 "Increases and Reductions to Minion Cast Speed also affect you","对召唤生物施法速度的增幅与减益也对你生效"
 "Increases and Reductions to Minion Damage also affect you at 150% of their value","提高或降低召唤生物伤害的效果也作用于你自身，等于其数值的 150%"
 "Increases and Reductions to Minion Damage also affect you","召唤生物伤害提高或降低，将同样套用于自身"
 "Increases and Reductions to Minion Maximum Life also apply to you at #% of their value","对召唤物最大生命值的增减效果，有 #% 也作用于你"
+"Increases and Reductions to Physical Damage also apply to Effect of
+Auras from Physical Skills at #% of their value, up to a maximum of 150%","对物理伤害的增减效果，
+有 #% 也作用于来自物理技能的光环效果，上限 150%"
 "Increases and Reductions to Physical Damage in Radius are Transformed to apply to Cold Damage","范围内物理伤害的增减转换成冰霜伤害"
 "Increases and Reductions to other Damage Types in Radius are Transformed to apply to Fire Damage","范围内其他伤害类型的增减转换成火焰伤害"
-"Increases and Reductions to your Evasion Rating also apply to your Spell Damage at #% of their value","你闪避值的提高与降低也作用于你的法术伤害"
 "Increases to Cast Speed from Arcane Surge also applies to Movement Speed","秘术增强对施法速度的加成也作用于移动速度"
 "Incursions in your Maps contain Cursed Treasures","你的地图中的时空穿越包含诅咒财宝"
 "Incursions in your Maps contain a Vaal Flesh Merchant","地图内的穿越内容有一个瓦尔血肉商人"
@@ -6951,10 +7146,11 @@ Shield Recharge Rate at #% of their value","魔力回复速度的提高和降低
 "Infernal Cry has #% increased Area of Effect","炼狱战吼的效果区域扩大 #%"
 "Infernal Cry","炼狱战吼"
 "Inflame","燃烧"
-"Inflict # additional Poisons on the same Target
-when you inflict Poison with this weapon","使用该武器施加中毒时，对同一目标额外施加一层中毒"
 "Inflict Cold Exposure on Hit, applying #% to Cold Resistance","击中时施加冰霜曝露，使冰霜抗性降低 #%"
 "Inflict Decay on Enemies you Curse with Hex Skills, dealing # Chaos Damage per Second for 8 Seconds","利用魔蛊技能对你诅咒的敌人造成腐蚀效果，每秒造成#点混沌伤害，持续8秒"
+"Inflict Fire Exposure on Hit against Enemies with
+5 Cinderflame, applying #% to Fire Resistance","击中拥有 5 层余烬之焰的敌人时对其施加火焰曝露，
+施加火焰抗性 #%"
 "Inflict Fire Exposure on Hit if you've cast Flammability in the past 10 seconds","如果你在过去 10 秒内施放过易燃，则对火焰曝露免疫"
 "Inflict Fire Exposure on Hit, applying #% to Fire Resistance","击中时施加火焰曝露，适配 #% 的火焰抗性"
 "Inflict Fire, Cold and Lightning Exposure on Enemies within 3 metres when used","使用时对 3 米范围内的敌人施加火焰、冰霜和闪电曝露"
@@ -6963,10 +7159,8 @@ when you inflict Poison with this weapon","使用该武器施加中毒时，对�
 "Inflict Lightning Exposure on Hit, applying #% to Lightning Resistance","击中时施加闪电曝露，适配 #% 的闪电抗性"
 "Inflict Withered for 2 seconds on Hit if you've cast Despair in the past 10 seconds","如果你在过去 10 秒内施放过绝望，则在命中时施加 2 秒的死亡凋零"
 "Inflict non-Damaging Ailments as though dealing #% more Damage","施加的非伤害型异常状态如同伤害总增 #%"
-"Inflicts # Mana Burn on you when you Hit an Enemy with a Melee Weapon","近战武器击中敌人时对你造成魔力燃烧"
 "Inflicts a random Hex on you when your Totems die","你的图腾死亡时对你施加一种随机魔蛊。"
 "Infused Channelling","灌能吟唱 （等阶 2）"
-"Inherent Rage Loss starts # seconds later","固有的怒火损失延迟 1 秒开始"
 "Inherent loss of Rage is #% faster","怒火固有损耗加快 #%"
 "Inherent loss of Rage is #% slower","怒火固有损耗减慢 #%"
 "Inner Conviction","内在信念"
@@ -7004,11 +7198,17 @@ when you inflict Poison with this weapon","使用该武器施加中毒时，对�
 "Items found in your Corrupted Maps have #% chance to be Corrupted","已腐化地图内发现的物品有 #% 的几率已腐化"
 "Jeweller's Workshop (Tier 1)","内有房间：珠宝匠的工坊（1 阶）"
 "Jewellery Forge (Tier 2)","内有房间：珠宝熔炉（2 阶）"
+"Keystone Passive Skills in Radius can be Allocated without being connected to your tree
+Passage","范围内的基石天赋技能无需连接到你的天赋树即可配置
+通途"
 "Kill Enemies that have 15% or lower Life on Hit if The Searing Exarch is dominant","如果首要为焚界者，则命中时消灭生命值低于15%的敌人"
 "Kill Undead Enemies that have 15% or lower Life when Hit by your Skills","使用技能击中时，击败生命不高于 15% 的亡灵敌人"
 "Killing Blows Consume corpses to Recover # Life","最后一击消耗灵柩，回复 # 点生命和 # 点魔力"
 "Killing Blows Consume corpses to Recover #% of Life","消灭时消耗灵柩并恢复 #% 的生命"
 "Killing Blows Consume corpses to Recover #% of Mana","最后一击消耗灵柩，回复 #% 的魔力"
+"Killing non-resident Architects in your Maps has #% chance to add
+an additional Upgrade Tier to the surviving Architect's Room","在你地图内击败非驻留建筑师时，有 #% 的几率
+使幸存建筑师的房间额外升一阶"
 "Killing resident Architects in your Maps adds their Upgrade Tier
 to the surviving Architect's Room","在地图内消灭居住的建筑师会使幸存建筑师的房间升一阶"
 "Kills grant an additional Vaal Soul if you have Rampaged Recently","若近期你获得过暴走，击败敌人时获得 1 个额外的瓦尔之灵"
@@ -7065,6 +7265,11 @@ to the surviving Architect's Room","在地图内消灭居住的建筑师会使�
 "Legion Encounters in your Maps have #% reduced chance to include a Templar army","地图内的战乱之殇遭遇战有一支圣堂教团军队的几率降低 #%"
 "Legion Encounters in your Maps have #% reduced chance to include a Vaal army","地图内的战乱之殇遭遇战有一支瓦尔军队的几率降低 #%"
 "Legion Encounters in your Maps have #% reduced chance to include an Eternal Empire army","地图内的战乱之殇遭遇战有一支永恒帝国军队的几率降低 #%"
+"Legion Encounters in your Maps have no Timer
+Breaking out Monsters and Chests that are in stasis progressively causes a Schism
+Legion Encounters in your Maps begin once the Schism has occurred","你地图中的战乱之殇遭遇战没有计时
+击破静滞中的怪物或宝箱会逐渐引发分裂
+你地图中的战乱之殇遭遇战会在分裂出现时开始"
 "Legion Encounters with a General in your Maps have both Generals","地图内有将军的战乱之殇遭遇战有两个将军"
 "Legion Monsters in your Maps have #% increased Pack Size","你地图中军团怪物的怪物群规模提高 #%"
 "Legion Monsters in your Maps have #% reduced Pack Size","你地图中军团怪物的怪物群规模降低 #%"
@@ -7138,6 +7343,9 @@ to the surviving Architect's Room","在地图内消灭居住的建筑师会使�
 "Life Recovery from Flasks also applies to Energy Shield during Effect","生效期间，药剂的生命回复效果也适用于能量护盾"
 "Life Recovery from Regeneration is not applied","生命再生不再回复生命"
 "Life and Mana Leech from Critical Strikes are instant","暴击时立即获得生命和魔力偷取"
+"Life that would be lost by taking Damage is instead Reserved
+until you take no Damage to Life for # second","失去的生命被保留起来，
+直到你的生命在 # 秒内没有再受到伤害"
 "Lifeforce dropped by Sacred Fauna in your Maps has #% chance to be Duplicated","地图中的神圣动物掉落的命能有 #% 的几率会被复制"
 "Lifeforce found in your Maps is granted as a random Crop instead at #% of the value","你地图中找到的命能改为提供 #% 数量的随机作物。"
 "Light Radius is based on Energy Shield instead of Life","照亮范围将基于能量护盾的属性"
@@ -7160,6 +7368,9 @@ to the surviving Architect's Room","在地图内消灭居住的建筑师会使�
 "Link Skills have #% reduced Cast Speed","羁绊技能的施法速度减慢 #%"
 "Link Skills have #% reduced Skill Effect Duration","羁绊技能的技能效果持续时间缩短 #%"
 "Linked Targets Cannot Die for # seconds after you Die","当你战败后，羁绊目标在 # 秒内不会战败"
+"Linked Targets always count as in range of Non-Curse Auras from your Skills
+Non-Curse Auras from your Skills only apply to you and Linked Targets","羁绊目标始终始终处于你的技能的非诅咒光环的范围内
+技能的非诅咒光环法术仅对你和羁绊目标生效"
 "Lockdown occurs immediately when Alert Level is full","警报等级一满便立刻触发封锁"
 "Locus of Corruption (Tier 3)","内有房间：腐化蝗群（3 阶）"
 "Lone Messenger","独行使者"
@@ -7205,12 +7416,14 @@ to the surviving Architect's Room","在地图内消灭居住的建筑师会使�
 "Malevolence has #% reduced Mana Reservation Efficiency","怨毒光环的魔力保留效能降低 #%"
 "Malevolence has no Reservation","怨毒光环没有保留效果"
 "Malevolence","怨毒光环"
+"Mana Flask Effects are not removed when Unreserved Mana is Filled
+Mana Flask Effects do not Queue","未保留的魔力全满时不移除魔力药剂效果
+魔力药剂效果不能堆叠"
 "Mana Flasks gain # Charge every 3 seconds","魔力药剂每 3 秒获得 # 次充能"
 "Mana Flasks used while on Low Mana apply Recovery Instantly","低魔时使用魔力药剂立即回复"
 "Mana Leech from Hits with this Weapon is Instant","该武器击中的魔力偷取立即生效"
 "Mana Recovery occurs instantly at the end of Effect","魔力回复会在效果结束时立即开始"
 "Mana Reservation of Herald Skills is always 45%","捷光环的魔力保留总是 45%"
-"Mana is increased by 1% per #% Overcapped Lightning Resistance","魔力根据超量闪电抗性的 50% 提高"
 "Manifested Dancing Dervishes die when Rampage ends","幻化之刃德尔维希会在暴走结束时消失"
 "Manifested Dancing Dervishes disables both weapon slots","幻化之刃德尔维希会禁用所有武器槽"
 "Map Boss is accompanied by a Synthesis Boss","地图首领伴随着一个虚空忆境首领"
@@ -7245,7 +7458,6 @@ to the surviving Architect's Room","在地图内消灭居住的建筑师会使�
 "Maximum # Spectral Totems","幻影图腾上限 #"
 "Maximum Absorption Charges is equal to Maximum Power Charges","榨取球数量上限等于暴击球数量上限"
 "Maximum Affliction Charges is equal to Maximum Frenzy Charges","痛苦球数量上限等于狂怒球数量上限"
-"Maximum Bitterblood is equal to #% of your Maximum Life","苦血上限等同于你的生命上限"
 "Maximum Brutal Charges is equal to Maximum Endurance Charges","残暴球数量上限等于耐力球数量上限"
 "Maximum Critical Strike Chance is 50%","最大暴击几率为 50%"
 "Maximum Endurance, Frenzy and Power Charges is 0","耐力、狂怒和暴击球上限为 0"
@@ -7255,14 +7467,63 @@ to the surviving Architect's Room","在地图内消灭居住的建筑师会使�
 "Maximum Recovery per Energy Shield Leech is Doubled","每次能量护盾偷取的最大回复量翻倍"
 "Maximum Resolve is 1","最大坚毅为 1"
 "Maximum Shock Effect","最大感电效果 （等阶 3）"
+"Maximum number of Animated Weapons is Doubled
+Cannot have Minions other than Animated Weapons","幻化武器 的最大数量翻倍
+不能拥有除 幻化武器 之外的其他召唤生物"
 "Maximum number of Animated Weapons is Doubled","幻化武器的最大数量翻倍"
+"Maximum number of Holy Armaments is Doubled
+Cannot have Minions other than Holy Armaments","神圣武装 的最大数量翻倍
+不能拥有除 神圣武装 之外的其他召唤生物"
+"Maximum number of Living Lightning is Doubled
+Cannot have Minions other than Living Lightning","活体闪电 的最大数量翻倍
+不能拥有除 活体闪电 之外的其他召唤生物"
+"Maximum number of Raised Spectres is Doubled
+Cannot have Minions other than Raised Spectres","召唤的灵体 的最大数量翻倍
+不能拥有除 召唤的灵体 之外的其他召唤生物"
+"Maximum number of Raised Spiders is Doubled
+Cannot have Minions other than Raised Spiders","召唤的毒蛛 的最大数量翻倍
+不能拥有除 召唤的毒蛛 之外的其他召唤生物"
+"Maximum number of Raised Zombies is Doubled
+Cannot have Minions other than Raised Zombies","复苏的魔卫 的最大数量翻倍
+不能拥有除 复苏的魔卫 之外的其他召唤生物"
+"Maximum number of Sentinels of Absolution is Doubled
+Cannot have Minions other than Sentinels of Absolution","赦罪哨卫 的最大数量翻倍
+不能拥有除 赦罪哨卫 之外的其他召唤生物"
+"Maximum number of Sentinels of Dominance is Doubled
+Cannot have Minions other than Sentinels of Dominance","统御哨兵 的最大数量翻倍
+不能拥有除 统御哨兵 之外的其他召唤生物"
+"Maximum number of Sentinels of Purity is Doubled
+Cannot have Minions other than Sentinels of Purity","纯净哨兵 的最大数量翻倍
+不能拥有除 纯净哨兵 之外的其他召唤生物"
+"Maximum number of Summoned Golems is Doubled
+Cannot have Minions other than Summoned Golems","召唤的魔像 的最大数量翻倍
+不能拥有除 召唤的魔像 之外的其他召唤生物"
+"Maximum number of Summoned Holy Relics is Doubled
+Cannot have Minions other than Summoned Holy Relics","召唤的圣物 的最大数量翻倍
+不能拥有除 召唤的圣物 之外的其他召唤生物"
+"Maximum number of Summoned Phantasms is Doubled
+Cannot have Minions other than Summoned Phantasms","召唤的幻灵 的最大数量翻倍
+不能拥有除 召唤的幻灵 之外的其他召唤生物"
+"Maximum number of Summoned Raging Spirits is Doubled
+Cannot have Minions other than Summoned Raging Spirits","召唤的愤怒狂灵 的最大数量翻倍
+不能拥有除 召唤的愤怒狂灵 之外的其他召唤生物"
+"Maximum number of Summoned Reapers is Doubled
+Cannot have Minions other than Summoned Reapers","召唤的追命死灵 的最大数量翻倍
+不能拥有除 召唤的追命死灵 之外的其他召唤生物"
+"Maximum number of Summoned Skeletons is Doubled
+Cannot have Minions other than Summoned Skeletons","召唤的魔侍 的最大数量翻倍
+不能拥有除 召唤的魔侍 之外的其他召唤生物"
+"Maximum number of Summoned Spectral Wolves is Doubled
+Cannot have Minions other than Summoned Spectral Wolves","召唤的幽狼 的最大数量翻倍
+不能拥有除 召唤的幽狼 之外的其他召唤生物"
 "Melee Attacks have #% chance to Poison on Hit","近战攻击击中后有 #% 的几率造成中毒"
 "Melee Attacks have #% chance to cause Bleeding","近战攻击有 #% 的几率造成流血"
 "Melee Attacks have #% to Critical Strike Chance against Excommunicated Enemies","对被驱逐的敌人进行近战攻击时，暴击几率 +#%"
 "Melee Critical Strikes have #% chance to Poison the Enemy","近战暴击有 #% 的几率使敌人中毒"
+"Melee Hits count as Rampage Kills
+Rampage","近战击中视为暴走击败
+暴走"
 "Melee Hits from Strike Skills Fortify","打击技能近战击中获得护体"
-"Melee Hits have #% chance to Fortify if 6 Warlord Items are Equipped","若装备 6 件督军物品，近战击中获得护体"
-"Melee Hits have #% chance to Fortify","近战击中提供护体状态"
 "Melee Hits which Stun have #% chance to Fortify","带眩晕效果的近战击中有 #% 的几率提供护体状态"
 "Melee Hits with Strike Skills always Knockback","拥有打击技能的近战攻击总能造成击退"
 "Melee Physical Damage","近战物理伤害 （等阶 2）"
@@ -7279,7 +7540,6 @@ to the surviving Architect's Room","在地图内消灭居住的建筑师会使�
 "Mercury Footprints","水银爪印"
 "Meteor","陨星"
 "Mind Over Matter","心灵升华"
-"Mines can be Detonated # additional times","地雷可以被额外触发 1 次"
 "Mines have #% increased Detonation Speed","地雷引爆速度加快 #%"
 "Mines have #% reduced Detonation Speed","地雷引爆速度减慢 #%"
 "Minion Caustic Death","召唤生物腐蚀死亡 （等阶 3）"
@@ -7287,6 +7547,9 @@ to the surviving Architect's Room","在地图内消灭居住的建筑师会使�
 "Minion Instability","复仇之灵"
 "Minion Life is increased by their Overcapped Fire Resistance","召唤生物的生命根据超量火焰抗性提高"
 "Minion Life","召唤生物生命 （等阶 2）"
+"Minions Convert #% of their Maximum Life to Maximum Energy
+Shield per 1% Chaos Resistance they have","召唤生物每有 1% 混沌抗性
+就将其 #% 最大生命转化为最大能量护盾"
 "Minions Leech #% of Damage as Life against Poisoned Enemies","召唤生物对中毒的敌人造成伤害的 #% 转化为生命偷取"
 "Minions Leech #% of Damage as Life","召唤生物获得 #% 生命偷取"
 "Minions Leech #% of Elemental Damage as Energy Shield","召唤生物元素伤害的 #% 会转化为能量护盾偷取"
@@ -7311,6 +7574,9 @@ to the surviving Architect's Room","在地图内消灭居住的建筑师会使�
 "Minions convert #% of Physical Damage to Lightning Damage per Blue Socket","每个蓝色插槽使召唤生物 #% 的物理伤害转化为闪电伤害"
 "Minions convert #% of Physical Damage to Lightning Damage per Socketed Blue Gem","每颗插上的蓝色技能石，召唤生物将 #% 物理伤害转化为闪电伤害"
 "Minions convert #% of Physical Damage to Lightning Damage","召唤生物 #% 的物理伤害转化为闪电伤害"
+"Minions count as having the same number of
+Endurance, Frenzy and Power Charges as you","召唤生物的耐力球、狂怒球和暴击球
+视作与你相同"
 "Minions created Recently have #% increased Attack and Cast Speed","近期内创造的召唤生物攻击和施法速度加快 #%"
 "Minions created Recently have #% increased Critical Hit Chance","近期内创造的召唤生物暴击几率提高 #%"
 "Minions created Recently have #% reduced Attack and Cast Speed","近期内创造的召唤生物攻击和施法速度减慢 #%"
@@ -7415,6 +7681,9 @@ Ghastly Eye Jewel affecting you, up to a maximum of +30%","每个影响你的苍
 "Minions summoned by Your Summoning Towers have #% increased Movement Speed","你的召唤之塔创造的召唤生物移动速度加快 #%"
 "Minions summoned by Your Summoning Towers have #% reduced Damage","你的召唤之塔创造的召唤生物伤害降低 #%"
 "Minions summoned by Your Summoning Towers have #% reduced Movement Speed","你的召唤之塔创造的召唤生物移动速度减慢 #%"
+"Minions' Base Attack Critical Strike Chance is equal to the Critical
+Strike Chance of your Main Hand Weapon","召唤生物的基础攻击暴击几率
+等于你的主手武器暴击几率"
 "Minions' Hits can only Kill Ignited Enemies","召唤生物只能击败被点燃的敌人"
 "Mirage Archer","幻影射手 （等阶 3）"
 "Mirror Arrow","镜像射击"
@@ -7435,6 +7704,9 @@ Ghastly Eye Jewel affecting you, up to a maximum of +30%","每个影响你的苍
 "Modifiers to Minimum Frenzy Charges instead apply to Minimum Affliction Charges","调整狂怒球数量下限词缀改为调整痛苦球数量下限"
 "Modifiers to Minimum Power Charges instead apply to Minimum Absorption Charges","调整暴击球数量下限的词缀改为调整榨取球数量下限"
 "Modifiers to Quantity of Items found in your Maps instead apply to Rarity of Items found in your Maps at 300% of their value","地图中掉落物品数量的修正改为以 300% 的效果作用于地图中掉落物品的稀有度"
+"Modifiers to number of Projectiles instead apply
+to the number of targets Projectiles Split towards","调整投射物数量的词缀改为
+调整投射物裂化飞向的目标数量"
 "Molten Shell","熔岩护盾"
 "Molten Strike","熔岩之击"
 "Molten Well","熔岩之井"
@@ -7499,6 +7771,9 @@ Ghastly Eye Jewel affecting you, up to a maximum of +30%","每个影响你的苍
 "Monsters take #% increased Damage","怪物受到的伤害增加 #%"
 "Monsters take #% reduced Damage","怪物受到的伤害减少 #%"
 "Monsters take #% reduced Extra Damage from Critical Strikes","怪物受到的暴击伤害降低 #%"
+"Monsters' Action Speed cannot be modified to below Base Value
+Monsters' Movement Speed cannot be modified to below Base Value","怪物的行动速度无法被减速至基础以下
+怪物的移动速度无法被减速至基础以下"
 "Monsters' Action Speed cannot be modified to below Base Value","怪物的行动速度无法被减速至基础以下"
 "Monsters' Attacks have #% chance to Impale on Hit","怪物的攻击击中有 #% 的几率造成穿刺"
 "Monsters' Movement Speed cannot be modified to below Base Value","怪物的移动速度无法被减速至基础以下"
@@ -7546,6 +7821,21 @@ the Attack time of your Main Hand Weapon","非幽魂召唤生物的基础攻击�
 "Non-Vaal Strike Skills target # additional nearby Enemies","非瓦尔打击技能以周围额外 # 名敌人为目标"
 "Non-critical strikes deal #% more Damage","非暴击打击的伤害总增 #%"
 "Non-instant Mana Recovery from Flasks is also Recovered as Life","药剂的非即时生效类魔力回复也会同时回复生命"
+"Notable Passive Skills in Radius are Transformed to
+instead grant: #% increased Mana Cost of Skills and #% increased Spell Damage","范围内的核心天赋替换为：
+技能魔力消耗提高 #%，法术伤害提高 #%"
+"Notable Passive Skills in Radius are Transformed to
+instead grant: Minions have #% increased Movement Speed","范围内的核心天赋技能转化
+替代为：召唤生物的移动速度加快 #%"
+"Notable Passive Skills in Radius are Transformed to
+instead grant: Minions have #% reduced Movement Speed","范围内的核心天赋技能转化
+替代为：召唤生物的移动速度减慢 #%"
+"Notable Passive Skills in Radius are Transformed to
+instead grant: Minions take #% increased Damage","范围内的核心天赋技能转化
+替代为：召唤生物受到的伤害提高 #%"
+"Notable Passive Skills in Radius are Transformed to
+instead grant: Minions take #% reduced Damage","范围内的核心天赋技能转化
+替代为：召唤生物受到的伤害降低 #%"
 "Notable Passive Skills in Radius grant nothing","范围内配置的核心天赋技能不会提供任何加成"
 "Nova Spells Cast at the targeted location instead of around you","新星法术在目标位置施放，而不是在你周围施放"
 "Nova Spells have #% more Area of Effect","新星法术的效果区域总增 #%"
@@ -7557,7 +7847,13 @@ the Attack time of your Main Hand Weapon","非幽魂召唤生物的基础攻击�
 "Office of Cartography (Tier 2)","内有房间：绘图室（2 阶）"
 "Oil Slick","黏油"
 "Oils found have a #% chance to be 1 tier higher","你的地图中发现的圣油有#%几率高一阶"
+"On Killing a Poisoned Enemy, Enemies within 3 metres are Poisoned, and you and
+Allies Regenerate 400 Life per second for the Poison's duration if within 3 metres","击杀中毒的敌人时，3 米内的敌人陷入中毒，且在这个中毒持续期间，如果你和
+友军在此 3 米范围内，则每秒回复 400 点生命"
 "On Killing a Rare monster, a random Linked Minion gains its Modifiers for # seconds","消灭稀有怪物时，一个随机羁绊的召唤物获得其词缀，持续 # 秒"
+"On non-channelling Attack, set a Life Flask with greater than 50% of maximum Charges remaining to 50%
+For each Charge removed this way, that Attack gains #% to Damage over time Multiplier","进行非吟唱攻击时，将一瓶剩余充能超过其最大充能 50% 的生命药剂充能量设为 50%
+以此方式每移除一层充能，该攻击的持续伤害加成 +#%"
 "Only # Portal is opened to each of your Maps","你的每个地图只能打开#个时空之门"
 "Only affects Passives in Large Ring","只影响 大 环形范围内的天赋"
 "Only affects Passives in Massive Ring","只影响 巨大 环形范围内的天赋"
@@ -7601,10 +7897,283 @@ the Attack time of your Main Hand Weapon","非幽魂召唤生物的基础攻击�
 "Passive Skills in Radius also grant #% to Chaos Resistance","范围内的天赋还会使混沌抗性 +#%"
 "Passive Skills in Radius also grant: #% increased Unarmed Attack Speed with Melee Skills","范围内的天赋技能还获得：近战技能的徒手攻击速度加快 #%"
 "Passive Skills in Radius also grant: Traps and Mines deal # to # added Physical Damage","范围内的天赋技能还提供：陷阱和地雷造成 # 至 # 额外物理伤害"
+"Passive Skills in Radius can be Allocated without being connected to your tree
+Passage","范围内的核心天赋技能无需连接到你的天赋树即可配置
+通途"
+"Passive Skills in Radius of Acrobatics can be Allocated
+without being connected to your tree
+Passage","移形换影范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Ancestral Bond can be Allocated
+without being connected to your tree
+Passage","先祖魂约范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Arrow Dancing can be Allocated
+without being connected to your tree
+Passage","箭矢闪跃范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Arsenal of Vengeance can be Allocated
+without being connected to your tree
+Passage","复仇军库范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Avatar of Fire can be Allocated
+without being connected to your tree
+Passage","火之化身范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Bitter Frost can be Allocated
+without being connected to your tree
+Passage","苦寒之霜范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Blood Magic can be Allocated
+without being connected to your tree
+Passage","祭血术范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Bloodsoaked Blade can be Allocated
+without being connected to your tree
+Passage","喋血之刃范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Call to Arms can be Allocated
+without being connected to your tree
+Passage","武装召唤范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Chaos Inoculation can be Allocated
+without being connected to your tree
+Passage","异灵之体范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Conduit can be Allocated
+without being connected to your tree
+Passage","能量连接范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Crimson Dance can be Allocated
+without being connected to your tree
+Passage","玫红之舞范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Divine Shield can be Allocated
+without being connected to your tree
+Passage","神威之盾范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Eldritch Battery can be Allocated
+without being connected to your tree
+Passage","异能魔力范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Elemental Equilibrium can be Allocated
+without being connected to your tree
+Passage","元素之相范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Elemental Overload can be Allocated
+without being connected to your tree
+Passage","元素超载范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Eternal Youth can be Allocated
+without being connected to your tree
+Passage","青春永驻范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Ghost Dance can be Allocated
+without being connected to your tree
+Passage","幽灵舞步范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Ghost Reaver can be Allocated
+without being connected to your tree
+Passage","灵能护体范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Glancing Blows can be Allocated
+without being connected to your tree
+Passage","斗转星移范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Hex Master can be Allocated
+without being connected to your tree
+Passage","邪法宗师范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Imbalanced Guard can be Allocated
+without being connected to your tree
+Passage","失衡卫士范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Iron Grip can be Allocated
+without being connected to your tree
+Passage","钢铁之握范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Iron Reflexes can be Allocated
+without being connected to your tree
+Passage","霸体范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Iron Will can be Allocated
+without being connected to your tree
+Passage","钢铁意志范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Lethe Shade can be Allocated
+without being connected to your tree
+Passage","忘川之影范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Magebane can be Allocated
+without being connected to your tree
+Passage","法师克星范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Mind Over Matter can be Allocated
+without being connected to your tree
+Passage","心灵升华范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Minion Instability can be Allocated
+without being connected to your tree
+Passage","复仇之灵范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Necromantic Aegis can be Allocated
+without being connected to your tree
+Passage","灵能护盾范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Pain Attunement can be Allocated
+without being connected to your tree
+Passage","苦痛灵曲范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Perfect Agony can be Allocated
+without being connected to your tree
+Passage","完美苦痛范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Point Blank can be Allocated
+without being connected to your tree
+Passage","零点射击范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Precise Technique can be Allocated
+without being connected to your tree
+Passage","技艺精湛范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Resolute Technique can be Allocated
+without being connected to your tree
+Passage","坚毅之心范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Roiling Tempest can be Allocated
+without being connected to your tree
+Passage","翻涌雷暴范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Runebinder can be Allocated
+without being connected to your tree
+Passage","符文绑定者范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Solipsism can be Allocated
+without being connected to your tree
+Passage","唯我独尊范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Supreme Ego can be Allocated
+without being connected to your tree
+Passage","无上自我范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of The Agnostic can be Allocated
+without being connected to your tree
+Passage","惘信者范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of The Impaler can be Allocated
+without being connected to your tree
+Passage","穿刺者范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Unwavering Stance can be Allocated
+without being connected to your tree
+Passage","烈士意志范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Vaal Pact can be Allocated
+without being connected to your tree
+Passage","瓦尔冥约范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Versatile Combatant can be Allocated
+without being connected to your tree
+Passage","多面好手范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Voracious Flame can be Allocated
+without being connected to your tree
+Passage","贪婪火焰范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Wicked Ward can be Allocated
+without being connected to your tree
+Passage","恶毒结界范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Wind Dancer can be Allocated
+without being connected to your tree
+Passage","风舞者范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passive Skills in Radius of Zealot's Oath can be Allocated
+without being connected to your tree
+Passage","狂热誓言范围内的核心天赋技能可以在
+未连结至天赋树的情况下配置
+通途"
+"Passives granting Cold Resistance or all Elemental Resistances in Radius
+also grant Chance to Suppress Spell Damage at #% of its value","给范围内提供冰霜抗性或所有元素抗性的天赋
+也提供法术伤害压制率，等于其数值的 #%"
+"Passives granting Cold Resistance or all Elemental Resistances in Radius
+also grant Cold Damage Converted to Chaos Damage at #% of its value","范围内，提供冰霜抗性或所有元素抗性的天赋点，
+也会将其数值的 #% 转化为冰霜伤害转为混沌伤害"
 "Passives granting Cold Resistance or all Elemental Resistances in Radius
 also grant an equal chance to gain a Frenzy Charge on Kill","范围内提高冰霜抗性的天赋也会提高击败敌人时获得狂怒球的概率"
+"Passives granting Cold Resistance or all Elemental Resistances in Radius
+also grant increased Maximum Mana at #% of its value","范围内，提供冰霜抗性或所有元素抗性的天赋点，
+也会将其数值的 #% 转化为提高最大魔力"
+"Passives granting Fire Resistance or all Elemental Resistances in Radius
+also grant Chance to Block Attack Damage at #% of its value","范围内提高火焰抗性或所有元素的天赋
+也会以 #% 的比例提高攻击伤害格挡几率"
+"Passives granting Fire Resistance or all Elemental Resistances in Radius
+also grant Fire Damage Converted to Chaos Damage at #% of its value","范围内，提供火焰抗性或所有元素抗性的天赋点，
+也会将其数值的 #% 转化为火焰伤害转为混沌伤害"
 "Passives granting Fire Resistance or all Elemental Resistances in Radius
 also grant an equal chance to gain an Endurance Charge on Kill","范围内提高火焰抗性的天赋也会提高击败敌人时获得耐力球的概率"
+"Passives granting Fire Resistance or all Elemental Resistances in Radius
+also grant increased Maximum Life at #% of its value","范围内，提供火焰抗性或所有元素抗性的天赋点，
+也会将其数值的 #% 转化为提高最大生命"
+"Passives granting Lightning Resistance or all Elemental Resistances in Radius
+also grant Chance to Block Spell Damage at #% of its value","范围内提高闪电抗性或所有元素抗性的天赋
+也会以 #% 的比例提高法术伤害格挡几率"
+"Passives granting Lightning Resistance or all Elemental Resistances in Radius
+also grant Lightning Damage Converted to Chaos Damage at #% of its value","范围内，提供闪电抗性或所有元素抗性的天赋点，
+也会将其数值的 #% 转化为闪电伤害转为混沌伤害"
+"Passives granting Lightning Resistance or all Elemental Resistances in Radius
+also grant an equal chance to gain a Power Charge on Kill","给范围内提供闪电抗性或所有元素抗性的天赋
+也有同等几率在击败敌人时获得一个暴击球"
+"Passives granting Lightning Resistance or all Elemental Resistances in Radius
+also grant increased Maximum Energy Shield at #% of its value","范围内，提供闪电抗性或所有元素抗性的天赋点，
+也会将其数值的 #% 转化为提高最大能量护盾"
 "Patrol Packs have #% increased chance to be replaced by an Elite Patrol Pack","巡逻队被精英巡逻队取代的几率提高 #%"
 "Patrol Packs have #% reduced chance to be replaced by an Elite Patrol Pack","巡逻队被精英巡逻队取代的几率降低 #%"
 "Patrol Packs take #% increased damage","巡逻队受到的伤害提高 #%"
@@ -7671,6 +8240,9 @@ also grant an equal chance to gain an Endurance Charge on Kill","范围内提高
 "Players have #% more effect of Flasks applied to them","玩家受到的药剂效果总增 #%"
 "Players have #% reduced Maximum total Life, Mana and Energy Shield Recovery per second from Leech","玩家从偷取中获得的每秒最大生命、魔力和能量护盾总回复量降低 #%"
 "Players have #% reduced effect of Non-Curse Auras from Skills","玩家技能的非诅咒光环效果降低 #%"
+"Players have #% to all Elemental Resistances for each Empty White Socket
+on any Equipped Item","任意已装备物品上每有一个空的白色插槽，
+玩家所有元素抗性 +#%"
 "Players have #% to all maximum Resistances","玩家的所有抗性上限为 #%"
 "Players have #% to amount of Suppressed Spell Damage Prevented","玩家阻挡被压制的法术伤害 +#%"
 "Players have Acceleration Shrine Buff while affected by no Flasks","当没有任何药剂效果时，玩家获得迅捷神龛增益"
@@ -7693,6 +8265,9 @@ also grant an equal chance to gain an Endurance Charge on Kill","范围内提高
 "Point Blank","零点射击"
 "Poison Garden (Tier 1)","内有房间：烈毒花园（1 阶）"
 "Poison you inflict is Reflected to you if you have fewer than 100 Poisons on you","若你身上的中毒效果少于 100， 则你造成的中毒将作用到你身上"
+"Poison you inflict with Travel Skills is Reflected to you if you
+have fewer than 5 Poisons on you","若你身上的中毒效果少于 5 层
+则你的旅行技能施加的中毒效果反射给你自己"
 "Poisoned Enemies you Kill with Hits Shatter","被你的击中所击败的中毒敌人会破碎"
 "Poisons on you expire #% faster","你身上的中毒效果消失速度减慢 #%"
 "Poisons you inflict deal Damage #% Faster","你施加的中毒造成的伤害生效速度加快 #%"
@@ -7727,7 +8302,6 @@ affected by Purity of Elements","受到元素净化影响时，阻挡受到的 +
 "Projectile Barrages have no spread","投射物弹幕攻击不会扩散"
 "Projectiles Chain # times while you have Phasing","你在迷踪状态下，投射物连锁次数 +#"
 "Projectiles Pierce # additional Target if 2 Hunter Items are Equipped","若装备 2 件狩猎者物品，投射物会穿透 # 个额外目标"
-"Projectiles Pierce # additional Targets while you have Phasing","处于迷踪状态时，投射物穿透 1 个额外目标"
 "Projectiles Pierce # additional Targets","投射物会穿透 # 个额外目标"
 "Projectiles Pierce all Burning Enemies","投射物穿透所有燃烧的敌人"
 "Projectiles Pierce all Targets within 3.5 metres","投射物穿透 3.5 米范围内的所有目标"
@@ -7740,11 +8314,26 @@ affected by Purity of Elements","受到元素净化影响时，阻挡受到的 +
 "Projectiles deal #% increased Damage with Hits and Ailments for each time they have Chained","每次敌人被连锁，投射物的击中和异常状态伤害提高 #%"
 "Projectiles from Attacks Fork","来自攻击的投射物会分叉"
 "Projectiles from Attacks can Fork # additional time","攻击的投射物可以额外分叉 # 次"
+"Projectiles from Attacks have #% chance to Maim on Hit while
+you have a Bestial Minion","当你拥有兽化的召唤生物时，投射物攻击击中时
+有 #% 的几率造成瘫痪"
+"Projectiles from Attacks have #% chance to Poison on Hit while
+you have a Bestial Minion","当你拥有兽化的召唤生物时，投射物攻击击中时
+有 #% 的几率造成中毒"
+"Projectiles from Attacks have #% chance to inflict Bleeding on Hit while
+you have a Bestial Minion","当你拥有兽化的召唤生物时，投射物攻击击中时
+有 #% 的几率造成流血"
 "Projectiles from Socketed Gems Fork","插槽内技能石的投射物会分叉"
 "Projectiles from Spells cannot Pierce","法术的投射物无法穿刺"
 "Projectiles gain #% of Non-Chaos Damage as extra Chaos Damage per Chain","每连锁弹射 1 次，投射物获得额外混沌伤害，其数值等同于非混沌伤害的 #%"
+"Projectiles gain Damage as they travel farther, dealing up
+to #% increased Damage with Hits to targets","投射物的伤害随着飞行距离提升，
+击中目标时最多提高 #%"
 "Projectiles gain Impale effect as they travel farther, causing Impales they inflict to have up to #% increased effect","投射物随穿越的距离而获得穿刺效果，使其造成的穿刺效果最多提高 #%"
 "Projectiles have #% chance to Return to you","投射物有 #% 的几率返回你身边"
+"Projectiles have #% chance to be able to Chain when colliding with terrain per
+Searching Eye Jewel affecting you, up to a maximum of 20%","投射物有 #% 的几率在碰撞地形时
+按照影响你的每件锐利之凝珠宝产生连锁效果，最多 20%"
 "Projectiles have #% chance to be able to Chain when colliding with terrain","投射物击中地形有 #% 的几率产生连锁效果"
 "Projectiles that have Chained gain #% of Non-Chaos Damage as extra Chaos Damage","连锁的投射物将 #% 非混沌伤害作为其额外混沌伤害"
 "Properties are doubled while in a Breach","属性在裂隙内得到加倍"
@@ -7819,6 +8408,9 @@ affected by Purity of Elements","受到元素净化影响时，阻挡受到的 +
 "Raised Spectres have #% reduced maximum Life","灵体的最大生命降低 #%"
 "Raised Spectres have #% to Critical Strike Chance","召唤灵体的暴击几率提高 +#%"
 "Raised Spectres have #% to all maximum Resistances","召唤灵体的所有抗性上线提高 +#%"
+"Raised Spectres have a Base Duration of # seconds
+Spectres do not travel between Areas","灵体的基础持续时间为 # 秒
+灵体无法在区域之间转移"
 "Raised Zombies deal #% increased Damage","魔卫复苏伤害提高 #%"
 "Raised Zombies deal #% more Physical Damage","魔卫复苏物理伤害总增 #%"
 "Raised Zombies deal #% reduced Damage","魔卫复苏伤害降低 #%"
@@ -7827,11 +8419,9 @@ affected by Purity of Elements","受到元素净化影响时，阻挡受到的 +
 "Raised Zombies have #% reduced maximum Life","魔卫复苏最大生命降低 #%"
 "Raised Zombies have #% to all Resistances","魔卫所有抗性 +#%"
 "Raised Zombies have Avatar of Fire","复苏的魔卫具有火之化身"
-"Raised Zombies have a #% chance to Cover Enemies in Ash on Hit","复苏的魔卫击中施加灰烬缠身"
 "Raised Zombies take #% of their Maximum Life per second as Fire Damage","复苏的魔卫每秒承受相当于其最大生命 #% 的火焰伤害"
 "Rallying Cry","激励战吼"
 "Rampage","暴走"
-"Rare Monsters each have # additional Modifier","你地图中的稀有怪物拥有一个额外词缀"
 "Rare Monsters have #% chance to have a Volatile Core","稀有怪物有 #% 的几率有一个无常之核"
 "Rare Monsters have Elemental Thorns reflecting # Elemental Damage","稀有怪物带有元素荆棘，反射 # 点元素伤害"
 "Rare Monsters have Physical Thorns reflecting # Physical Damage","稀有怪物带有物理荆棘，反射 # 点物理伤害"
@@ -7858,6 +8448,9 @@ affected by Purity of Elements","受到元素净化影响时，阻挡受到的 +
 "Recover #% of Life on Kill","生命在击败敌人时恢复 #%"
 "Recover #% of Life on Rampage","暴走状态时回复 #% 生命"
 "Recover #% of Life on use","使用时恢复 #% 生命"
+"Recover #% of Life per Endurance Charge on use
+Lose all Endurance Charges on use","使用时每个耐力球都使你恢复 #% 生命
+使用时失去所有耐力球"
 "Recover #% of Life when you Block","格挡时回复 #% 生命"
 "Recover #% of Life when you Chill a non-Chilled Enemy","冰缓非冰缓状态的敌人时回复 #% 生命"
 "Recover #% of Life when you Ignite an Enemy","点燃一个敌人后回复 #% 生命"
@@ -7974,6 +8567,9 @@ affected by Purity of Elements","受到元素净化影响时，阻挡受到的 +
 "Regenerate #% Life over one second when Hit while Sane","理智状态下，被击中时在一秒内再生 #% 生命"
 "Regenerate #% Life over one second when hit while affected by Vitality","被活力影响时，被击中时在一秒内再生 #% 生命"
 "Regenerate #% of Energy Shield over 2 seconds when you Consume a corpse","每消耗一个灵柩使你在 2 秒内再生 #% 能量护盾"
+"Regenerate #% of Energy Shield per Second for
+every 10 Intelligence on Allocated Passives in Radius","范围内每配置 10 点智慧
+便每秒再生 #% 能量护盾"
 "Regenerate #% of Energy Shield per Second while affected by Discipline","受到纪律影响时每秒再生 #% 能量护盾"
 "Regenerate #% of Energy Shield per second if you've Consumed a Corpse Recently","若你近期内消耗一个灵枢，每秒再生 #% 能量护盾"
 "Regenerate #% of Energy Shield per second if you've dealt a Critical Strike with this weapon Recently","近期用该武器造成暴击使你每秒再生 #% 能量护盾"
@@ -7999,6 +8595,9 @@ affected by Purity of Elements","受到元素净化影响时，阻挡受到的 +
 "Regenerate #% of Mana over 2 seconds when you Consume a corpse","每消耗一个灵柩使你在 2 秒内再生 #% 魔力"
 "Regenerate #% of Mana per second if you've Consumed a corpse Recently","若你近期内消耗一个灵枢，每秒再生 #% 魔力"
 "Regenerate #% of Mana per second","每秒再生 #% 魔力"
+"Regenerate 1 Rage per second for every # Life Recovery per second from Regeneration
+Does not delay Inherent Loss of Rage","每有 # 每秒生命回复来自再生，每秒再生 1 怒火
+不会延迟怒火本身的消逝"
 "Reinforce: Fallen Bishop","增援：堕落主教"
 "Reinforce: Fallen Emperor","增援：堕落皇帝"
 "Reinforce: Fallen Osseotitan","增援：堕落骨巨人"
@@ -8028,6 +8627,9 @@ Passives in radius are Conquered by the Kalguur","纪念 # 件沃拉娜世系值
 "Removes Curses on use","使用时移除诅咒"
 "Removes Elemental Ailments on Rampage","暴走时驱散元素异常状态"
 "Removes all Energy Shield","移除所有能量护盾"
+"Removes all but one Life on use
+Removed life is Regenerated as Energy Shield over # seconds","使用时将生命扣至 1 点
+扣除的生命在 # 秒内再生为能量护盾"
 "Rerolling Favours at Ritual Altars in your Maps costs #% increased Tribute","在地图中的驱灵祭坛处重置恩典消耗的贡品增加#%"
 "Rerolling Favours at Ritual Altars in your Maps costs #% reduced Tribute","在地图中的驱灵祭坛处重置恩典消耗的贡品减少#%"
 "Rerolling Favours at Ritual Altars in your Maps has no Cost # additional time","在地图中的驱灵祭坛处额外 # 次重置恩典无消耗"
@@ -8074,13 +8676,11 @@ Passives in radius are Conquered by the Kalguur","纪念 # 件沃拉娜世系值
 "Right ring slot: you and your Minions prevent +#% of Reflected Physical Damage","右戒指栏位：你和你的召唤生物阻挡受到的 +#% 反射物理伤害"
 "Rightmost # Magic Utility Flask constantly applies its Flask Effect to you","最右边的 # 个魔法功能药剂给你持续提供药剂效果"
 "Rin's Veiled","麟的影匿"
-"Ritual Altars in your Maps allow rerolling Favours # additional times","地图内的驱灵祭坛可以额外重置一次恩典"
 "Ritual Altars in your Maps can have #% increased number of Spawned Monsters at once","你地图中驱灵祭坛同时产生的怪物数量提高 #%"
 "Ritual Altars in your Maps spawn Monsters #% faster","你地图中驱灵祭坛产生怪物的速度加快 #%"
 "Ritual Splinters offered at Ritual Altars in your Maps have #% increased Stack Size","你地图中驱灵祭坛提供的驱灵裂片堆叠数量提高 #%"
 "Rogue Equipment cannot be found","找不到赏金猎人装备"
 "Rogue Exiles in your Maps have #% chance to drop an additional Currency Item","地图内的盗贼流放者有 #% 的几率额外掉落一个通货物品"
-"Rogue Perks have #% more effect","赏金猎人专长翻倍"
 "Rogue's Markers, Contracts and Blueprints cannot be found in Your Maps","你的地图不会掉落赏金猎人印记、契约和蓝图"
 "Roiling Tempest","翻腾风暴"
 "Rolling Magma","熔岩奔涌"
@@ -8128,6 +8728,9 @@ Passives in radius are Conquered by the Kalguur","纪念 # 件沃拉娜世系值
 "Shock Enemies within 3 metres for # Seconds when you Focus","专注时，使 3 米范围内的敌人感电 # 秒"
 "Shock Reflection","反射感电"
 "Shock yourself for # Seconds when you Focus","当你专注时使自己感电#秒"
+"Shocked Enemies you Kill Explode, dealing #% of
+their Life as Lightning Damage which cannot Shock","感电的敌人被你击败时会爆炸，
+造成等同敌人生命 #% 的闪电伤害，该伤害无法造成感电"
 "Shocks Enemies within 3 metres during Effect, causing 10% increased Damage taken","生效期间，使 3 米范围内敌人感电，并使其承受的伤害提高 10%"
 "Shocks from your Hits always increase Damage taken by at least #%","你击中造成的感电效果始终使受到的伤害提高至少 #%"
 "Shocks you cause are reflected back to you","感电会反射回自己身上"
@@ -8150,11 +8753,13 @@ Passives in radius are Conquered by the Kalguur","纪念 # 件沃拉娜世系值
 "Skeletons deal #% increased Damage","魔侍造成的伤害提高 #%"
 "Skeletons deal #% reduced Damage","魔侍造成的伤害降低 #%"
 "Skeletons gain Added Chaos Damage equal to #% of Maximum Energy Shield on your Equipped Shield","为魔侍附加相当于你装备盾牌的能量护盾上限 #% 的混沌伤害"
-"Skills Chain # additional times while at maximum Frenzy Charges","当你拥有最大数量的狂怒球时，技能额外连锁弹射 1 次"
 "Skills Chain # times","技能可以连锁弹射 +# 次"
 "Skills Cost Energy Shield instead of Mana or Life","技能消耗的魔力或生命改为消耗能量护盾"
 "Skills Cost Life instead of #% of Mana Cost","技能消耗魔力的 #% 改为消耗生命"
 "Skills Cost no Mana during Effect","生效期间技能不消耗魔力"
+"Skills Fire # additional Projectile for 4 seconds after
+you consume a total of 8 Steel Shards","你总共消耗 8 枚钢刃碎片后
+技能在 4 秒内发射 # 枚额外投射物"
 "Skills Socketed in your Boots are Supported by level # ​Added Chaos Damage","你的 靴子 中镶嵌的技能由 # 级的 附加混沌伤害 辅助"
 "Skills Socketed in your Boots are Supported by level # ​Added Cold Damage","你的 靴子 中镶嵌的技能由 # 级的 附加冰霜伤害 辅助"
 "Skills Socketed in your Boots are Supported by level # ​Added Fire Damage","你的 靴子 中镶嵌的技能由 # 级的 附加火焰伤害 辅助"
@@ -8648,10 +9253,6 @@ Passives in radius are Conquered by the Kalguur","纪念 # 件沃拉娜世系值
 "Skills Supported by Unleash have #% reduced Seal gain frequency","技能被释出辅助时，其封印获取频率降低 #%"
 "Skills deal #% increased Projectile damage per Projectile created","每创造一个投射物，技能造成的投射物伤害提高 #%"
 "Skills deal #% more Damage for each Warcry Exerting them","每有一个増助的战吼，技能造成的伤害就总增 #%"
-"Skills fire # additional Projectiles during Effect","生效期间，技能发射 1 个额外投射物"
-"Skills fire # additional Projectiles if you've been Hit Recently","若你近期内被击中，技能可以额外发射 1 个投射物"
-"Skills fire # additional Projectiles if you've used a Movement Skill Recently","若你近期内使用过位移技能，技能可以额外发射 1 个投射物"
-"Skills fire # additional Projectiles","技能可以额外发射 1 个投射物"
 "Skills fire an additional Projectile if 6 Hunter Items are Equipped","若装备 6 件狩猎者物品，技能发射 1 个额外投射物"
 "Skills gain Added Chaos Damage equal to #% of Mana Cost, if Mana Cost is not higher than the maximum you could spend","如果魔力消耗不高于你能够消耗的最大值，技能附加相当于魔力消耗 #% 的混沌伤害"
 "Skills gain a Base Energy Shield Cost equal to #% of Base Mana Cost","技能获得等于基础魔力消耗 #% 的基础能量护盾消耗"
@@ -8831,12 +9432,8 @@ Passives in radius are Conquered by the Kalguur","纪念 # 件沃拉娜世系值
 "Skills used by Spectral Totems deal #% more Damage","幻影图腾使用的技能造成的伤害总增 #%"
 "Skills used by Traps have #% increased Area of Effect","陷阱所使用的技能范围扩大 #%"
 "Skills used by Traps have #% reduced Area of Effect","陷阱所使用的技能范围缩小 #%"
-"Skills used by your Traps and Mines Chain # additional times","你的陷阱和地雷使用的技能额外连锁一次"
 "Skills which Exert an Attack have #% chance to not count that Attack","增助攻击的技能有 #% 几率不计入那次攻击"
 "Skills which Throw Traps have # Cooldown Use","陷阱投掷技能 +# 冷却时间次数"
-"Skills which Throw Traps throw up to # additional Traps","投掷陷阱的技能会投掷最多 1 个额外陷阱"
-"Skills which throw Mines throw up to # additional Mines if you have at least 800 Dexterity","若你至少拥有 800 点敏捷，可以投掷地雷的技能就会最多额外投掷 1 个地雷"
-"Skills which throw Mines throw up to # additional Mines if you have at least 800 Intelligence","若你至少拥有 800 点智慧，可以放置地雷的技能就会最多额外投掷 1 个地雷"
 "Skills which throw Traps Cost Life instead of Mana","投掷陷阱的技能消耗生命而非魔力"
 "Slaying Enemies close together can attract monsters from Beyond this realm","击败敌人将会吸引更强大的怪物登场"
 "Slaying Enemies in a kill streak grants Rampage bonuses","快速击败敌人来累积暴走奖励"
@@ -9163,7 +9760,6 @@ Passives in radius are Conquered by the Kalguur","纪念 # 件沃拉娜世系值
 "Socketed Gems deal #% more Damage while on Low Life","低血时插入的技能石伤害总增 #%"
 "Socketed Gems deal #% more Elemental Damage","此物品上的技能石元素伤害总增 #%"
 "Socketed Gems deal #% more damage per Socketed Skill Gem","每镶嵌一颗技能宝石，镶嵌的宝石造成的伤害总增 #%"
-"Socketed Gems fire # additional Projectiles","此物品上的技能石可以发射 1 个额外投射物"
 "Socketed Gems fire Projectiles in a circle","插槽内的技能石的投射物会以环状方式发射"
 "Socketed Gems gain #% of Physical Damage as extra Lightning Damage","此物品上的技能石获得 #% 物理伤害，并转化为额外闪电伤害"
 "Socketed Gems have #% Critical Strike Chance","插入的技能石 +#% 暴击率"
@@ -9175,6 +9771,9 @@ Passives in radius are Conquered by the Kalguur","纪念 # 件沃拉娜世系值
 "Socketed Gems have #% reduced Reservation Efficiency","插入的宝石的保留效能提高 #%"
 "Socketed Gems have Elemental Equilibrium","此物品上的技能石额外获得元素之相"
 "Socketed Gems have Secrets of Suffering","插入的技能石具有苦难秘辛"
+"Socketed Gems have no Reservation
+Your Blessing Skills are Disabled","插入的宝石没有保留效果
+你的祝福技能被禁用"
 "Socketed Golem Skills gain #% of Maximum Life as Extra Maximum Energy Shield","插槽内魔像技能获得等同最大生命 #% 的额外能量护盾"
 "Socketed Golem Skills have #% chance to Taunt on Hit","插槽内魔像技能击中时有 #% 的几率嘲讽"
 "Socketed Golem Skills have #% increased Attack and Cast Speed","插槽内魔像技能攻击和施法速度加快 #%"
@@ -9184,10 +9783,12 @@ Passives in radius are Conquered by the Kalguur","纪念 # 件沃拉娜世系值
 "Socketed Minion Gems are Supported by Level # Life Leech","此物品上的召唤生物技能石由 # 级的 生命偷取 辅助"
 "Socketed Movement Skills Cost no Mana","插入的位移技能不消耗魔力"
 "Socketed Projectile Spells deal #% less Damage with Hits","插入的投射物法术的击中伤害总增 #%"
-"Socketed Projectile Spells fire # additional Projectiles","插入的投射物法术发射一枚额外投射物"
 "Socketed Projectile Spells fire Projectiles in a circle","插入的投射物法术环状发射投射物"
 "Socketed Projectile Spells have # seconds to Cooldown","插入的投射物法术的冷却时间 +# 秒"
 "Socketed Projectile Spells have #% more Skill Effect Duration","插入的投射物法术的技能效果持续时间总增 #%"
+"Socketed Rare Abyssal Jewels will be Consumed
+One modifier from Consumed Jewels will be retained","插上的稀有深渊珠宝将被消耗
+来自被消耗珠宝的一个词缀将被保留"
 "Socketed Red Gems get #% Physical Damage as Extra Fire Damage","此物品上的红色技能石额外获得 #% 的物理伤害，并转化为火焰伤害"
 "Socketed Skill Gems get a #% Cost & Reservation Multiplier","插入的技能石的消耗及保留加成为原来的 #%"
 "Socketed Skills apply Fire, Cold and Lightning Exposure on Hit","插入的技能击中时施加火焰、冰霜、闪电曝露效果"
@@ -9235,7 +9836,6 @@ Passives in radius are Conquered by the Kalguur","纪念 # 件沃拉娜世系值
 "Spells cause you to gain Energy Shield equal to their Upfront
 Cost every third time you Pay it","每第三次支付法术的预支消耗时，获得等于该消耗的能量护盾"
 "Spells deal added Chaos Damage equal to #% of your maximum Life","法术附加相当于你生命上限 #% 的混沌伤害"
-"Spells fire # additional Projectiles","法术可以额外发射 1 个投射物"
 "Spells have #% increased Critical Strike Chance per Intensity","每层凝聚使法术的暴击率提高 #%"
 "Spells have #% reduced Critical Strike Chance per Intensity","每层凝聚使法术的暴击率降低 #%"
 "Spells have a #% chance to deal Double Damage","法术有  #% 的几率造成双倍伤害"
@@ -9252,7 +9852,6 @@ Cost every third time you Pay it","每第三次支付法术的预支消耗时，
 "Spreads Tar when you take a Critical Strike","暴击时喷洒焦油"
 "Starts Energy Shield Recharge when Used","使用时开始能量护盾充能"
 "Static Strike","充能打击"
-"Stationary Enemies within 6 metres gain a Grasping Vine every # seconds","6 米范围内静止的敌人每秒获得一个缓速藤蔓"
 "Steelskin Ally","友军钢铁之肤"
 "Storage Room (Tier 1)","内有房间：储藏屋（1 阶）"
 "Storm Call of Trarthus","特拉特斯之风暴呼唤"
@@ -9262,6 +9861,9 @@ Cost every third time you Pay it","每第三次支付法术的预支消耗时，
 "Strength from Passives in Radius is Transformed to Dexterity","将范围内天赋所给予的力量转换成敏捷"
 "Strength from Passives in Radius is Transformed to Intelligence","将范围内天赋所给予的力量转换成智慧"
 "Strength provides no bonus to Maximum Life","力量不对最大生命提供加成"
+"Strength's Damage Bonus instead grants 3% increased Melee
+Physical Damage per 10 Strength","不再通过力量获得伤害加成，每 10 点力量会使
+近战物理伤害提高 3%"
 "Strike Distance","打击距离 （等阶 2）"
 "Strike Skills also target the previous location they were used","打击技能同时将其之前攻击的地点设为目标"
 "Strike Skills which target additional Enemies can do so from #% further away","能设定额外目标的打击技能可以将设定额外目标的范围扩大 #%"
@@ -9289,7 +9891,6 @@ Passives affected are Conquered by the Abyssal","征服 # 个受乌拉曼奴役�
 "Suffix Modifiers cannot be changed","后缀不能改变"
 "Sulphite Veins and Chests in your Maps have #% chance to also contain an equal amount of Azurite","地图内的亚硫酸矿脉和宝箱有 #% 的几率有相等的蓝晶"
 "Sulphite found in your Maps is granted as a random Ore instead at #% of the value","你地图中找到的亚硫酸改为提供 #% 数量的随机矿石"
-"Summon # additional Skeletons with Summon Skeletons","召唤魔侍额外召唤一个魔侍"
 "Summon Raging Spirit has #% increased Duration","召唤愤怒狂灵的持续时间延长 #%"
 "Summon Raging Spirit has #% reduced Duration","召唤愤怒狂灵的持续时间缩短 #%"
 "Summon Raging Spirit","召唤愤怒狂灵"
@@ -9340,7 +9941,13 @@ Passives affected are Conquered by the Abyssal","征服 # 个受乌拉曼奴役�
 "Summoned Raging Spirits' Hits always Ignite","愤怒狂灵击中后必定造成点燃"
 "Summoned Raging Spirits' Melee Strikes deal Fire-only Splash
 Damage to Surrounding Targets","召唤的愤怒狂灵其近战打击对周围目标造成火焰限定溅射伤害"
+"Summoned Skeleton Warriors and Soldiers deal Triple Damage with this
+Weapon if you've Hit with this Weapon Recently","如果你最近使用这把武器击中过，
+召唤的魔侍武士和魔侍兵使用该武器造成三倍伤害"
 "Summoned Skeleton Warriors and Soldiers wield this Weapon while in your Main Hand","装备于你的主手时，召唤的魔侍武士和魔侍兵持有该武器"
+"Summoned Skeleton Warriors are Permanent and Follow you
+Summon Skeletons cannot Summon more than 1 Skeleton Warrior","召唤的魔侍武士将会一直跟着你
+召唤魔侍所召唤的魔侍武士数量不多于 1 个"
 "Summoned Skeletons have Avatar of Fire","召唤的魔侍获得火之化身"
 "Summoned Skeletons have a #% chance to Cover Enemies in Ash on Hit","召唤的魔侍有 #% 的几率在击中时使敌人被灰烬缠身"
 "Summoned Skeletons take #% of their Maximum Life per second as Fire Damage","召唤的魔侍每秒承受其生命上限 #% 的火焰伤害"
@@ -9561,7 +10168,6 @@ Damage to Surrounding Targets","召唤的愤怒狂灵其近战打击对周围目
 "The Effect of Chill on you is reversed while on Chilled ground","你在冰缓地面上时，冰缓对你的效果反转"
 "The Effect of Chill on you is reversed","你身上的冰缓效果颠倒"
 "The Herald of the Scourge deals #% more Damage","天灾先驱的伤害总增 #%"
-"The Herald of the Scourge drops # additional Forbidden Tomes","天灾先驱额外掉落一本禁域典籍"
 "The Herald of the Scourge drops Eternal Damnation","天灾先驱会掉落永恒诅咒"
 "The Herald of the Scourge drops Sandstorm Visage","天灾先驱会掉落禁域面容"
 "The Herald of the Scourge drops the Balance of Terror","天灾先驱会掉落恐惧之平衡"
@@ -9569,8 +10175,16 @@ Damage to Surrounding Targets","召唤的愤怒狂灵其近战打击对周围目
 "The Herald of the Scourge drops the Winds of Fate","天灾先驱会掉落命运之风"
 "The Herald of the Scourge takes #% more Damage","天灾先驱受到的伤害总增 #%"
 "The Impaler","穿刺者"
+"The Maven has a #% chance to cast Up the Stakes summoning 1 to 3 additional Atlas Bosses
+when Witnessing Map Bosses
+The number of additional Bosses summoned is higher if there
+are fewer monsters remaining in the Map
+Modifiers to the Final Map Boss in each Map also apply to these summoned Bosses","贤主目睹地图首领时有 #% 的几率施放赌注加码
+额外召唤 1 到 3 个异界首领
+若地图中的剩余怪物数量较少
+召唤额外首领的数量会提高
+每张地图最终地图首领的修正也会作用于召唤的首领"
 "The Maven interferes with Players","贤主会干涉玩家"
-"The Merchant has # additional Choices","商人会提供一个额外选择"
 "The Ring takes no Cut","秘环不抽成"
 "The Ring's Cut increased by #%","秘环抽成提高至 #%"
 "The Ring's Cut reduced by #%","秘环抽成降低至 #%"
@@ -9579,6 +10193,9 @@ Damage to Surrounding Targets","召唤的愤怒狂灵其近战打击对周围目
 "The number of Memory Strands on Equipment Items found
 in your Maps has #% chance to be Lucky","你地图中找到的装备物品的回忆束丝数量有 #% 的几率特别幸运"
 "The stars are aligned if you have 6 Influence types among other Equipped Items","若其他装备的物品具有 6 种影响类型，群星将会罗列"
+"This Jewel's Socket has #% increased effect per Allocated Passive Skill between
+it and your Class' starting location","从你职业的出发位置到该珠宝槽之间
+每一点配置的天赋就使该珠宝插槽的效果提高 #%"
 "This Weapon's Critical Strike Chance is 100%","该武器的暴击率为 100%"
 "This item is destroyed when applied to a Sanctum","对禁域使用时摧毁该物品"
 "Threads dropped in your Maps have #% increased chance to be Abyss Threads","地图中掉落的丝线为深渊丝线的几率提高 #%"
@@ -9610,6 +10227,9 @@ in your Maps has #% chance to be Lucky","你地图中找到的装备物品的回
 "Torment Cells (Tier 1)","内有房间：折磨牢狱（1 阶）"
 "Tormented Spirits have a #% chance to be set free when Possessed Monsters are slain","击败被附身的怪物时有 #% 的几率释放罪魂"
 "Tormented Spirits in your Maps are more likely to be less common varieties","地图中的罪魂更有可能为稀有类型"
+"Tormented Spirits in your Maps can Possess Players for 30 seconds
+Tormented Spirits in your Maps cannot Possess Monsters","你地图中的罪魂可以附身玩家，持续 30 秒
+你地图中的罪魂无法附身怪物"
 "Tormented Spirits in your Maps have #% increased Duration","地图内的罪魂持续时间延长 #%"
 "Tormented Spirits in your Maps have #% reduced Duration","地图内的罪魂持续时间缩短 #%"
 "Tornado Shot","龙卷射击"
@@ -9649,6 +10269,9 @@ in your Maps has #% chance to be Lucky","你地图中找到的装备物品的回
 "Treats Enemy Monster Elemental Resistance values as inverted","将敌方怪物的元素抗性值视作反转"
 "Trigger Level # Assassin's Mark when you Hit a Rare or Unique Enemy and have no Mark","当你击中的稀有或传奇敌人没有被标记，触发 # 级暗影印记"
 "Trigger Level # Bone Nova when you Hit a Bleeding Enemy","击中流血的敌人时，触发 # 级的裂骨新星"
+"Trigger Level # Bone Offering, Flesh Offering, Spirit Offering every 5 seconds in sequence
+Offering Skills Triggered this way also affect you","每 5 秒依次触发 # 级的骸骨奉献、血肉奉献或灵魂奉献
+以此种方式触发的奉献技能也会影响你"
 "Trigger Level # Cinders when Equipped","装备时触发 # 级余烬"
 "Trigger Level # Consecrate when you deal a Critical Strike","暴击时触发 # 级的奉献"
 "Trigger Level # Contaminate when you Kill an Enemy","击败敌人时触发 # 级的玷污"
@@ -9675,6 +10298,9 @@ in your Maps has #% chance to be Lucky","你地图中找到的装备物品的回
 "Trigger Level # Summon Phantasm Skill when you Consume a corpse","当你吞噬灵柩时触发 # 级的召唤幻灵技能"
 "Trigger Level # Summon Taunting Contraption when you use a Flask","你使用药剂时触发 # 级召唤嘲讽装置"
 "Trigger Level # Summon Void Spawn every 4 seconds","每 4 秒触发 # 级的召唤虚空造物"
+"Trigger Level # Tawhoa's Chosen when you Attack with
+a Non-Vaal Slam or Strike Skill near an Enemy","你在敌人周围使用非瓦尔猛击或打击技能攻击时
+触发 # 级的塔赫亚神选"
 "Trigger Level # Tears of Rot when Equipped","装备时触发 # 级腐朽之泪"
 "Trigger Level # Toxic Rain when you Attack with a Bow","你用弓类攻击时触发 # 级毒雨"
 "Trigger Level # Unseen Strike every 0.5 seconds while Phasing","迷踪状态下，每隔 0.5 秒便触发 # 级隐形打击"
@@ -9688,7 +10314,16 @@ in your Maps has #% chance to be Lucky","你地图中找到的装备物品的回
 "Trigger a Socketed Elemental Spell on Block, with a # second Cooldown","格挡时触发一个镶嵌的元素法术，冷却时间 # 秒"
 "Trigger a Socketed Fire Spell on Hit, with a # second Cooldown","击中时触发一个镶嵌的火焰法术，冷却时间 # 秒"
 "Trigger a Socketed Spell on Unarmed Melee Critical Strike, with a # second Cooldown","徒手近战暴击时触发一个镶嵌的法术，冷却时间 # 秒"
+"Trigger a Socketed Spell on Using a Skill, with a # second Cooldown
+Spells Triggered this way have 150% more Cost","使用技能时触发一个插入的法术，它有 # 秒冷却时间
+通过这种方式触发的法术消耗总增 150%"
+"Trigger a Socketed Spell when a Hit from this
+Weapon Freezes a Target, with a 0.25 second Cooldown","当使用该武器造成的攻击使目标冻结时，
+会触发一个已镶嵌的法术，且该效果有 0.25 秒的冷却时间。"
 "Trigger a Socketed Spell when you Block, with a 0.25 second Cooldown","格挡时触发一个镶嵌的法术，冷却时间 0.25 秒"
+"Trigger a Socketed Spell when you Use a Skill, with a 8 second Cooldown
+Spells Triggered this way have 150% more Cost","有 #% 的几率在使用技能时触发一个插入的法术，它有 8 秒冷却时间
+通过这种方式触发的法术消耗总增 150%"
 "Trigger level # Ceaseless Flesh once every second","每秒触发一次 # 级无尽血肉"
 "Trigger level # Ghostly Artillery when you Attack with this Weapon","使用此武器攻击时触发 # 级鬼火大炮"
 "Trigger level 20 Suspend in Time on Casting a Spell","施放法术时触发 20 级时间停滞"
@@ -9709,6 +10344,9 @@ in your Maps has #% chance to be Lucky","你地图中找到的装备物品的回
 "Triggers Level # Physical Aegis when Equipped","装备时触发 # 级物理神盾"
 "Triggers Level # Reflection when Equipped","装备时触发等级 # 的反射"
 "Triggers Level # Summon Arbalists when Equipped","装备时触发 # 级召唤劲弩"
+"Triggers Level 20 Spectral Spirits when Equipped
+# to maximum number of Spectral Spirits","装备时触发等级20幽鬼之灵，
+幽鬼之灵的数量上限 +#"
 "Triggerslam","触发重击"
 "Tunnels","内有房间：隧道"
 "Tunnelslam","隧道重击"
@@ -9717,12 +10355,56 @@ in your Maps has #% chance to be Lucky","你地图中找到的装备物品的回
 "Ultimatum Boss drops 10 of a random Catalyst","致命试炼首领掉落 10 个随机催化剂"
 "Ultimatum Encounters in your Maps get #% increased Radius each Round","地图内的致命贪婪遭遇战每轮使范围扩大 #%"
 "Ultimatum Encounters in your Maps get #% reduced Radius each Round","地图内的致命贪婪遭遇战每轮使范围缩小 #%"
-"Ultimatum Encounters in your Maps grant rewards as though you completed # additional Rounds","地图内的致命贪婪遭遇战提供的奖励视作你额外完成了一轮"
+"Ultimatum Encounters in your Maps have #% increased chance for
+the final Round to include a Boss","地图内的致命贪婪遭遇战最后一轮
+包含一个首领的几率提高 #%"
+"Ultimatum Encounters in your Maps have #% increased chance to
+only require you to Survive","地图内的致命贪婪遭遇战只有生存挑战
+的几率提高 #%"
+"Ultimatum Encounters in your Maps have #% increased chance to
+require you to Stand in the Stone Circles","地图内的致命贪婪遭遇战要求站上符纹
+的几率提高 #%"
+"Ultimatum Encounters in your Maps have #% increased chance to
+require you to defeat waves of Enemies","地图内的致命贪婪遭遇战要求击败多波敌人
+的几率提高 #%"
+"Ultimatum Encounters in your Maps have #% increased chance to
+require you to protect the Altar","地图内的致命贪婪遭遇战要求保护祭坛
+的几率提高 #%"
+"Ultimatum Encounters in your Maps have #% reduced chance for
+the final Round to include a Boss","地图内的致命贪婪遭遇战最后一轮
+包含一个首领的几率降低 #%"
+"Ultimatum Encounters in your Maps have #% reduced chance to
+only require you to Survive","地图内的致命贪婪遭遇战只有生存挑战
+的几率降低 #%"
+"Ultimatum Encounters in your Maps have #% reduced chance to
+require you to Stand in the Stone Circles","地图内的致命贪婪遭遇战要求站上符纹
+的几率降低 #%"
+"Ultimatum Encounters in your Maps have #% reduced chance to
+require you to defeat waves of Enemies","地图内的致命贪婪遭遇战要求击败多波敌人
+的几率降低 #%"
+"Ultimatum Encounters in your Maps have #% reduced chance to
+require you to protect the Altar","地图内的致命贪婪遭遇战要求保护祭坛
+的几率降低 #%"
 "Ultimatum Encounters in your Maps last up to 13 Rounds","地图内的致命贪婪遭遇战最多持续 13 轮"
+"Ultimatum Encounters in your Maps only requiring you to Survive
+have #% increased duration","地图内只有生存挑战的致命贪婪遭遇战
+持续时间延长 #%"
+"Ultimatum Encounters in your Maps only requiring you to Survive
+have #% reduced duration","地图内只有生存挑战的致命贪婪遭遇战
+持续时间缩短 #%"
+"Ultimatum Encounters in your Maps requiring you to Defeat waves of Enemies
+require killing #% increased number of Enemies","地图内要求击败多波敌人的致命贪婪遭遇战
+要求击败的敌人数量提高 #%"
+"Ultimatum Encounters in your Maps requiring you to Defeat waves of Enemies
+require killing #% reduced number of Enemies","地图内要求击败多波敌人的致命贪婪遭遇战
+要求击败的敌人数量降低 #%"
 "Ultimatum Encounters in your Maps spawn #% increased number of Monsters","地图内的致命贪婪遭遇战生成的怪物数量提高 #%"
 "Ultimatum Encounters in your Maps spawn #% reduced number of Monsters","地图内的致命贪婪遭遇战生成的怪物数量降低 #%"
 "Ultimatum Modifiers in your Maps start a Tier higher if possible","地图内的致命贪婪词缀尽可能以高一阶开始"
 "Ultimatum Monsters and Modifiers in your Maps deal #% more Damage","地图内的致命贪婪怪物和词缀造成的伤害总增 #%"
+"Ultimatum Monsters in your Maps apply Ruin with their special abilities
+Fail on reaching 7 Ruin","地图内的致命贪婪怪物会用特殊能力对你施加摧灭
+积累 7 层摧灭时失效"
 "Ultimatum Monsters in your Maps grant #% increased Experience","地图内的致命贪婪怪物提供的经验值提高 #%"
 "Ultimatum Monsters in your Maps grant #% reduced Experience","地图内的致命贪婪怪物提供的经验值降低 #%"
 "Ultimatum Rewards in your Maps have #% chance to be duplicated","地图内的致命贪婪奖励有 #% 的几率被复制"
@@ -9807,7 +10489,6 @@ in your Maps has #% chance to be Lucky","你地图中找到的装备物品的回
 "Unique Bosses are Possessed","传奇首领被附身"
 "Unique Monsters (Blood-Filled Vessel): #","传奇怪物（浸血法器）：#"
 "Unique Monsters drop Corrupted Items","该区域内的传奇怪物掉落腐化物品"
-"Unique Monsters have # random Shrine Buffs","传奇怪物拥有一个随机神龛增益"
 "Unique Monsters in your Maps have #% increased chance to drop Threads","地图中的传奇怪物掉落丝线的几率提高 #%"
 "Unique Monsters slain at Ritual Altars in your Maps grant #% more Tribute","在你地图中的驱灵祭坛处击败的传奇怪物提供的贡品总降 #%"
 "Unnerving Blast","震慑爆破"
@@ -9859,7 +10540,6 @@ in your Maps has #% chance to be Lucky","你地图中找到的装备物品的回
 "Vaal Smite","瓦尔：惩击"
 "Vaal Vitality","瓦尔：活力"
 "Vagan's Veiled","瓦甘的影匿"
-"Varieties of Items contained in # Blight Chests in your Maps are Lucky","地图内 1 个菌潮宝箱里的各种物品都有幸运属性"
 "Vault (Tier 1)","内有房间：宝库（1 阶）"
 "Veiled","影匿的"
 "Venom Gyre","剧毒旋风"
@@ -9900,7 +10580,6 @@ in your Maps has #% chance to be Lucky","你地图中找到的装备物品的回
 "Wave of Conviction of Trarthus","特拉特斯之定罪波"
 "Wave of Conviction","定罪波"
 "Wealth of the Vaal (Tier 3)","内有房间：瓦尔之宝（3 阶）"
-"Weapons you Animate create # additional copies","你幻化的武器将额外复制 1 把"
 "When 90% of your Hex's Duration Expires on an Enemy, Eat 1 Soul per Enemy Power","当你在敌人身上的魔蛊持续时间消减 90% 后，每一点敌人威力值使你吞噬 1 个灵魂"
 "When Hit during effect, #% of Life loss from Damage taken occurs over 4 seconds instead","效果持续期间受到击中伤害，则生命损失的 #% 会改为在 4 秒内逐渐丧失"
 "When Hit, gain a random Movement Speed modifier from #% reduced to #% increased, until Hit again","被击中时获得从降低 #% 至提高 #% 之间的随机移动速度修正，直到被再次击中"
@@ -9908,11 +10587,17 @@ in your Maps has #% chance to be Lucky","你地图中找到的装备物品的回
 "When a Minion within 4 metres dies, gain Rotten Bulwark equal to #% of its maximum Life","4 米范围内的一个召唤生物死亡时，获得等同于其生命上限 #% 的腐朽壁垒"
 "When an Enemy Hit deals Elemental Damage to you, their Resistance to those Elements becomes zero for 4 seconds","当敌人对你造成元素伤害时，使其对应元素抗性变为零，持续 4 秒"
 "When used in the Synthesiser, the new item will have an additional Herald Modifier","在忆境之台上使用时，新物品获得一个额外的捷属性"
+"When you Attack, take #% of Life as Physical Damage for
+each Warcry Exerting the Attack","攻击时，每有一个増助的战吼，
+便受到相当于生命值#%的物理伤害"
 "When you Cast a Spell, Sacrifice all Mana to gain Added Maximum Lightning Damage
 equal to #% of Sacrificed Mana for 4 seconds","当你施放法术时，献祭所有魔力，获得等同于献祭魔力 #% 的附加最大闪电伤害，持续 4 秒"
 "When you Kill a Rare Monster, #% chance to gain one of its Modifiers for 10 seconds","当你击败稀有怪物时，有 #% 的几率获得该怪物的一种属性修正 10 秒"
 "When you Kill a Rare monster, you gain its Modifiers for 60 seconds","当你击败稀有怪物时，会获得该怪物属性修正 60 秒"
 "When you Kill a Shocked Enemy, inflict an equivalent Shock on each Enemy within 2 metres","击败一名感电敌人时，对 2 米范围内的敌人造成相同的感电效果"
+"When you Kill an Enemy Cursed with a Non-Aura Hex, become Immune to
+Curses for remaining Hex Duration","当你消灭一个被非光环魔蛊诅咒的敌人时，在魔蛊剩余
+的持续时间中免疫诅咒"
 "When you Kill an Ignited Enemy, inflict an equivalent Ignite on each Enemy within 2 metres","击败一名被点燃的敌人时，对 2 米范围内的敌人造成相同的点燃效果"
 "When you Poison a non-Poisoned target, also inflict # Withered debuffs, lasting 2 seconds","使一个未中毒的目标中毒时，同样施加 # 层死亡凋零减益，持续 2 秒"
 "When you kill a Poisoned Enemy, Enemies within 1.5 metres are Poisoned","当你击杀中毒的敌人时，1.5 米内的敌人陷入中毒"
@@ -10206,7 +10891,6 @@ equal to #% of Sacrificed Mana for 4 seconds","当你施放法术时，献祭所
 "While a Pinnacle Atlas Boss is in your Presence, Intimidating Cry has #% increased Cooldown Recovery Rate","有一个异界图鉴最终首领出现在你面前：威吓战吼的冷却回复速度加快 #%"
 "While a Pinnacle Atlas Boss is in your Presence, Malevolence has #% increased Aura Effect","有一个异界图鉴最终首领出现在你面前：怨毒光环的光环效果提高 #%"
 "While a Pinnacle Atlas Boss is in your Presence, Malevolence has #% reduced Aura Effect","有一个异界图鉴最终首领出现在你面前：怨毒光环的光环效果降低 #%"
-"While a Pinnacle Atlas Boss is in your Presence, Melee Hits have #% chance to Fortify","有一个异界图鉴最终首领出现在你面前：近战击中提供护体状态"
 "While a Pinnacle Atlas Boss is in your Presence, Minions deal #% increased Damage","有一个异界图鉴最终首领出现在你面前：召唤生物的伤害提高 #%"
 "While a Pinnacle Atlas Boss is in your Presence, Minions deal #% reduced Damage","有一个异界图鉴最终首领出现在你面前：召唤生物的伤害降低 #%"
 "While a Pinnacle Atlas Boss is in your Presence, Minions have #% increased Movement Speed","有一个异界图鉴最终首领出现在你面前：召唤生物的移动速度加快 #%"
@@ -10528,7 +11212,6 @@ equal to #% of Sacrificed Mana for 4 seconds","当你施放法术时，献祭所
 "While a Unique Enemy is in your Presence, Intimidating Cry has #% increased Cooldown Recovery Rate","有一个传奇怪物出现在你面前：威吓战吼的冷却回复速度加快 #%"
 "While a Unique Enemy is in your Presence, Malevolence has #% increased Aura Effect","有一个传奇怪物出现在你面前：怨毒光环的光环效果提高 #%"
 "While a Unique Enemy is in your Presence, Malevolence has #% reduced Aura Effect","有一个传奇怪物出现在你面前：怨毒光环的光环效果降低 #%"
-"While a Unique Enemy is in your Presence, Melee Hits have #% chance to Fortify","有一个传奇怪物出现在你面前：近战击中提供护体状态"
 "While a Unique Enemy is in your Presence, Minions deal #% increased Damage","有一个传奇怪物出现在你面前：召唤生物的伤害提高 #%"
 "While a Unique Enemy is in your Presence, Minions deal #% reduced Damage","有一个传奇怪物出现在你面前：召唤生物的伤害降低 #%"
 "While a Unique Enemy is in your Presence, Minions have #% increased Movement Speed","有一个传奇怪物出现在你面前：召唤生物的移动速度加快 #%"
@@ -10580,7 +11263,9 @@ Wild Rogue Exiles in your Maps have #% chance to have Soul Eater","地图中的�
 "With # Corrupted Items Equipped: Life Leech recovers based on your Chaos Damage instead","装备 # 个被腐化物品时：生命偷取只按照造成的混沌伤害计算"
 "With # Small Passives Allocated in Radius, When you Kill a Rare monster, you gain 1 of its Modifiers for 20 seconds","若范围内配置了 # 个小型天赋，消灭稀有怪物时，获得其 1 个词缀，持续 20 秒"
 "With 4 Notables Allocated in Radius, When you Kill a Rare monster, you gain # of its Modifiers for 20 seconds","若范围内配置了 4 个关键天赋点，当你击败稀有怪物时，你会获得该怪物的 # 属性修正 20 秒"
-"With 40 Intelligence in Radius, Glacial Cascade has # additional Bursts","若范围内含有 40 点智慧，冰川之刺将额外爆炸 1 次"
+"With 40 Intelligence in Radius, #% of Glacial Cascade Physical Damage
+Converted to Cold Damage","若范围内含有 40 点智慧，冰川之刺物理伤害的  #%
+转化为冰霜伤害"
 "With 40 total Dexterity and Strength in Radius, Prismatic Skills cannot choose Lightning","范围内包含的敏捷和力量总计 40 点时，虹光技能不能选择闪电效果"
 "With 40 total Dexterity and Strength in Radius, Prismatic Skills deal 50% less Lightning Damage","范围内包含的敏捷和力量总计 40 点时，虹光技能的闪电伤害总降 50%"
 "With 40 total Intelligence and Dexterity in Radius, Prismatic Skills cannot choose Fire","范围内包含的智慧和敏捷总计 40 点时，虹光技能不能选择火焰效果"
@@ -10588,6 +11273,9 @@ Wild Rogue Exiles in your Maps have #% chance to have Soul Eater","地图中的�
 "With 40 total Strength and Intelligence in Radius, Prismatic Skills cannot choose Cold","范围内包含的力量和智慧总计 40 点时，虹光技能不能选择冰霜效果"
 "With 40 total Strength and Intelligence in Radius, Prismatic Skills deal 50% less Cold Damage","范围内包含的智慧和力量总计 40 点时，虹光技能的冰霜伤害总降 50%"
 "With a Ghastly Eye Jewel Socketed, Minions have # to Accuracy Rating","插入苍白之凝珠宝时，召唤生物的命中值 +#"
+"With a Ghastly Eye Jewel Socketed, Minions have #% chance to
+gain Unholy Might on Hit with Spells","插入苍白之凝珠宝时，召唤生物法术击中时有 #% 几率
+获得不洁之力"
 "With a Hypnotic Eye Jewel Socketed, gain Arcane Surge on Hit with Spells","插入安睡之凝珠宝时，法术击中获得秘术增强"
 "With a Murderous Eye Jewel Socketed, Intimidate Enemies for 4 seconds on Hit with Attacks","当插槽内有 1 个凶残之凝珠宝时，攻击击中敌人会威吓它们 4 秒"
 "With a Murderous Eye Jewel Socketed, Melee Attacks grant # Rage on Hit","镶嵌凶残之凝珠宝时，近战攻击击中产生 # 点怒火"
@@ -10598,14 +11286,45 @@ Wild Rogue Exiles in your Maps have #% chance to have Soul Eater","地图中的�
 "With at least 1000 Intelligence, #% of Damage dealt by your Raised Zombies is Leeched to you as Energy Shield","拥有至少 1000 点智慧时，你的复苏的魔卫造成伤害的 #% 转化为能量护盾偷取"
 "With at least 1000 Strength, #% of Damage dealt by your Raised Zombies is Leeched to you as Life","当力量超过 1000 时，魔卫复苏造成伤害的 #% 转化为给你的生命偷取"
 "With at least 40 Dexterity in Radius, Animate Weapon can Animate up to # Ranged Weapons","若范围内含有 40 点敏捷，幻化武器可以幻化最多 # 把远程武器"
-"With at least 40 Dexterity in Radius, Barrage fires an additional # projectiles simultaneously on the first and final attacks","若范围内含有 40 点敏捷，弹幕的第一次和最后一次攻击会附加 1 个额外的投射物"
+"With at least 40 Dexterity in Radius, Dual Strike Hits Intimidate Enemies for
+4 seconds while wielding an Axe","若范围内至少有 40 点敏捷，
+双持打击持握斧类时击中威吓敌人 4 秒"
+"With at least 40 Dexterity in Radius, Dual Strike deals Off Hand Splash Damage
+to surrounding targets","若范围内含有 40 点敏捷，
+双持打击时副手武器对周围敌人造成扩散伤害"
 "With at least 40 Dexterity in Radius, Dual Strike deals Splash Damage
 to surrounding targets while wielding a Mace","若范围内至少有 40 点敏捷，双持打击持握锤类时对周围目标造成溅射伤害"
+"With at least 40 Dexterity in Radius, Dual Strike has #% increased
+Accuracy Rating while wielding a Sword","若范围内至少有 40 点敏捷，
+双持打击持握剑类时命中值提高 #%"
+"With at least 40 Dexterity in Radius, Dual Strike has #% increased Attack
+Speed while wielding a Claw","若范围内至少有 40 点敏捷，
+双持打击持握爪类时攻击速度加快 #%"
+"With at least 40 Dexterity in Radius, Dual Strike has #% reduced
+Accuracy Rating while wielding a Sword","若范围内至少有 40 点敏捷，
+双持打击持握剑类时命中值降低 #%"
+"With at least 40 Dexterity in Radius, Dual Strike has #% reduced Attack
+Speed while wielding a Claw","若范围内至少有 40 点敏捷，
+双持打击持握爪类时攻击速度减慢 #%"
+"With at least 40 Dexterity in Radius, Dual Strike has #% to Critical Strike
+Multiplier while wielding a Dagger","若范围内至少有 40 点敏捷，
+双持打击持握匕首时 +#% 暴击伤害加成"
+"With at least 40 Dexterity in Radius, Dual Strike has a #% chance
+to deal Double Damage with the Main-Hand Weapon","若范围内含有 40 点敏捷，
+双持打击时主手武器有 #% 的几率造成双倍伤害"
 "With at least 40 Dexterity in Radius, Ethereal Knives fires Projectiles in a circle","若范围内至少有 40 点敏捷，则虚空匕首将以环状发射投射物"
+"With at least 40 Dexterity in Radius, Frost Blades has #% increased Projectile Speed","若范围内含有 40 点敏捷，
+冰霜之刃的投射物速度加快 #%"
+"With at least 40 Dexterity in Radius, Frost Blades has #% reduced Projectile Speed","若范围内含有 40 点敏捷，
+冰霜之刃的投射物速度减慢 #%"
 "With at least 40 Dexterity in Radius, Galvanic Arrow deals #% increased Area Damage","若范围内至少有 40 点敏捷，电光箭的范围伤害提高 #%"
 "With at least 40 Dexterity in Radius, Galvanic Arrow deals #% reduced Area Damage","若范围内至少有 40 点敏捷，电光箭的范围伤害降低 #%"
-"With at least 40 Dexterity in Radius, Ice Shot Pierces # additional Targets","若范围内含有 40 点敏捷，冰霜射击会额外穿透 1 个目标"
+"With at least 40 Dexterity in Radius, Galvanic Arrow has #% increased Area of Effect","若范围内至少有 40 点敏捷，
+则电光箭的效果区域扩大 #%"
 "With at least 40 Dexterity in Radius, Ice Shot has #% increased Area of Effect","若范围内含 40 点敏捷，冰霜射击的范围扩大 #%"
+"With at least 40 Dexterity in Radius, Melee Damage
+dealt by Frost Blades Penetrates #% Cold Resistance","若范围内含有 40 点敏捷，冰霜之刃造成
+的近战伤害穿透 #% 冰霜抗性"
 "With at least 40 Dexterity in Radius, Viper Strike deals #% increased Damage with Hits and Poison for each Poison on the Enemy","若范围内有 40 点敏捷，敌人身上的每层中毒会使毒蛇打击的击中和中毒伤害提高 #%"
 "With at least 40 Dexterity in Radius, Viper Strike has a #% chance per Poison on Enemy to grant Unholy Might for 4 seconds on Hit","若范围内含有 40 点敏捷，毒蛇打击每次造成中毒时有 #% 的几率获得 4 秒不洁之力"
 "With at least 40 Dexterity in Radius, each Spectral Throw Projectile gains #% increased Damage each time it Hits","若范围内含有 40 点敏捷，灵体投掷每次击中时，伤害提高 #%"
@@ -10618,27 +11337,46 @@ you've Shattered an Enemy Recently","当范围内含有至少 40 点智慧时，
 "With at least 40 Intelligence in Radius, Blight has #% increased Hinder Duration","若范围内含有 40 点智慧，枯萎的干扰持续时间延长 #%"
 "With at least 40 Intelligence in Radius, Blight has #% reduced Cast Speed","在范围内至少有 40 点智慧的情况下，枯萎的施法速度减慢 #%"
 "With at least 40 Intelligence in Radius, Blight inflicts Withered for # seconds","在范围内至少有 40 点智慧的情况下，枯萎在接下来 # 秒内施加凋零"
+"With at least 40 Intelligence in Radius, Cold Snap grants Power Charges instead of Frenzy Charges when Enemies die in its Area
+With at least 40 Intelligence in Radius, Cold Snap's Cooldown can be bypassed by Power Charges instead of Frenzy Charges","若范围内含有 40 点智慧，当敌人在霜暴的作用区域被击败，将获得暴击球而非狂怒球
+若范围内含有 40 点智慧，霜暴的冷却时间缩短将受暴击球影响，而非狂怒球"
 "With at least 40 Intelligence in Radius, Discharge Cooldown is # ms","若范围内至少有 40 点智慧，解放的冷却时间为 # 毫秒"
 "With at least 40 Intelligence in Radius, Discharge deals #% more Damage","若范围内至少有 40 点智慧，解放的伤害总增 #%"
 "With at least 40 Intelligence in Radius, Discharge has #% more Area of Effect","若范围内至少有 40 点智慧，解放的效果区域总增 #%"
 "With at least 40 Intelligence in Radius, Fireball cannot ignite","若范围内至少有 40 点智慧，火球无法点燃"
 "With at least 40 Intelligence in Radius, Fireball has #% chance to inflict scorch","若范围内至少有 40 点智慧，火球 +#% 的几率施加烧灼"
-"With at least 40 Intelligence in Radius, Freezing Pulse fires # additional Projectiles","若范围内含有 40 点智慧，则冰霜脉冲额外发射 1 个投射物"
-"With at least 40 Intelligence in Radius, Frostbolt fires # additional Projectiles","若范围内含有 40 点智慧，寒冰弹会额外发射 1 个投射物"
+"With at least 40 Intelligence in Radius, Frostbolt Projectiles gain #% increased Projectile Speed per second","若范围内含有 40 点智慧，
+寒冰弹会每秒提高 #% 投射物速度"
+"With at least 40 Intelligence in Radius, Frostbolt Projectiles gain #% reduced Projectile Speed per second","若范围内含有 40 点智慧，
+寒冰弹会每秒降低 #% 投射物速度"
 "With at least 40 Intelligence in Radius, Projectiles gain radius as they travel farther, up to a maximum of # metre to radius","范围内配置的智慧至少 40 点时，投射物范围随飞行距离扩大，最大范围 +# 米"
+"With at least 40 Intelligence in Radius, Raised
+Zombies' Slam Attack has #% increased Cooldown Recovery Rate","若范围内含有 40 点智慧，
+魔卫复苏的重击攻击会使冷却回复速度加快 #%"
 "With at least 40 Intelligence in Radius, Raised Spectres have a #% chance to gain Soul Eater for 20 seconds on Kill","若范围内至少有 40 点智慧，召唤灵体击败敌人时有 #% 的几率获得 20 秒的噬魂者效果"
+"With at least 40 Intelligence in Radius, Raised Zombies' Slam
+Attack deals #% increased Damage","若范围内含有 40 点智慧，
+魔卫复苏的重击攻击伤害提高 #%"
 "With at least 40 Intelligence in Radius, Rolling Magma
 has #% increased Area of Effect per Chain","若范围内至少有 40 点智慧，则熔岩奔涌每次连锁的效果区域扩大 #%"
 "With at least 40 Intelligence in Radius, Rolling Magma
 has #% reduced Area of Effect per Chain","若范围内至少有 40 点智慧，则熔岩奔涌每次连锁的效果区域缩小 #%"
 "With at least 40 Intelligence in Radius, Rolling Magma deals #% more Damage per Chain","若范围内至少有 40 点智慧，则熔岩奔涌每次连锁的伤害总增 #%"
 "With at least 40 Intelligence in Radius, Rolling Magma deals #% more Damage","若范围内至少有 40 点智慧，则熔岩奔涌伤害总增 #%"
-"With at least 40 Intelligence in Radius, Rolling Magma fires # additional Projectiles","若范围内至少有 40 点智慧，则熔岩奔涌发射一枚额外投射物"
 "With at least 40 Intelligence in Radius, Spark fires Projectiles in a circle","若范围内至少有 40 点智慧，电球以环状方式发射投射物"
 "With at least 40 Intelligence in Radius, Summon Skeletons can Summon up to # Skeleton Mages","若范围内至少有 40 点智慧，则召唤魔侍技能可以召唤最多 # 个魔侍法师"
+"With at least 40 Strength in Radius, #% of Glacial
+Hammer Physical Damage Converted to Cold Damage","若范围内含有 40 点力量，
+则冰霜之锤#% 的物理伤害会转化为冰霜伤害"
 "With at least 40 Strength in Radius, #% to Rarity of Items dropped by Enemies Shattered by Glacial Hammer","范围内配置的力量至少 40 点时，被冰霜之锤击碎的敌人掉落的物品稀有度 +#%"
 "With at least 40 Strength in Radius, Attacks Exerted by Infernal Cry deal #% more Damage with Ignite","在范围内至少有 40 点力量的情况下，炼狱战吼增助攻击的点燃伤害总增 #%"
+"With at least 40 Strength in Radius, Cleave has +0.1 metres to Radius per
+Enemy within 2 metres, up to a maximum of +1 metre","范围内配置的力量至少 40 点时，2 米范围内每个敌人
+使劈砍范围 +0.1 米，上限 +1 米"
 "With at least 40 Strength in Radius, Combust is Disabled","在范围内至少有 40 点力量的情况下禁用燃尽"
+"With at least 40 Strength in Radius, Glacial Hammer deals
+Cold-only Splash Damage to surrounding targets","若范围内含有 40 点力量，
+则冰霜之锤会对周围敌人造成冰霜伤害"
 "With at least 40 Strength in Radius, Ground Slam
 has a #% increased angle","若范围内含有 40 点力量，裂地之击的角度扩大 #%"
 "With at least 40 Strength in Radius, Ground Slam
@@ -10650,7 +11388,6 @@ has a #% reduced angle","若范围内含有 40 点力量，裂地之击的角度
 "With at least 40 Strength in Radius, Hits with Vigilant Strike Fortify you and Allies within a 10 metre base radius for # seconds","范围内至少有 40 点力量时，戒备打击的击中给你和基础半径 10 米内的友军提供 # 秒护体状态"
 "With at least 40 Strength in Radius, Molten Strike Projectiles Chain # time","若范围内至少有 40 点力量，熔岩之击的投射物 +# 次连锁"
 "With at least 40 Strength in Radius, Molten Strike Projectiles Chain on impacting ground","若范围内至少有 40 点力量，熔岩之击的投射物撞击地面时产生连锁效果"
-"With at least 40 Strength in Radius, Molten Strike fires # additional Projectiles","若范围内含有 40 点力量，熔岩之击会额外发射 1 个投射物"
 "With at least 40 Strength in Radius, Molten Strike fires #% more Projectiles","若范围内至少有 40 点力量，熔岩之击发射的投射物数量总增 #%"
 "With at least 40 Strength in Radius, Molten Strike has #% increased Area of Effect","若范围内含有 40 点力量，熔岩之击的范围扩大 #%"
 "Wither Totem","凋零图腾"
@@ -10669,6 +11406,9 @@ has a #% reduced angle","若范围内含有 40 点力量，裂地之击的角度
 "Wrath","雷霆"
 "Yellow Beasts in your Maps have #% chance to be replaced with Red Beasts","地图内的黄野兽有 #% 的几率变为红野兽"
 "You always Ignite while Burning","你正在燃烧时总能点燃敌人"
+"You and Allies near your Banner have #% to Damage over Time Multiplier per
+2 Valour consumed for that Banner","你与战旗附近的友军，该战旗每消耗
+2 点勇武，持续伤害加成 +#%"
 "You and Allies within 5 metres deal # to # additional Cold Damage","你和 5 米范围内的友军造成 # 到 # 点额外冰霜伤害"
 "You and Allies within 6 metres deal #% increased Damage","你和 6 米范围内的友军造成的伤害提高 #%"
 "You and Allies within 6 metres deal #% reduced Damage","你和 6 米范围内的友军造成的伤害降低 #%"
@@ -10705,21 +11445,19 @@ has a #% reduced angle","若范围内含有 40 点力量，裂地之击的角度
 "You are affected by Delirium Fog","受到惊悸迷雾影响"
 "You are at Maximum Chance to Block Attack Damage if you have not Blocked Recently","若你近期内没有格挡，你的攻击伤害格挡率将处于最高值"
 "You are at Maximum Chance to Block Spell Damage if you have not Blocked Recently","若你近期未格挡过，你拥有最大的格挡法术伤害几率"
-"You can Cast # additional Brands","可以施放 1 个额外烙印"
 "You can apply # additional Curses during Effect","生效期间，你能施加的诅咒增加 # 个"
 "You can apply # additional Curses if 6 Hunter Items are Equipped","若装备 6 件狩猎者物品，你能施加的诅咒增加 # 个"
-"You can apply # additional Curses while affected by Malevolence","受到怨毒光环影响时，你可以额外施加一个诅咒"
-"You can apply # additional Curses while at maximum Power Charges","当暴击球达到上限时，你可以对敌人额外施加 1 个诅咒"
 "You can apply # additional Curses","你能施加 # 个额外诅咒"
 "You can be Touched by Tormented Spirits","你可能会被一个罪魂触碰"
 "You can catch Corrupted Fish","你可以捕获腐化鱼"
 "You can catch Exotic Fish","你可以捕获外来鱼种"
-"You can have # additional Tinctures active","你可以额外激活一个酊剂"
 "You can have an Offering of each type","你可以拥有每种奉献各一个"
 "You can have two Offerings of different types","你可以拥有两个不同类型的奉献"
-"You can inflict # additional Ignites on each Enemy","你可以对敌人造成额外 1 个点燃效果"
 "You can only Socket Corrupted Gems in this item","只能在此物品上放入已腐化的技能石"
 "You can only deal Damage with this Weapon or Ignite","只能使用该武器造成伤害，或点燃敌人"
+"You cannot Cast Socketed Hex Curse Skills
+Inflict Socketed Hexes on Enemies that trigger your Traps","你无法施放已镶嵌的六角诅咒技能
+对触发你陷阱的敌人施加已镶嵌的六角诅咒"
 "You cannot Regenerate or Recoup Life","无法再生或吸纳生命"
 "You cannot be Chilled for # second after being Chilled","你被冰缓后在接下来 # 秒不能被冰缓"
 "You cannot be Cursed with Silence","免疫沉默诅咒"
@@ -10739,11 +11477,13 @@ a Stunning Hit in the past 2 seconds","若过去的 2 秒内你被晕眩或是�
 "You count as on Full Life while you are Cursed with Vulnerability","你被脆弱诅咒时视为满血状态"
 "You count as on Low Life while you are Cursed with Vulnerability","受到脆弱诅咒时，视作低血状态"
 "You do not inherently take less Damage for having Fortification","护体本身并不能降低你受到的伤害"
-"You gain # Grasping Vines when you take a Critical Strike","你承受暴击时获得一个缓速藤蔓"
 "You gain #% increased Damage per stack of Sulphite Intoxication","每层亚硫酸中毒使你的伤害提高 #%"
 "You gain #% increased Movement Speed per stack of Sulphite Intoxication","每层亚硫酸中毒使你的移动速度加快 #%"
 "You gain #% to all maximum Elemental Resistances per stack of Sulphite Intoxication","每层亚硫酸中毒使你的所有元素抗性上限 +#%"
 "You gain Adrenaline for # second on using a Vaal Skill","使用瓦尔技能时，获得肾上腺素，持续 # 秒"
+"You gain Divinity for # seconds on reaching maximum Divine Charges
+Lose all Divine Charges when you gain Divinity","满神圣球时，你获得神性，持续 # 秒
+获得神性时失去所有神圣球"
 "You gain Onslaught for # second per Endurance Charge when Hit","被击中时，每个耐力球使你获得 # 秒的猛攻状态"
 "You gain Onslaught for # seconds on Critical Strike","暴击后获得 # 秒的猛攻状态"
 "You gain Onslaught for # seconds on Culling Strike","终结时获得猛攻状态 # 秒"
@@ -10868,7 +11608,6 @@ stationary if Strength is your highest Attribute","若力量是你最高的属�
 "Your Fireball Towers Projectiles fire in a circle","你的火球之塔以环状发射投射物"
 "Your Fireball Towers deal #% increased Damage","你的火球之塔伤害提高 #%"
 "Your Fireball Towers deal #% reduced Damage","你的火球之塔伤害降低 #%"
-"Your Fireball Towers fire an additional # Projectiles","火球之塔发射一个额外的投射物"
 "Your Fireball Towers have #% increased Cast Speed","你的火球之塔施法速度加快 #%"
 "Your Fireball Towers have #% increased Range","你的火球之塔范围扩大 #%"
 "Your Fireball Towers have #% reduced Cast Speed","你的火球之塔施法速度减慢 #%"
@@ -10884,7 +11623,6 @@ stationary if Strength is your highest Attribute","若力量是你最高的属�
 "Your Freezebolt Tower deal full damage to Cold Enemies","你的冰箭之塔对寒系敌人造成完整伤害"
 "Your Freezebolt Towers deal #% increased Damage","你的冰箭之塔伤害提高 #%"
 "Your Freezebolt Towers deal #% reduced Damage","你的冰箭之塔伤害降低 #%"
-"Your Freezebolt Towers fire # additional Projectiles","你的冰箭之塔发射一个额外的投射物"
 "Your Freezebolt Towers have #% chance to inflict Brittle","你的冰箭之塔有 #% 的几率施加易碎"
 "Your Freezebolt Towers have #% increased Range","你的冰箭之塔范围扩大 #%"
 "Your Freezebolt Towers have #% reduced Range","你的冰箭之塔范围缩小 #%"
@@ -10925,6 +11663,9 @@ stationary if Strength is your highest Attribute","若力量是你最高的属�
 "Your Linked Minions take #% more Damage","你羁绊的召唤物受到的伤害总增 #%"
 "Your Linked targets deal #% increased Damage","你的羁绊对象的伤害提高 #%"
 "Your Linked targets deal #% reduced Damage","你的羁绊对象的伤害降低 #%"
+"Your Lucky or Unlucky effects use the best or
+worst from three rolls instead of two","你的特别幸运和特别不幸效果改为重复判断三次，
+取其中最好或最坏的结果"
 "Your Maps contain #% more Monster Packs consisting of difficult and rewarding Monsters","你的地图包含高难度与高奖励怪物的怪物群总增 #%"
 "Your Maps have #% chance to award double progress towards encountering The Eater of Worlds","遭遇灭界者时，你的地图有#%的几率提供双倍进度"
 "Your Maps have #% chance to award double progress towards encountering The Searing Exarch","你的地图有#%的几率奖励双倍焚界者遭遇进度"
@@ -10944,6 +11685,9 @@ stationary if Strength is your highest Attribute","若力量是你最高的属�
 "Your Maps have #% chance to contain an Abyss","地图内有深渊的几率 +#%"
 "Your Maps have #% chance to contain an Ultimatum Encounter","地图内有致命贪婪遭遇战的几率 +#%"
 "Your Maps have #% chance to contain an additional Imprisoned Monster","地图有 #% 的几率有一个额外的禁锢怪物"
+"Your Maps have #% chance to contain other Extra Content that can
+be turned off through Atlas Passives","你的地图包含可通过异界天赋关闭的
+额外内容的几率 +#%"
 "Your Maps have a #% chance to be haunted by an additional Tormented Spirit","你的地图有 #% 的几率被一个额外的罪魂纠缠"
 "Your Maps have a #% chance to contain 20 additional Rogue Exiles","地图内有 #% 的几率有 20 个额外盗贼流放者"
 "Your Maps have a #% chance to contain an additional Rogue Exile","地图内有 #% 的几率有一个额外盗贼流放者"
@@ -10963,8 +11707,10 @@ stationary if Strength is your highest Attribute","若力量是你最高的属�
 "Your Maps that contain capturable Beasts contain # additional Yellow Beast","你的包含可捕获野兽的地图额外包含#个黄野兽"
 "Your Maps that contain capturable Beasts have #% chance to contain an additional Red Beast","有可抓捕魔物的地图有 #% 的几率有一个额外红野兽"
 "Your Maps with Incursions always have four Incursions","带有时空穿越的地图总是会出现四次时空穿越"
+"Your Maps with Ore Deposits have #% increased chance
+to contain at least two Ore Deposits","你的包含矿脉的地图包含
+至少两个矿脉的几率提高 #%"
 "Your Maps with Ritual Altars always have four Ritual Altars","拥有驱灵祭坛的地图始终拥有四个驱灵祭坛"
-"Your Mark has a #% chance to Transfer to another Enemy within 3 metres when Marked Enemy dies","当被标记的敌人死亡时，你的印记会转移到附近 3 米范围内的另一个敌人身上"
 "Your Maximum Endurance Charges is equal to your Maximum Frenzy Charges","你的耐力球数量上限等于你的狂怒球数量上限"
 "Your Maximum Energy Shield is Equal to #% of Your Maximum Life","你的能量护盾上限等同于你生命上限的 #%"
 "Your Maximum Frenzy Charges is equal to your Maximum Power Charges","你的狂怒球数量上限等于你的暴击球数量上限"
@@ -10974,7 +11720,6 @@ stationary if Strength is your highest Attribute","若力量是你最高的属�
 "Your Meteor Towers create Burning Ground for # seconds on Hit","你的陨星之塔击中时创造燃烧地面，持续 # 秒"
 "Your Meteor Towers deal #% increased Damage","你的陨星之塔伤害提高 #%"
 "Your Meteor Towers deal #% reduced Damage","你的陨星之塔伤害降低 #%"
-"Your Meteor Towers drop # additional Meteors","你的陨星之塔降下一个额外的流星"
 "Your Meteor Towers have #% increased Range","你的陨星之塔范围提高 #%"
 "Your Meteor Towers have #% reduced Range","你的陨星之塔范围降低 #%"
 "Your Minions gain your chance to Suppress Spell Damage","你的召唤生物获得与你相同的法术伤害压制几率"
@@ -10994,10 +11739,8 @@ stationary if Strength is your highest Attribute","若力量是你最高的属�
 "Your Red Tier Maps grant # additional Voltaxic Sulphite on Completion","你的红色等阶地图完成时额外提供#个魔暴亚硫酸"
 "Your Scout Towers have #% increased Range","你的侦察之塔范围提高 #%"
 "Your Scout Towers have #% reduced Range","你的侦察之塔范围降低 #%"
-"Your Scout Towers summon an additional # minions","你的斥候之塔额外召唤一个生物"
 "Your Seismic Towers deal #% increased Damage","你的震地之塔伤害提高 #%"
 "Your Seismic Towers deal #% reduced Damage","你的震地之塔伤害降低 #%"
-"Your Seismic Towers have # additional Cascades","你的震地之塔获得一个额外的地刺"
 "Your Seismic Towers have #% increased Range","你的震地之塔范围提高 #%"
 "Your Seismic Towers have #% increased Stun Duration","你的震地之塔晕眩持续提高 #%"
 "Your Seismic Towers have #% increased length and range of Cascades","你的震地之塔地刺长度和范围提高 #%"
@@ -11049,7 +11792,6 @@ stationary if Strength is your highest Attribute","若力量是你最高的属�
 "Your Temporal Towers have #% reduced Effect","你的时间之塔效果降低 #%"
 "Your Temporal Towers have #% reduced Range","你的时间之塔射程降低 #%"
 "Your Towers deal #% increased Damage per Type of Tower Active","每有一种启动的防御塔，就使你防御塔造成的伤害提高 #%"
-"Your Travel Skills Critically Strike once every # uses","你的旅行技能造成暴击"
 "Your Warcries are disabled","你的战吼被禁用了"
 "Your Warcries cover Enemies in Ash for # second","你的战吼使敌人灰烬缠身 # 秒"
 "Your White Tier Maps grant # additional Voltaxic Sulphite on Completion","你的白色等阶地图完成时额外提供#个魔暴亚硫酸"

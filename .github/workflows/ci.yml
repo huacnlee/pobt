@@ -41,7 +41,7 @@ jobs:
           key: nsh-target-${{ steps.toolchain.outputs.cachekey }}-${{ hashFiles('ext/pobt-native/Cargo.lock') }}
           restore-keys: nsh-target-${{ steps.toolchain.outputs.cachekey }}-
 
-      - name: Install the NSH CLI of the nightly Cargo.lock locks
+      - name: Install the NSH CLI of the nsh-core Cargo.lock locks
         run: scripts/setup-nsh.sh
 
       - name: Check

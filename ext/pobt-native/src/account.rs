@@ -275,7 +275,7 @@ const PROPERTIES: &[(&str, &str)] = &[
 ];
 
 /// A jewel's radius, as Tencent words it.
-const RADII: &[(&str, &str)] = &[("小", "Small"), ("中", "Medium"), ("大", "Large"), ("非常大", "Very Large"), ("超大", "Very Large"), ("极大", "Very Large"), ("可变", "Variable")];
+const RADII: &[(&str, &str)] = &[("小", "Small"), ("中", "Medium"), ("大", "Large"), ("非常大", "Very Large"), ("超大", "Very Large"), ("极大", "Very Large"), ("可变", "Variable"), ("变量", "Variable")];
 
 fn has_chinese(s: &str) -> bool {
     s.chars().any(|c| c as u32 >= 0x2e80)
@@ -333,6 +333,14 @@ fn translate_item(rev: &Reverse, item: &mut Value, missed: &mut usize) {
                 },
                 _ => continue,
             };
+            // A mod of several lines whole, as Path of Building combines a line with the next: Tencent breaks some
+            // elsewhere than the English does; else line by line.
+            if text.contains('\n') && has_chinese(text) {
+                if let Some(en) = rev.english(text) {
+                    *text = en;
+                    continue;
+                }
+            }
             let lines: Vec<String> = text
                 .split('\n')
                 .map(|line| {

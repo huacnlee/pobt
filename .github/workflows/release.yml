@@ -64,7 +64,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y clang libclang-dev libgtk-4-dev libwebkitgtk-6.0-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
 
-      - name: Install the NSH CLI of the nightly Cargo.lock locks
+      - name: Install the NSH CLI of the nsh-core Cargo.lock locks
         run: scripts/setup-nsh.sh
 
       - name: Test
@@ -156,7 +156,7 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - name: Install the NSH CLI of the nightly Cargo.lock locks
+      - name: Install the NSH CLI of the nsh-core Cargo.lock locks
         run: scripts/setup-nsh.sh
 
       - name: Write the update manifest

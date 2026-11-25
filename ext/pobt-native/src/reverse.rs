@@ -19,6 +19,14 @@ const FIRST: &[&str] = &[
     "passiveTree.csv",
 ];
 
+/// A cluster jewel's enchant as Tencent words its start, and the English of
+/// it: what follows it Tencent leaves in English ("增加的小天赋获得：12%
+/// increased Damage with Bows") or words in Chinese, as any other mod.
+const LEADS: &[(&str, &str)] = &[
+    ("增加的小天赋获得", "Added Small Passive Skills grant: "),
+    ("增加的小天赋还获得", "Added Small Passive Skills also grant: "),
+];
+
 fn rank(name: &str) -> usize {
     FIRST.iter().position(|f| name.starts_with(f)).unwrap_or(FIRST.len())
 }
@@ -50,9 +58,10 @@ fn unmark(s: &str) -> String {
 }
 
 /// Full-width forms as ASCII ("（辅）" as "(辅)"), with no whitespace: Tencent's
-/// text and the dictionary's differ in both; and no markup.
+/// text and the dictionary's differ in both; and no markup. A negative number
+/// after Tencent's "+" ("所有元素抗性 +-11%") as the number alone.
 fn normalize(s: &str) -> String {
-    unmark(s)
+    let t: String = unmark(s)
         .chars()
         .filter(|c| !c.is_whitespace() && *c != '\u{3000}')
         .map(|c| match c {
@@ -60,7 +69,8 @@ fn normalize(s: &str) -> String {
             '\u{3001}' => ',',
             c => c,
         })
-        .collect()
+        .collect();
+    t.replace("+-", "-")
 }
 
 /// The Chinese of a template made a key: `{N}` and `#` become holes, and so
@@ -179,7 +189,8 @@ impl Reverse {
             if record.len() < 2 {
                 continue;
             }
-            let en = String::from_utf8_lossy(&record[0]).trim_start_matches('\u{feff}').trim().to_string();
+            // a mod of several lines with "\n" between them, however git checked the file out
+            let en = String::from_utf8_lossy(&record[0]).trim_start_matches('\u{feff}').trim().replace("\r\n", "\n");
             let zh = String::from_utf8_lossy(&record[1]).trim().to_string();
             self.insert(en, &zh);
         }
@@ -216,7 +227,21 @@ impl Reverse {
         if let Some(en) = self.exact.get(&t) {
             return Some(en.clone());
         }
-        self.template(&t, true).or_else(|| self.template(&t, false))
+        self.template(&t, true).or_else(|| self.template(&t, false)).or_else(|| self.lead(zh))
+    }
+
+    /// `zh` as one of `LEADS` and the mod after it.
+    fn lead(&self, zh: &str) -> Option<String> {
+        let zh = zh.trim();
+        let (rest, en) = LEADS.iter().find_map(|(lead, en)| {
+            let rest = zh.strip_prefix(lead)?;
+            Some((rest.strip_prefix('：').or_else(|| rest.strip_prefix(':'))?.trim(), en))
+        })?;
+        if rest.is_empty() {
+            return None;
+        }
+        let rest = if rest.chars().any(|c| c as u32 >= 0x2e80) { self.english(rest)? } else { rest.to_string() };
+        Some(format!("{en}{rest}"))
     }
 
     /// The English of a gem's name: as `english`, or a support's name with
@@ -304,6 +329,12 @@ mod tests {
         assert_eq!(r.english("附加火焰伤害（辅）").as_deref(), Some("Added Fire Damage"));
         assert_eq!(r.english("2 换 1").as_deref(), Some("Swap 2 and 1"));
         assert_eq!(r.english("未知词缀 5"), None);
+        assert_eq!(
+            r.english("增加的小天赋获得：12% increased Damage with Bows").as_deref(),
+            Some("Added Small Passive Skills grant: 12% increased Damage with Bows")
+        );
+        assert_eq!(r.english("增加的小天赋还获得：生命上限提高 4%").as_deref(), Some("Added Small Passive Skills also grant: 4% increased maximum Life"));
+        assert_eq!(r.english("增加的小天赋获得：未知词缀 5"), None);
     }
 
     /// The real dictionary turns a few of Tencent's lines back.
@@ -314,5 +345,13 @@ mod tests {
         assert_eq!(r.english("瓦尔法衣").as_deref(), Some("Vaal Regalia"));
         assert_eq!(r.english("猎首").as_deref(), Some("Headhunter"));
         assert_eq!(r.english("+80 最大生命").as_deref(), Some("+80 to maximum Life"));
+        assert_eq!(r.english("所有元素抗性 +-11%").as_deref(), Some("-11% to all Elemental Resistances"));
+        assert_eq!(r.english("范围内的天赋技能无需连接到你的天赋树即可配置").as_deref(), Some("Passive Skills in Radius can be Allocated without being connected to your tree"));
+        assert_eq!(r.english("只影响 巨大 环形范围内的天赋").as_deref(), Some("Only affects Passives in Massive Ring"));
+        // a mod of two lines, which Tencent breaks elsewhere than the English
+        assert_eq!(
+            r.english("敌人每受到一种元素异常状态影响，\n击中和异常状态造成的元素伤害提高 30%").as_deref(),
+            Some("30% increased Elemental Damage with Hits and Ailments for\neach type of Elemental Ailment on Enemy")
+        );
     }
 }

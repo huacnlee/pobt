@@ -11,10 +11,10 @@
     },
     {
       "name": "nsh-icon-lucide",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "source": "crates.io",
-      "checksum": "sha256-aa2647c3cd43f805a5290ea165148044690fa0450bd956af96da9f26faecd8f5",
-      "dir": "nsh-icon-lucide/0.2.1",
+      "checksum": "sha256-4e19459bd683caf459782a18f318e1a1629255ff2e1e5ddb45a2e0ac962861ad",
+      "dir": "nsh-icon-lucide/0.2.2",
       "module": "nsh-icon-lucide/native",
       "exports": {
         "nsh-icon-lucide": "tsx/index.ts"

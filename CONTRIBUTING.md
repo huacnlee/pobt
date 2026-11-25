@@ -38,9 +38,9 @@ POBT links its own LuaJIT and stands in for the modules POB uses (lcurl, lzip, l
 ## Developing
 
 You need Windows, Rust and the [nsh CLI](https://nsh.dev/docs/installation), and Path of Building Community installed.
-POBT follows NSH's `nightly` tag: the nsh CLI must be built from the commit `ext/pobt-native/Cargo.lock` locks
-`nsh-core` to (`nsh update nightly` while that is the latest nightly; `scripts/setup-nsh.sh` installs it in `.nsh/cli`,
-as CI does). Move to a newer nightly with `cargo update -p nsh-core --manifest-path ext/pobt-native/Cargo.toml`.
+The nsh CLI must be the version of `nsh-core` in `ext/pobt-native/Cargo.lock` (0.7.0, from crates.io);
+`scripts/setup-nsh.sh` installs it in `.nsh/cli`, as CI does. It also takes an `nsh-core` from NSH's `nightly` tag, and
+installs the CLI of the commit `Cargo.lock` locks it to.
 
 ```sh
 nsh run                       # the app, rebuilt as you edit
