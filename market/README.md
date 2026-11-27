@@ -48,12 +48,12 @@ Copy the `.filter` into `Documents/My Games/Path of Exile` and choose it in the 
 
 `src/worker.ts` runs on Cloudflare Workers' free plan (`wrangler.jsonc`), with an R2 bucket:
 
-- **Every hour** it saves poe.ninja's price pages to R2 untouched, streamed and not parsed, so the run costs almost no
+- **Every hour** it saves poe.ninja's price pages to R2 untouched, copied and not parsed, so the run costs almost no
   CPU. This is the price history, worth starting early.
 - **Every day** it reads the last hour back and writes a filter for each strictness, with the snapshot.
 - **`GET /filters/<soft|regular|strict>.filter`** serves the day's filter to whoever has the access token.
 
-The free plan gives a run 10 ms of CPU. Streaming the hourly pages fits; the daily filter does not (poe.ninja's
+The free plan gives a run 10 ms of CPU. Copying the hourly pages fits; the daily filter does not (poe.ninja's
 `BaseType` page alone is 9 MB of JSON to parse), so the daily run needs Workers Paid, or the filter is built where
 CPU is free: the CLI, a scheduled CI job, or POBT itself.
 

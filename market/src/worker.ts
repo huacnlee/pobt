@@ -1,7 +1,7 @@
 // The service on Cloudflare Workers (free plan), not deployed yet: see README.md.
 //
 // - Every hour: poe.ninja's price pages for the league, saved to R2 as they came (`raw/<league>/<day>/<hour>/`). The
-//   bodies are streamed, never parsed, so the hourly run spends almost no CPU, and the history starts building up.
+//   bodies are copied, never parsed, so the hourly run spends almost no CPU, and the history starts building up.
 // - Every day: the latest hour read back, made a snapshot, and a filter written for each strictness
 //   (`filters/<league>/<strictness>.filter`), with the snapshot beside it. Parsing 10 MB of JSON is more than the free
 //   plan's 10 ms of CPU: this run needs Workers Paid.
@@ -21,10 +21,11 @@ const STRICTNESS: Strictness[] = ["soft", "regular", "strict"];
 const DAILY = "17 3 * * *";
 
 export default {
-  async scheduled(event: ScheduledController, env: Env, ctx: ExecutionContext) {
+  // Awaited, not left to waitUntil: a cron run may take its 15 minutes, waitUntil only 30 s after it returns.
+  async scheduled(event: ScheduledController, env: Env) {
     const league = await currentLeague();
-    if (event.cron === DAILY) ctx.waitUntil(daily(env, league));
-    else ctx.waitUntil(hourly(env, league, new Date(event.scheduledTime)));
+    if (event.cron === DAILY) await daily(env, league);
+    else await hourly(env, league, new Date(event.scheduledTime));
   },
 
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -55,8 +56,9 @@ async function hourly(env: Env, league: string, at: Date) {
   await Promise.all(
     sources(league).map(async (source) => {
       const response = await fetch(source.url, { headers: { "user-agent": USER_AGENT } });
-      if (!response.ok || !response.body) throw new Error(`${source.page}: HTTP ${response.status}`);
-      await env.MARKET.put(`${prefix}/${source.page}.json`, response.body, {
+      if (!response.ok) throw new Error(`${source.page}: HTTP ${response.status}`);
+      // Read whole, not streamed: R2 takes a stream only of a known length, and poe.ninja's are chunked.
+      await env.MARKET.put(`${prefix}/${source.page}.json`, await response.arrayBuffer(), {
         httpMetadata: { contentType: "application/json" },
       });
     }),

@@ -32,12 +32,14 @@ export interface Tier {
 
 export function tiers(divine: number, minWorth: number): Tier[] {
   // "1 divine" starts a little under its price, so a divine orb, worth a hair less once sold, is still the top tier.
-  const steps = [divine * 0.9, 20, 5].filter((at) => at > minWorth);
+  const top = divine * 0.9;
+  // Best first, whatever a divine is worth this league (it could fall under 20 c).
+  const steps = [...new Set([top, 20, 5].filter((at) => at > minWorth))].sort((a, b) => b - a);
   steps.push(minWorth);
   return steps.map((at, i) => ({
     id: i + 1,
     at,
-    label: i === 0 ? (at === divine * 0.9 ? "1 divine+" : `${fmt(at)} c+`) : `${fmt(at)} c – ${i === 1 && steps[0] === divine * 0.9 ? "1 divine" : `${fmt(steps[i - 1])} c`}`,
+    label: i === 0 ? (at === top ? "1 divine+" : `${fmt(at)} c+`) : `${fmt(at)} c – ${steps[i - 1] === top ? "1 divine" : `${fmt(steps[i - 1])} c`}`,
   }));
 }
 

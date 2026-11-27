@@ -20,6 +20,9 @@ describe("tiers", () => {
       [1, "1 c – 5 c"],
     ]);
   });
+  test("best first even when a divine is cheap", () => {
+    expect(tiers(15, 1).map((t) => t.at)).toEqual([20, 13.5, 5, 1]);
+  });
   test("a high threshold drops the tiers under it", () => {
     expect(tiers(150, 30).map((t) => t.at)).toEqual([135, 30]);
   });
