@@ -1,7 +1,7 @@
 // The build's sidebar as Path of Building fills it: the main skill controls and POB's own stat list (its labels,
 // values and colours), translated.
 import { Scroll, View } from "nsh";
-import { Divider, Text } from "../ui";
+import { Separator, Text } from "../ui";
 import { ColoredText, plain } from "./ColoredText";
 import { t, tr } from "./i18n";
 import { PobControl } from "./PobControl";
@@ -43,7 +43,7 @@ export function Sidebar() {
           }}
         </Each>
       </View>
-      <Divider />
+      <Separator />
       <Scroll class="flex-1" scrollbar>
         <View class="py-2">
           <Each of={s()?.lines ?? []}>

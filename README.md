@@ -27,6 +27,8 @@ Chinese, Traditional Chinese and Korean are included.
 - **Import characters** from an account, as a build code or a build saved in Path of Building: see below.
 - **AI build analysis**: from the Tools menu, choose one of your builds (or paste a build code) and have the AI already on your computer, Claude Code or Codex, rate it by damage, defence, recovery, ailments, utility and gear, with what to change first. POBT sends it no account and keeps no key: the agent runs as you signed it in.
 
+- **Market and loot filter** (Path of Exile): from the Tools menu, the trades worth making now, what the market is doing, prices and their history, a watchlist with alerts, a ledger of your trades, and a loot filter made from the prices. See below.
+
 <p align="center"><img src="website/public/screenshots/ai-en.webp" alt="AI build analysis" width="800"></p>
 
 ## Import characters
@@ -39,6 +41,23 @@ a character's build code or save it among Path of Building's builds.
 - **Path of Exile 2**: the official site's characters once signed in to pathofexile.com in the browser, as Path of
   Building 2 does. Tencent's, by a WeGame share link: in WeGame's Path of Exile 2 helper, open the character's data and
   press Share (一键分享).
+
+## Market and loot filter
+
+**Tools → Market & loot filter** answers three questions for Path of Exile 1: what is worth buying and selling now
+(opportunities: dips and arbitrage cycles on the Currency Exchange, each with its risk and its steps), what the market is
+doing (a heat map, movers, anomalies, each item's price and history), and what on the ground is worth picking up (a loot
+filter made from the prices, installed in the game's filter folder and rewritten with each update). In Chinese, items
+are named as on Tencent's servers.
+
+- Its only source is [poe.ninja](https://poe.ninja)'s public API: the current league, 20 overview pages and about 25
+  items' days of trades. Everything is computed on your computer; there is no server and no account.
+- It asks at most once an hour, one page at a time, and only while POBT is open and the market has been opened once;
+  a page fetched in the last 50 minutes is never asked for again, an older one conditionally. Offline, it shows the
+  market it kept and how old it is.
+- What it keeps (prices, 60 days of history, poe.ninja's answers, item pictures) is in POBT's data folder; the
+  market's Settings page shows where and how much, and clears it. The loot filter is written only where you install it.
+- Prices change all the time: the game's live price is what counts, and the opportunities are estimates, not promises.
 
 ## Two interfaces: classic Lua and redrawn in NSH
 

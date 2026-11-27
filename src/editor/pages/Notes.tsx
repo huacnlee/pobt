@@ -1,7 +1,7 @@
 // The Notes page of POBT's build editor: the notes of Path of Building's notes tab (service/notes.lua), in POB's
 // colours (`^7`, `^xRRGGBB`), and the same text to edit, written back to POB's notes as typing stops.
 import { cleanup, effect, resource, Scroll, signal, untracked, View } from "nsh";
-import { EmptyState, Segmented, TextArea } from "../../ui";
+import { Empty, Segmented, TextArea } from "../../ui";
 import { ColoredText } from "../ColoredText";
 import { page } from "../BuildEditor";
 import { language, t } from "../i18n";
@@ -57,20 +57,20 @@ export function NotesPage() {
   const lines = () => draft().split(/\r?\n/).map((line, i) => ({ i, line }));
 
   return (
-    <If when={build.open()} else={<EmptyState title={t("noBuild")} />}>
+    <If when={build.open()} else={<Empty class="flex-1" title={t("noBuild")} />}>
       <View class="flex-1">
         <View class="flex-row items-center gap-3 border-b border-border px-4 py-3">
           <Segmented<Mode>
             items={[
-              { key: "view", label: s("view") },
-              { key: "edit", label: s("edit") },
+              { value: "view", label: s("view") },
+              { value: "edit", label: s("edit") },
             ]}
             value={mode()}
             onChange={(m) => {
               if (m === "view" && timer) void save();
               mode.set(m);
             }}
-            accessibilityLabel={s("mode")}
+            label={s("mode")}
           />
           <View class="flex-1" />
           <If when={failure()}>
@@ -80,7 +80,7 @@ export function NotesPage() {
         <If
           when={mode() === "edit"}
           else={
-            <If when={draft().trim()} else={<EmptyState title={t("noNotes")} />}>
+            <If when={draft().trim()} else={<Empty class="flex-1" title={t("noNotes")} />}>
               <Scroll class="flex-1" contentClass="p-4">
                 <Each of={lines()} key={(l) => l.i}>
                   {(l) => <ColoredText raw text={l().line || " "} class="select-text" />}

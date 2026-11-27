@@ -2,6 +2,7 @@
 // text, configuration labels) goes through the same dictionary the Lua POB is translated with (trs/<language>), so a
 // new league's text is a new row in those CSVs, not code. What only POBT says is in POBT_STRINGS below.
 import { signal } from "nsh";
+import { setLocale } from "nsh/i18n";
 import { Pob } from "pobt/native";
 
 /** The language in use (`trs/<language>`), or null for English. */
@@ -10,8 +11,10 @@ export const language = signal<string | null>(null);
 const loaded = signal(0);
 const cache = new Map<string, string>();
 
-/** Loads the dictionary of `lang` (null for none). */
+/** Loads the dictionary of `lang` (null for none), and shows the `t()` words of locales/ (the shared controls', the
+ * market's) in it too: POB's `zh-rCN` is BCP 47's `zh-CN`; English when null. */
 export async function useLanguage(lang: string | null) {
+  setLocale(lang ? lang.replace("-r", "-") : "en");
   await Pob.trLoad(lang ?? "");
   cache.clear();
   language.set(lang);

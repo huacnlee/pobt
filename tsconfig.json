@@ -1,4 +1,5 @@
 {
   "extends": "./.nsh/tsconfig.json",
-  "include": ["App.tsx", "src/**/*.ts", "src/**/*.tsx", "tests/**/*.tsx"]
+  "include": ["App.tsx", "src/**/*.ts", "src/**/*.tsx", "tests/**/*.tsx"],
+  "exclude": ["src/market/core/test"]
 }

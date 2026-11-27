@@ -4,8 +4,7 @@
 import { type ContextMenuEvent, effect, resource, signal, untracked, View } from "nsh";
 import { Tree, type TreeEntry, type TreeItem } from "nsh/base";
 import { Menu } from "nsh/desktop";
-import { Button, EmptyState, Icon, Modal, Select, Text, TextField } from "../ui";
-import { ChevronRight } from "nsh-icon-lucide";
+import { Button, Empty, Icon, Modal, Select, Text, Input } from "../ui";
 import { BODY, BrassButton, C, DISPLAY, Gate, GoldRule, Plaque, Subtitle, textIn, Title } from "../ui/launcher";
 import { WASH } from "../ui/motion";
 import { t, tr } from "./i18n";
@@ -36,7 +35,7 @@ function Row(props: { entry?: BuildEntry; tree: TreeEntry; onMenu?: (e: ContextM
       <View class="w-4 items-center">
         <If when={props.tree.folder} else={<View style={{ width: 5, height: 5, backgroundColor: C.trim, transform: [{ rotate: "45deg" }] }} />}>
           <View class="transition-transform duration-180 group-aria-expanded:rotate-90 motion-reduce:transition-none">
-            <Icon icon={ChevronRight} size={14} class={textIn(C.trimHi)} />
+            <Icon name="chevron-right" size="sm" tone="trim" />
           </View>
         </If>
       </View>
@@ -209,10 +208,10 @@ export function BuildList(props: { onImport: () => void; onOpened: () => void })
           <Subtitle>{t("buildsHint")}</Subtitle>
         </View>
         <View class="flex-row items-center gap-3">
-          <TextField value={typed()} onChange={search} placeholder={t("searchBuilds")} accessibilityLabel={t("searchBuilds")} class="w-72" />
+          <Input value={typed()} onChange={search} placeholder={t("searchBuilds")} accessibilityLabel={t("searchBuilds")} class="w-72" />
           <Select
-            accessibilityLabel={t("sortBy")}
-            items={sorts()}
+            label={t("sortBy")}
+            options={sorts()}
             value={top()?.sort ?? sort() ?? "NAME"}
             onChange={(v) => sort.set(v as SortMode)}
             class="w-36"
@@ -256,7 +255,7 @@ export function BuildList(props: { onImport: () => void; onOpened: () => void })
               class="flex-1"
               itemClass={`group ${WASH} hover:bg-[rgba(177,141,78,0.10)] selected:bg-[rgba(177,141,78,0.22)] focus-visible:bg-[rgba(177,141,78,0.16)] disabled:opacity-60`}
               renderItem={(e) => <Row entry={byId.get(e.id)} tree={e} onMenu={(ev) => menu(byId.get(e.id), ev)} />}
-              empty={<EmptyState title={top.loading() ? "" : t("emptyFolder")} detail={top.loading() ? "" : t("emptyFolderHint")} />}
+              empty={<Empty class="flex-1" title={top.loading() ? "" : t("emptyFolder")} description={top.loading() ? "" : t("emptyFolderHint")} />}
             />
           </View>
           <View style={{ position: "absolute", top: 0, left: 0, right: 0, alignItems: "center", pointerEvents: "box-none" }}>
@@ -331,9 +330,9 @@ function NameDialog(props: { open: boolean; title: string; initial: string; wher
   return (
     <Modal
       open={props.open}
-      onClose={props.onClose}
+      onOpenChange={(open) => open || props.onClose()}
       title={props.title}
-      actions={
+      footer={
         <View class="flex-row justify-end gap-2">
           <Button label={tr("Cancel")} variant="ghost" onPress={props.onClose} />
           <Button label={t("ok")} variant="primary" busy={busy()} disabled={!name().trim()} onPress={() => void done()} />
@@ -346,7 +345,7 @@ function NameDialog(props: { open: boolean; title: string; initial: string; wher
             {props.where}
           </Text>
         </If>
-        <TextField
+        <Input
           value={name()}
           onChange={(v) => {
             name.set(v);
@@ -392,9 +391,9 @@ function ConfirmDelete(props: { entry: BuildEntry | null; onClose: () => void; o
   return (
     <Modal
       open={!!props.entry}
-      onClose={close}
+      onOpenChange={(open) => open || close()}
       title={t("delete")}
-      actions={
+      footer={
         <View class="flex-row justify-end gap-2">
           <Button label={tr("Cancel")} variant="ghost" onPress={close} />
           <Button label={t("delete")} variant="destructive" busy={busy()} onPress={() => void go()} />

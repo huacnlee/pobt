@@ -4,7 +4,6 @@
 // previews it beside the pointer, and pins that card when pressed.
 import { type JSX, Scroll, signal, View } from "nsh";
 import { FADE, HoverCard, Icon, Text, WASH } from "../../../ui";
-import { ChevronRight } from "nsh-icon-lucide";
 import { tr } from "../../i18n";
 import { type Cell, detailCell, hex, isHeaderRow, label, type Row, type SectionData, statRows, type Sub, targetKey } from "./data";
 import { PobText } from "./PobText";
@@ -66,7 +65,7 @@ const rowName = (r: Row, c?: Cell) => `${tr(label(r.label))} ${label(c?.text)}`.
 function Chevron(props: { open: boolean }) {
   return (
     <View class="w-3 items-center transition-transform duration-180 ease-out motion-reduce:transition-none" classList={{ "rotate-90": props.open }}>
-      <Icon icon={ChevronRight} size={12} class="text-muted-foreground" />
+      <Icon name="chevron-right" size="xs" tone="muted" />
     </View>
   );
 }

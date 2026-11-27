@@ -1,0 +1,689 @@
+{
+ "currency": {
+  "core": {
+   "rates": {
+    "divine": 0.006657
+   },
+   "primary": "chaos"
+  },
+  "lines": [
+   {
+    "id": "chaos",
+    "primaryValue": 1,
+    "volumePrimaryValue": 9384528,
+    "maxVolumeCurrency": "divine",
+    "maxVolumeRate": 150.2,
+    "sparkline": {
+     "totalChange": 43.86,
+     "data": [
+      -0.22,
+      2.15,
+      7.34,
+      12.84,
+      22.28,
+      26.71,
+      43.86
+     ]
+    }
+   },
+   {
+    "id": "divine",
+    "primaryValue": 150.2,
+    "volumePrimaryValue": 9384528,
+    "maxVolumeCurrency": "chaos",
+    "maxVolumeRate": 0.006657,
+    "sparkline": {
+     "totalChange": -30.49,
+     "data": [
+      0.27,
+      -2.09,
+      -6.7,
+      -11.33,
+      -18.2,
+      -21.08,
+      -30.49
+     ]
+    }
+   },
+   {
+    "id": "alt",
+    "primaryValue": 0.1877,
+    "volumePrimaryValue": 98883,
+    "maxVolumeCurrency": "chaos",
+    "maxVolumeRate": 5.33,
+    "sparkline": {
+     "totalChange": -1.76,
+     "data": [
+      11.43,
+      13.45,
+      2.75,
+      15.08,
+      13.18,
+      1.15,
+      -1.76
+     ]
+    }
+   },
+   {
+    "id": "vivid-lifeforce",
+    "primaryValue": 0.03545,
+    "volumePrimaryValue": 718208,
+    "maxVolumeCurrency": "divine",
+    "maxVolumeRate": 4238,
+    "sparkline": {
+     "totalChange": 100.4,
+     "data": [
+      9.4,
+      13.19,
+      47.41,
+      65.01,
+      79.67,
+      90.26,
+      100.4
+     ]
+    }
+   },
+   {
+    "id": "mirror",
+    "primaryValue": 126335,
+    "volumePrimaryValue": 10780562,
+    "maxVolumeCurrency": "divine",
+    "maxVolumeRate": 0.001189,
+    "sparkline": {
+     "totalChange": 77.55,
+     "data": [
+      10.48,
+      20.0,
+      37.77,
+      49.82,
+      58.91,
+      73.97,
+      77.55
+     ]
+    }
+   }
+  ],
+  "items": [
+   {
+    "id": "chaos",
+    "name": "Chaos Orb",
+    "category": "Currency",
+    "detailsId": "chaos-orb",
+    "image": "/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQ3VycmVuY3lSZXJvbGxSYXJlIiwic2NhbGUiOjF9XQ/46a2347805/CurrencyRerollRare.png"
+   },
+   {
+    "id": "divine",
+    "name": "Divine Orb",
+    "category": "Currency",
+    "detailsId": "divine-orb",
+    "image": "/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQ3VycmVuY3lNb2RWYWx1ZXMiLCJzY2FsZSI6MX1d/ec48896769/CurrencyModValues.png"
+   },
+   {
+    "id": "alt",
+    "name": "Orb of Alteration",
+    "category": "Currency",
+    "detailsId": "orb-of-alteration",
+    "image": "/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQ3VycmVuY3lSZXJvbGxNYWdpYyIsInNjYWxlIjoxfV0/6308fc8ca2/CurrencyRerollMagic.png"
+   },
+   {
+    "id": "vivid-lifeforce",
+    "name": "Vivid Crystallised Lifeforce",
+    "category": "Currency",
+    "detailsId": "vivid-crystallised-lifeforce",
+    "image": "/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvSGFydmVzdC9WaXZpZExpZmVmb3JjZSIsInNjYWxlIjoxfV0/a355b8a5a2/VividLifeforce.png"
+   },
+   {
+    "id": "mirror",
+    "name": "Mirror of Kalandra",
+    "category": "Currency",
+    "detailsId": "mirror-of-kalandra",
+    "image": "/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvQ3VycmVuY3lEdXBsaWNhdGUiLCJzY2FsZSI6MX1d/8d7fea29d1/CurrencyDuplicate.png"
+   }
+  ]
+ },
+ "cards": {
+  "core": {
+   "rates": {
+    "divine": 0.006657
+   },
+   "primary": "chaos"
+  },
+  "lines": [
+   {
+    "id": "abandoned-wealth",
+    "primaryValue": 4.67,
+    "volumePrimaryValue": 2.33,
+    "maxVolumeCurrency": "chaos",
+    "maxVolumeRate": 0.2143,
+    "sparkline": {
+     "totalChange": 671.0,
+     "data": [
+      54.89,
+      15.73,
+      -30.79,
+      313.0,
+      717.8,
+      268.0,
+      671.0
+     ]
+    }
+   },
+   {
+    "id": "a-chilling-wind",
+    "primaryValue": 7.96,
+    "volumePrimaryValue": 88.83,
+    "maxVolumeCurrency": "chaos",
+    "maxVolumeRate": 0.1257,
+    "sparkline": {
+     "totalChange": 9.73,
+     "data": [
+      -1.1,
+      11.12,
+      -5.85,
+      18.6,
+      14.92,
+      64.08,
+      9.73
+     ]
+    }
+   },
+   {
+    "id": "alone-in-the-darkness",
+    "primaryValue": 0.5082,
+    "volumePrimaryValue": 5.17,
+    "maxVolumeCurrency": "chaos",
+    "maxVolumeRate": 1.97,
+    "sparkline": {
+     "totalChange": -82.92,
+     "data": [
+      56.09,
+      -11.04,
+      -14.17,
+      -70.61,
+      -67.68,
+      -66.54,
+      -82.92
+     ]
+    }
+   },
+   {
+    "id": "the-doctor",
+    "primaryValue": 3819,
+    "volumePrimaryValue": 1919111,
+    "maxVolumeCurrency": "divine",
+    "maxVolumeRate": 0.03933,
+    "sparkline": {
+     "totalChange": -13.71,
+     "data": [
+      11.28,
+      17.16,
+      12.24,
+      10.08,
+      2.98,
+      -13.35,
+      -13.71
+     ]
+    }
+   },
+   {
+    "id": "rain-of-chaos",
+    "primaryValue": 0.08596,
+    "volumePrimaryValue": 625.0,
+    "maxVolumeCurrency": "chaos",
+    "maxVolumeRate": 11.63,
+    "sparkline": {
+     "totalChange": -94.46,
+     "data": [
+      -89.68,
+      -94.32,
+      -93.45,
+      -93.92,
+      -93.07,
+      -94.67,
+      -94.46
+     ]
+    }
+   }
+  ],
+  "items": [
+   {
+    "id": "abandoned-wealth",
+    "name": "Abandoned Wealth",
+    "category": "Cards",
+    "detailsId": "abandoned-wealth"
+   },
+   {
+    "id": "a-chilling-wind",
+    "name": "A Chilling Wind",
+    "category": "Cards",
+    "detailsId": "a-chilling-wind"
+   },
+   {
+    "id": "alone-in-the-darkness",
+    "name": "Alone in the Darkness",
+    "category": "Cards",
+    "detailsId": "alone-in-the-darkness"
+   },
+   {
+    "id": "the-doctor",
+    "name": "The Doctor",
+    "category": "Cards",
+    "detailsId": "the-doctor"
+   },
+   {
+    "id": "rain-of-chaos",
+    "name": "Rain of Chaos",
+    "category": "Cards",
+    "detailsId": "rain-of-chaos"
+   }
+  ]
+ },
+ "uniques": {
+  "lines": [
+   {
+    "id": 135098,
+    "name": "Foulborn Headhunter",
+    "baseType": "Leather Belt",
+    "variant": "Culling Strike, Minimap Icons",
+    "itemType": "Belt",
+    "levelRequired": 40,
+    "chaosValue": 1263350,
+    "divineValue": 8411,
+    "count": 1,
+    "listingCount": 1,
+    "sparkLine": {
+     "totalChange": 0,
+     "data": []
+    },
+    "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQmVsdHMvSGVhZGh1bnRlciIsInciOjIsImgiOjEsInNjYWxlIjoxLCJtdXRhdGVkIjp0cnVlfV0/2a93cbdad2/Headhunter.png"
+   },
+   {
+    "id": 142082,
+    "name": "Foulborn Mageblood",
+    "baseType": "Heavy Belt",
+    "variant": "5 Flasks",
+    "itemType": "Belt",
+    "levelRequired": 44,
+    "chaosValue": 246545,
+    "divineValue": 1641,
+    "count": 2,
+    "listingCount": 2,
+    "sparkLine": {
+     "totalChange": 0,
+     "data": []
+    },
+    "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQmVsdHMvSW5qZWN0b3JCZWx0IiwidyI6MiwiaCI6MSwic2NhbGUiOjEsIm11dGF0ZWQiOnRydWV9XQ/8f193a2016/InjectorBelt.png"
+   },
+   {
+    "id": 135487,
+    "name": "Foulborn Headhunter",
+    "baseType": "Leather Belt",
+    "variant": "Minimap Icons",
+    "itemType": "Belt",
+    "levelRequired": 40,
+    "chaosValue": 225300,
+    "divineValue": 1500,
+    "count": 11,
+    "listingCount": 11,
+    "sparkLine": {
+     "totalChange": 60.43,
+     "data": [
+      null,
+      0,
+      null,
+      10.53,
+      21.45,
+      19.82,
+      60.43
+     ]
+    },
+    "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQmVsdHMvSGVhZGh1bnRlciIsInciOjIsImgiOjEsInNjYWxlIjoxLCJtdXRhdGVkIjp0cnVlfV0/2a93cbdad2/Headhunter.png"
+   },
+   {
+    "id": 135150,
+    "name": "Foulborn Headhunter",
+    "baseType": "Leather Belt",
+    "variant": "Culling Strike",
+    "itemType": "Belt",
+    "levelRequired": 40,
+    "chaosValue": 223047,
+    "divineValue": 1485,
+    "count": 5,
+    "listingCount": 5,
+    "sparkLine": {
+     "totalChange": 41.29,
+     "data": [
+      0,
+      -3.96,
+      64.51,
+      30.3,
+      2.37,
+      null,
+      41.29
+     ]
+    },
+    "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQmVsdHMvSGVhZGh1bnRlciIsInciOjIsImgiOjEsInNjYWxlIjoxLCJtdXRhdGVkIjp0cnVlfV0/2a93cbdad2/Headhunter.png"
+   },
+   {
+    "id": 142079,
+    "name": "Mageblood",
+    "baseType": "Heavy Belt",
+    "variant": "5 Flasks",
+    "itemType": "Belt",
+    "levelRequired": 44,
+    "chaosValue": 222296,
+    "divineValue": 1480,
+    "count": 7,
+    "listingCount": 7,
+    "sparkLine": {
+     "totalChange": -19.7,
+     "data": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      0,
+      -19.7
+     ]
+    },
+    "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQmVsdHMvSW5qZWN0b3JCZWx0IiwidyI6MiwiaCI6MSwic2NhbGUiOjEsInJlbGljIjo0fV0/b2bef5486a/InjectorBelt.png"
+   },
+   {
+    "id": 135418,
+    "name": "Foulborn Headhunter",
+    "baseType": "Leather Belt",
+    "variant": "Culling Strike, Soul Eater",
+    "itemType": "Belt",
+    "levelRequired": 40,
+    "chaosValue": 75100,
+    "divineValue": 500.0,
+    "count": 1,
+    "listingCount": 1,
+    "sparkLine": {
+     "totalChange": 0,
+     "data": []
+    },
+    "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQmVsdHMvSGVhZGh1bnRlciIsInciOjIsImgiOjEsInNjYWxlIjoxLCJtdXRhdGVkIjp0cnVlfV0/2a93cbdad2/Headhunter.png"
+   },
+   {
+    "id": 135807,
+    "name": "Foulborn Headhunter",
+    "baseType": "Leather Belt",
+    "variant": "Soul Eater, Minimap Icons",
+    "itemType": "Belt",
+    "levelRequired": 40,
+    "chaosValue": 56325,
+    "divineValue": 375.0,
+    "count": 1,
+    "listingCount": 1,
+    "sparkLine": {
+     "totalChange": 0,
+     "data": []
+    },
+    "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQmVsdHMvSGVhZGh1bnRlciIsInciOjIsImgiOjEsInNjYWxlIjoxLCJtdXRhdGVkIjp0cnVlfV0/2a93cbdad2/Headhunter.png"
+   },
+   {
+    "id": 142076,
+    "name": "Mageblood",
+    "baseType": "Heavy Belt",
+    "variant": "4 Flasks",
+    "itemType": "Belt",
+    "levelRequired": 44,
+    "chaosValue": 39052,
+    "divineValue": 260.0,
+    "count": 276,
+    "listingCount": 276,
+    "sparkLine": {
+     "totalChange": -25.3,
+     "data": [
+      0,
+      0.7,
+      -6.17,
+      -11.21,
+      -16.79,
+      -17.71,
+      -25.3
+     ]
+    },
+    "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQmVsdHMvSW5qZWN0b3JCZWx0IiwidyI6MiwiaCI6MSwic2NhbGUiOjF9XQ/21ec0269de/InjectorBelt.png"
+   }
+  ]
+ },
+ "bases": {
+  "lines": [
+   {
+    "id": 52509,
+    "name": "Hubris Circlet",
+    "variant": "Shaper/Warlord",
+    "itemType": "Helmet",
+    "levelRequired": 85,
+    "chaosValue": 4506,
+    "divineValue": 30.0,
+    "count": 1,
+    "listingCount": 1,
+    "sparkLine": {
+     "totalChange": 0,
+     "data": []
+    },
+    "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQXJtb3Vycy9IZWxtZXRzL0hlbG1ldEludDExIiwidyI6MiwiaCI6Miwic2NhbGUiOjF9XQ/4588b92597/HelmetInt11.png"
+   },
+   {
+    "id": 50722,
+    "name": "Hubris Circlet",
+    "variant": "Warlord/Hunter",
+    "itemType": "Helmet",
+    "levelRequired": 85,
+    "chaosValue": 766.0,
+    "divineValue": 5.1,
+    "count": 2,
+    "listingCount": 2,
+    "sparkLine": {
+     "totalChange": 0,
+     "data": []
+    },
+    "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQXJtb3Vycy9IZWxtZXRzL0hlbG1ldEludDExIiwidyI6MiwiaCI6Miwic2NhbGUiOjF9XQ/4588b92597/HelmetInt11.png"
+   },
+   {
+    "id": 50479,
+    "name": "Hubris Circlet",
+    "variant": "Shaper/Elder",
+    "itemType": "Helmet",
+    "levelRequired": 86,
+    "chaosValue": 450.6,
+    "divineValue": 3.0,
+    "count": 1,
+    "listingCount": 1,
+    "sparkLine": {
+     "totalChange": 0,
+     "data": []
+    },
+    "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQXJtb3Vycy9IZWxtZXRzL0hlbG1ldEludDExIiwidyI6MiwiaCI6Miwic2NhbGUiOjF9XQ/4588b92597/HelmetInt11.png"
+   },
+   {
+    "id": 28280,
+    "name": "Hubris Circlet",
+    "variant": "Hunter",
+    "itemType": "Helmet",
+    "levelRequired": 83,
+    "chaosValue": 200.0,
+    "divineValue": 1.33,
+    "count": 1,
+    "listingCount": 1,
+    "sparkLine": {
+     "totalChange": 0,
+     "data": []
+    },
+    "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQXJtb3Vycy9IZWxtZXRzL0hlbG1ldEludDExIiwidyI6MiwiaCI6Miwic2NhbGUiOjF9XQ/4588b92597/HelmetInt11.png"
+   },
+   {
+    "id": 28451,
+    "name": "Hubris Circlet",
+    "variant": "Warlord",
+    "itemType": "Helmet",
+    "levelRequired": 84,
+    "chaosValue": 156.1,
+    "divineValue": 1.04,
+    "count": 3,
+    "listingCount": 3,
+    "sparkLine": {
+     "totalChange": 0,
+     "data": []
+    },
+    "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQXJtb3Vycy9IZWxtZXRzL0hlbG1ldEludDExIiwidyI6MiwiaCI6Miwic2NhbGUiOjF9XQ/4588b92597/HelmetInt11.png"
+   },
+   {
+    "id": 29647,
+    "name": "Hubris Circlet",
+    "variant": "Warlord",
+    "itemType": "Helmet",
+    "levelRequired": 83,
+    "chaosValue": 110.0,
+    "divineValue": 0.73,
+    "count": 3,
+    "listingCount": 3,
+    "sparkLine": {
+     "totalChange": 0,
+     "data": [
+      null,
+      null,
+      null,
+      0,
+      null,
+      null,
+      null
+     ]
+    },
+    "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQXJtb3Vycy9IZWxtZXRzL0hlbG1ldEludDExIiwidyI6MiwiaCI6Miwic2NhbGUiOjF9XQ/4588b92597/HelmetInt11.png"
+   },
+   {
+    "id": 27001,
+    "name": "Hubris Circlet",
+    "variant": "Warlord",
+    "itemType": "Helmet",
+    "levelRequired": 85,
+    "chaosValue": 100.0,
+    "divineValue": 0.67,
+    "count": 55,
+    "listingCount": 55,
+    "sparkLine": {
+     "totalChange": -14.31,
+     "data": [
+      0,
+      -14.31,
+      -31.45,
+      -38.47,
+      -40.02,
+      -37.15,
+      -14.31
+     ]
+    },
+    "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQXJtb3Vycy9IZWxtZXRzL0hlbG1ldEludDExIiwidyI6MiwiaCI6Miwic2NhbGUiOjF9XQ/4588b92597/HelmetInt11.png"
+   },
+   {
+    "id": 34114,
+    "name": "Hubris Circlet",
+    "variant": "Warlord",
+    "itemType": "Helmet",
+    "levelRequired": 86,
+    "chaosValue": 90.0,
+    "divineValue": 0.6,
+    "count": 30,
+    "listingCount": 30,
+    "sparkLine": {
+     "totalChange": -37.5,
+     "data": [
+      0,
+      -30.56,
+      -37.5,
+      -52.78,
+      -56.6,
+      -37.5,
+      -37.5
+     ]
+    },
+    "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQXJtb3Vycy9IZWxtZXRzL0hlbG1ldEludDExIiwidyI6MiwiaCI6Miwic2NhbGUiOjF9XQ/4588b92597/HelmetInt11.png"
+   },
+   {
+    "id": 10091,
+    "name": "Hubris Circlet",
+    "variant": "Elder",
+    "itemType": "Helmet",
+    "levelRequired": 82,
+    "chaosValue": 70.04,
+    "divineValue": 0.47,
+    "count": 3,
+    "listingCount": 3,
+    "sparkLine": {
+     "totalChange": 0,
+     "data": []
+    },
+    "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQXJtb3Vycy9IZWxtZXRzL0hlbG1ldEludDExIiwidyI6MiwiaCI6Miwic2NhbGUiOjF9XQ/4588b92597/HelmetInt11.png"
+   },
+   {
+    "id": 29302,
+    "name": "Hubris Circlet",
+    "variant": "Hunter",
+    "itemType": "Helmet",
+    "levelRequired": 84,
+    "chaosValue": 46.0,
+    "divineValue": 0.31,
+    "count": 2,
+    "listingCount": 2,
+    "sparkLine": {
+     "totalChange": 0,
+     "data": []
+    },
+    "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQXJtb3Vycy9IZWxtZXRzL0hlbG1ldEludDExIiwidyI6MiwiaCI6Miwic2NhbGUiOjF9XQ/4588b92597/HelmetInt11.png"
+   },
+   {
+    "id": 9077,
+    "name": "Hubris Circlet",
+    "variant": "Elder",
+    "itemType": "Helmet",
+    "levelRequired": 83,
+    "chaosValue": 32.0,
+    "divineValue": 0.21,
+    "count": 5,
+    "listingCount": 5,
+    "sparkLine": {
+     "totalChange": 220,
+     "data": [
+      null,
+      null,
+      0,
+      -56,
+      null,
+      220,
+      220
+     ]
+    },
+    "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQXJtb3Vycy9IZWxtZXRzL0hlbG1ldEludDExIiwidyI6MiwiaCI6Miwic2NhbGUiOjF9XQ/4588b92597/HelmetInt11.png"
+   },
+   {
+    "id": 9866,
+    "name": "Hubris Circlet",
+    "variant": "Shaper",
+    "itemType": "Helmet",
+    "levelRequired": 83,
+    "chaosValue": 29.4,
+    "divineValue": 0.2,
+    "count": 5,
+    "listingCount": 5,
+    "sparkLine": {
+     "totalChange": 0,
+     "data": [
+      null,
+      null,
+      null,
+      null,
+      0,
+      0,
+      0
+     ]
+    },
+    "icon": "https://web.poecdn.com/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQXJtb3Vycy9IZWxtZXRzL0hlbG1ldEludDExIiwidyI6MiwiaCI6Miwic2NhbGUiOjF9XQ/4588b92597/HelmetInt11.png"
+   }
+  ]
+ }
+}

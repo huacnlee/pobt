@@ -1,0 +1,430 @@
+language:
+  name: 中文
+
+common:
+  loading: 正在加载…
+  retry: 重试
+  back: 返回
+  cancel: 取消
+  save: 保存
+  delete: 删除
+  updated: "%{league} · 更新于 %{ago} · 1 div = %{divine} c"
+  navigation: 导航
+  trend: 走势
+  loadFailed: 加载失败
+  disclaimer: 价格来自 poe.ninja，POBT 打开时每小时最多获取一次，随时变化；以游戏内实时价格为准。这里的机会是估算，不保证盈利。
+  notAffiliated: POBT 是第三方工具，与 Grinding Gear Games 没有任何关联，也未获其认可。
+  level: "%{level} 级"
+
+nav:
+  tool: 市场与过滤器
+  opportunities: 机会
+  market: 行情
+  search: 查价
+  watchlist: 自选
+  ledger: 账本
+  filter: 过滤器
+  settings: 设置
+
+category:
+  Currency: 通货
+  Fragment: 碎片
+  DivinationCard: 命运卡
+  Scarab: 圣甲虫
+  Oil: 油瓶
+  Essence: 精华
+  Fossil: 化石
+  Resonator: 共振器
+  DeliriumOrb: 惊悸迷雾宝珠
+  Omen: 预兆
+  Tattoo: 纹身
+  Artifact: 文物
+  Runegraft: 符文嫁接
+  AllflameEmber: 全焰余烬
+  UniqueWeapon: 传奇武器
+  UniqueArmour: 传奇护甲
+  UniqueAccessory: 传奇饰品
+  UniqueJewel: 传奇珠宝
+  UniqueFlask: 传奇药剂
+  BaseType: 底材
+influence:
+  Shaper: 塑界者
+  Elder: 裂界者
+  Crusader: 圣战军王
+  Redeemer: 救赎者
+  Hunter: 狩猎者
+  Warlord: 督军
+kind:
+  currency: 通货
+  card: 命运卡
+  unique: 传奇
+  base: 底材
+  all: 全部分类
+
+where:
+  exchange: 通货交易所
+  trade: 交易网站
+
+risk:
+  low: 低风险
+  medium: 中风险
+  high: 高风险
+
+tag:
+  below7d: 低于 7 日均价
+  above7d: 高于 7 日均价
+  volumeSpike: 放量
+  newHigh: 30 日新高
+  newLow: 30 日新低
+  thin: 挂单少
+
+time:
+  withinHour: 1 小时内
+  hours: "约 %{n} 小时"
+  days: "约 %{n} 天"
+  justNow: 刚刚
+  minutesAgo: "%{n} 分钟前"
+  hoursAgo: "%{n} 小时前"
+  daysAgo: "%{n} 天前"
+
+error:
+  network: 连不上 poe.ninja，请检查网络。
+  busy: poe.ninja 请求过于频繁，稍后会自动重试。
+  server: "poe.ninja 出错了（%{status}）"
+
+opp:
+  title: 机会
+  type: 类型
+  all: 全部
+  dip: 低吸
+  cycle: 套利环
+  risk: 风险
+  anyRisk: 任何风险
+  upToMedium: 中风险以下
+  lowOnly: 仅低风险
+  dipTitle: "低吸 %{item}"
+  cycleTitle: "套利环 %{path}"
+  buyAt: "%{where}买入"
+  sellAt: "%{where}卖出"
+  roiHours: "回报 %{roi}% · %{hours}"
+  dailyVolume: "日成交 %{n}"
+  cycles: 套利环
+  cyclesHint: "物品在 chaos 和神圣石两个交易对的汇率平时就差几个百分点，这是兑换所的报价方式，不是机会。只有两边差得比平时明显更多、成交又足够大时才算套利环；已扣除每次交易约 0.5% 的损耗。"
+  noCycles: 现在没有套利环
+  noCyclesHint: "两个交易对的汇率差和平时一样，这很常见。POBT 打开时行情每小时最多更新一次，可以稍后再看。"
+  none: 暂时没有符合条件的机会
+  noneHint: "机会只来自兑换所里真实成交的物品：前几天价格稳定、最近两天放量下跌（按 chaos 和神圣石计价都跌了）。持续下跌的、没放量的、只有挂单没有成交的交易网站物品都不算。没有机会的日子很正常。"
+  expired: 这个机会已经过期
+  expiredHint: 行情更新后，它不再符合条件。回到列表看看新的机会。
+  profit: 预计利润
+  roi: "回报 %{roi}%"
+  stake: 投入
+  stakeHint: "%{qty} 个 × %{price}"
+  target: 目标卖价
+  sellTime: 预计卖出时间
+  why: 为什么
+  viewChart: 查看价格走势
+  steps: 步骤
+  recordTitle: 买到之后，记入账本
+  qty: 数量
+  paid: 实际买入单价
+  paidHint: 以游戏里成交的价格为准
+  record: 记入账本
+  recorded: 已记入账本
+  recordedToast: 已记入账本，卖出后在账本里填上成交价
+  total: "共 %{total} c"
+  checkFirst: 勾选第 1 步（买入）后可记入
+  viewLedger: 查看账本
+
+ring:
+  title: 环路
+  noLegs: "这个套利环来自较早的一次更新，没有每一步的汇率；下次更新后会画出环路。"
+  rate: "1 %{from} → %{rate} %{to}"
+  volume: "今日成交 %{n} · %{chaos}"
+  value: "1 c 现值 %{value} c"
+  net: "回到 %{value} c · 净赚 %{percent}"
+  perLoop: 每圈
+  join: "；"
+  perChaos: "按每投入 1 c 计，已扣每次交易约 0.5% 的损耗。"
+  usualNote: "神圣石一侧取今天的成交价，并扣掉它平时就贵出的 %{percent}%。"
+  label: "套利环：%{steps}。扣手续费后净赚 %{percent}。"
+  step: "%{from} 换 %{to}，1 换 %{rate}，今日成交 %{volume}，之后值 %{value} c"
+
+phrase:
+  steadyThenDrop: "前 %{days} 天稳定成交在 %{average} 左右，最近两天跌了 %{percent}%"
+  volumeOnDrop: "下跌时的成交量是平时的 %{ratio} 倍：低价确实有人在买"
+  tradedDaily: "平时每天成交约 %{qty} 个"
+  pricedInPair: "按%{item}计价也跌了，不只是 chaos 涨了"
+  fillChance: "按成交量估计，约 %{percent}% 的把握能按目标价卖完"
+  risk:
+    low: 风险低
+    medium: 风险中
+    high: 风险高
+  cycleOffUsual: "两边汇率比平时多差了 %{ratio} 倍"
+  cycleEdge: "扣手续费后约 +%{percent}%"
+  pairVolume: "较少的一边每天成交约 %{price}，投入不超过它的 2%"
+  spreadMayVanish: 汇率是一天的均价，价差可能在你下单前就没了
+  buyOnExchange: "在法斯特斯（Faustus）兑换所以不高于 %{price} 的单价买入 %{qty} 个 %{item}"
+  listAtTraded: "挂单 %{price} 卖出：前几天成交在 %{average}，让出约 %{percent}% 的买卖价差"
+  cutLoss: "若跌破 %{price}，止损卖出，不再等反弹"
+  collectFromExchange: 兑换所成交后从法斯特斯处取回 chaos
+  record: 在 POBT 中勾选完成，记入账本
+  cycleStart: "用 %{price} 在兑换所换成 %{item}"
+  cycleTrade: "把 %{from} 换成 %{to}"
+  checkRate: 每一步先看兑换所的实时汇率，价差没了就停
+
+market:
+  title: 行情
+  view: 行情视图
+  heatmap: 热力图
+  movers: 涨跌榜
+  anomalies: 异动
+  heatHint: 面积是每天的成交额（chaos），颜色是 24 小时涨跌：红涨绿跌。把指针放到色块上看详情。
+  heatDaily: "日成交约 %{value} c"
+  heatLabel: "热力图，成交额最大的 %{n} 个物品"
+  heatFoot: 只画了成交额最大的物品；不含 Chaos Orb 本身。
+  viewChart: 查看走势
+  period: 时间段
+  hour: 1 小时
+  day: 24 小时
+  week: 7 天
+  hourOnly: 1 小时涨跌只有通货交易所的物品有
+  up: 涨幅榜
+  down: 跌幅榜
+  noData: 没有数据
+  noAnomalies: 现在没有异动
+  anomaliesHint: 价格偏离 7 日均价 20% 以上、成交量翻倍，或创 30 天新高新低的物品，按成交额排序。
+
+search:
+  title: 查价
+  subtitle: "%{league} · %{count} 个%{kind} · 更新于 %{ago}"
+  placeholder: 搜索名称（中文或英文）
+  label: 搜索
+  item: 物品
+  week: 7 天
+  price: 价格
+  day: 24 小时
+  liquidity: 流动性
+  sellTime: 卖出时间
+  none: 没有找到
+  noneHint: 试试别的名称，或换个分类。
+  first200: 只显示前 200 个，输入更多文字缩小范围
+
+item:
+  trade: 去交易网站
+  addWatch: 加入自选
+  removeWatch: 移出自选
+  added: 已加入自选
+  removed: 已移出自选
+  alert: 设提醒
+  alertOn: 提醒已开
+  alertTitle: 价格提醒
+  alertHint: "现价 %{price} c。POBT 打开时会检查，到价后发系统通知。"
+  above: 涨到（c）以上
+  below: 跌到（c）以下
+  aboveLabel: 涨到
+  belowLabel: 跌到
+  alertOff: 关闭提醒
+  alertSaved: 提醒已设置
+  alertSavedQuiet: 提醒已设置；系统通知未开启，只能在自选里看到
+  forecast: 预测
+  forecastShort: 天数太少，还做不出预测。
+  inDays: "%{days} 天后约"
+  range: 可能区间
+  confidence: 可信度
+  lowConfidence: 偏低，仅供参考
+  forecastHint: 用最近价格的趋势线外推，没有考虑版本更新、赛季节奏等事件。只是参考，不是承诺。
+  now: 现价
+  changes: 1 小时 / 24 小时 / 7 天
+  liquidity: 流动性
+  dailyVolume: "日成交 %{n}"
+  listings: "挂单 %{n}"
+  sellTime: 卖出时间
+  worth: 卖出后实际价值
+  worthHint: 扣除流动性和卖出成本
+  chart: 价格与成交量
+  compare: 对比赛季
+  noCompare: 不对比
+  compareWith: "对比 %{league}"
+  compareShort: 对比
+  depth: "成交/挂单 %{n}"
+  chartLabel: "价格走势，%{n} 天"
+  firstDay: 从今天开始记录，明天起能看到曲线。
+  zonesShort: 天数太少，还看不出区间。
+  zoneCheap: 现在在便宜区间
+  zoneDear: 现在在贵的区间
+  zoneNormal: 现在在正常区间
+  zones: "%{where}：便宜 ≤ %{cheap}，贵 ≥ %{dear}（近 30 天的 20% / 80% 分位）。"
+  fromSpark: 记录的天数还少，曲线是 poe.ninja 近 7 天的走势；成交量从今天开始记录。
+  fromNinja: 本机保存的天数还少，曲线用的是 poe.ninja 上通货交易所的每日成交。
+  seasonAligned: 对比线按赛季开始后的第几天对齐。
+  pairBuys: "交易所里最常用 %{currency} 买卖：1 %{currency} 约换 %{rate} 个。"
+  pairSells: "交易所里最常用 %{currency} 买卖：1 个约换 %{rate} %{currency}。"
+
+watch:
+  title: 自选
+  subtitle: "%{n} 个物品 · 保存在这台设备上"
+  check: 检查提醒
+  checked: 已刷新，没有新的提醒
+  fired: "%{n} 条新提醒"
+  empty: 还没有自选
+  emptyHint: 在物品详情里点星标加入自选，再设置涨跌提醒。
+  toSearch: 去查价
+  addedAt: "加入时 %{price}"
+  noAlert: 没有提醒
+  hit: "已到价 %{thresholds}"
+  on: 提醒开
+  off: 提醒关
+  noNotifications: 系统通知未开启，到价只会显示在这里
+  remove: 移出自选
+  alertTitleUp: "%{item} 涨到 %{price} c"
+  alertTitleDown: "%{item} 跌到 %{price} c"
+  alertBodyUp: "已达到你设的 %{price} c 以上"
+  alertBodyDown: "已达到你设的 %{price} c 以下"
+  oppAlerts: 机会提醒
+  oppDipHint: 有新的物品跌到明显低于平常的价格时通知你
+  oppCycleHint: 出现新的通货兑换环、转一圈能多换回来时通知你
+  oppMinProfit: 利润至少
+  oppMaxRisk: 风险最多
+  oppAlertsHint: 每个新机会只通知一次；打开某类提醒时已经列出的机会不会通知。
+  oppAlertTitle: "新机会：%{title}"
+  oppAlertBody: "预计利润约 %{profit} c（%{roi}%）· %{risk}"
+  oppAlertMany: "%{n} 个新机会"
+  oppSwitch: "%{type}提醒"
+
+ledger:
+  title: 账本
+  subtitle: 你的买卖记录和利润，保存在这台设备上
+  add: 记一笔
+  realized: 已实现利润
+  held: 持有中（成本）
+  closed: 已卖出
+  closedCount: "%{n} 笔"
+  winRate: 赚钱的比例
+  records: 记录
+  empty: 还没有记录
+  emptyHint: 在机会详情里完成步骤后点“记入账本”，或者手动记一笔。
+  chartShort: 卖出两天以上后，这里会画出累计利润。
+  chartLabel: 累计利润
+  sell: 卖出
+  sellPrice: 实际卖出单价
+  sellLabel: 卖出单价
+  confirm: 确定
+  noted: "记下了：%{profit}"
+  bought: "%{day} 买入"
+  sold: " · %{day} 卖出"
+  holding: 持有中
+  deleteTitle: "删除 %{item} 这条记录？"
+  deleteHint: 删除后无法恢复。
+  deleteLabel: 删除记录
+  addTitle: 手动记一笔
+  addHint: 不是从机会来的买卖，也可以记在这里。
+  item: 物品
+  itemPlaceholder: 例如 神圣石
+  qty: 数量
+  buy: 买入单价
+  saved: 已记入账本
+
+filter:
+  title: 过滤器
+  subtitle: "%{league} · 按 %{ago}的价格生成"
+  intro: 按市场价，算出每样东西卖掉后真正值多少（考虑好不好卖），把不值得弯腰捡的藏起来，值钱的按价值分级高亮。每次更新行情后在本机重新生成。
+  stage: 游戏阶段
+  custom: 自定义
+  campaign: 基础
+  maps: 异界
+  endgame: 终局
+  farming: 打宝
+  campaignHint: 0–70 级，剧情阶段。所有通货和传奇都显示，还会高亮练级用得上的：4 连、红绿蓝小件、药剂。
+  mapsHint: 70–90 级，从 T1 地图刷到 T16。不到 1 c 的单个通货隐藏，便宜的传奇低调显示。
+  endgameHint: 90 级以后。便宜的命运卡、白装和蓝装隐藏，5 c 以上才醒目。
+  farmingHint: 已经成型，专门打高价值通货。黄装和不值钱的传奇也隐藏，20 c 以上才显示。
+  rules: "%{n} 条规则"
+  hideBelow: 低于这个价值就隐藏
+  threshold: 隐藏阈值
+  tiers: 显示规则
+  tier1: 最大字号、红框、光柱和声音
+  tier2: 大字号、橙框、光柱
+  tier3: 中等字号、黄框
+  tier4: 正常显示
+  tier5: 隐藏：不值得弯腰
+  atLeast: "≥ %{value}"
+  under: "< %{value}"
+  install: 安装到游戏
+  folder: 游戏的过滤器文件夹
+  folderCustom: 已改成你指定的文件夹
+  folderDefault: 留空使用默认位置；装在别处的话填上实际路径
+  installed: "已安装到 %{path}"
+  then: 然后在游戏里
+  thenDesktop: "打开 选项 → 界面 → 物品过滤器，选择 %{name}。安装后，POBT 每次更新行情都会按新价格重新写入。"
+
+  autoUpdate: 自动更新
+  autoUpdateHint: "已安装 %{name}。POBT 打开期间每次更新出新价格都会自动重新写入，在游戏的过滤器选项里点“重新载入”即可生效。"
+  autoUpdated: 过滤器已按新价格自动更新
+  sound: 提示音效
+  soundGame: 游戏默认
+  soundCustom: 自定义
+  soundHint: 使用你已经放在游戏过滤器文件夹里的音效文件（例如其他过滤器的音效包）。之后每次自动更新都沿用这里的选择。
+  soundTier1: "1 div 以上"
+  soundTier2: "20 c 以上"
+  soundTier3: "5 c 以上"
+  soundKeep: 游戏默认音效
+  soundNone: 过滤器文件夹及其子文件夹里没有找到 mp3、wav 或 ogg 文件。先把你的音效包复制进去。
+  soundsFound: "过滤器文件夹里有 %{n} 个音效文件"
+update:
+  fetching: "更新行情中… %{done}/%{total}"
+  computing: 计算行情中…
+  status: "%{league} · %{ago}更新"
+  failed: 上次更新失败
+  failedToast: "更新失败：%{error}"
+  fresh: 已经是最新的；poe.ninja 每小时最多请求一次
+  done: 行情已更新
+  refresh: 更新行情
+  offline: "离线 · 数据更新于 %{ago}"
+  offlineEmpty: 离线：连不上 poe.ninja
+  offlineToast: 离线，显示的是本机保存的行情
+  stale: "更新失败 · 数据更新于 %{ago}"
+
+settings:
+  title: 设置
+  general: 通用
+  language: 语言
+  languageHint: 物品名称跟着切换；中文使用国服（腾讯）的译名
+  system: 跟随系统
+  interval: 检查提醒的间隔
+  intervalHint: 行情本身每小时最多更新一次；只在 POBT 打开时检查提醒
+  minutes: "%{n} 分钟"
+  hour: 1 小时
+  notifications: 系统通知
+  notificationsHint: 价格到了你设的提醒、或出现新机会时通知你
+  allow: 允许通知
+  allowed: 通知已允许
+  denied: 通知被关闭了，请在系统设置里打开
+  data: 行情数据
+  noData: 还没有行情
+  updatedAt: "%{league} · %{ago}更新"
+  limit: "POBT 每 %{minutes} 分钟最多请求一次 poe.ninja，并且只在打开时请求。"
+  nextNow: 现在就可以更新。
+  nextAt: "%{minutes} 分钟后可以再次更新。"
+  updateNow: 立即更新
+  history: 已保存的价格历史
+  historyLeague: "%{league}：%{from} – %{to}"
+  historyNone: 还没有；POBT 每天更新时保存一天
+  location: 保存位置
+  locationStorage: 应用自己的存储里
+  clear: 清除行情数据
+  clearTitle: 清除行情数据？
+  clearHint: 本机保存的价格、机会和价格历史会被删除。自选、账本和设置保留。
+  clearAction: 清除
+  cleared: 行情数据已清除
+  cache: 缓存
+  cacheSize: "已缓存 %{size}"
+  cacheHint: poe.ninja 的原始页面和物品图片，打开时不用联网，离线也能看到行情。一小时内不会再请求；之后只下载有变化的部分。
+  clearCache: 清除缓存
+  clearCacheTitle: 清除缓存？
+  clearCacheHint: 本机保存的 poe.ninja 页面和物品图片会被删除，下次更新时重新下载。行情和价格历史保留。
+  cacheCleared: 缓存已清除
+  footnote: POBT 只从 poe.ninja 读取公开的市场价格，所有数据都保存在这台设备上，没有账号。它不读取游戏内存，也不会替你自动交易。
+
+names:
+  foulborn: "%{name}（邪生）"

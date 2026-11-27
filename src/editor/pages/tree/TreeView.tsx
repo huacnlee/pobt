@@ -3,7 +3,7 @@
 // allocate or deallocate. Panning and zooming move animated values the drawing reads, so the tree is recorded again
 // only when what it shows changes; hover, path and search marks are a second, light canvas on top.
 import { type AnimatedNode, Canvas, type CanvasRenderingContext2D, createAnimatedValue, signal, token, View } from "nsh";
-import { Button, Divider, Peek, Text } from "../../../ui";
+import { Button, Separator, Peek, Text } from "../../../ui";
 import { ColoredText, plain } from "../../ColoredText";
 import { TipLines } from "../../PobTip";
 import { tr } from "../../i18n";
@@ -581,7 +581,7 @@ export function TreeView(props: TreeViewProps) {
 function ZoomButton(props: { label: string; a11y: TreeKey; onPress: () => void }) {
   return (
     <Button
-      variant="secondary"
+      variant="default"
       size="sm"
       class="min-w-8 bg-card"
       label={props.label}

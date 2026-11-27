@@ -3,9 +3,8 @@
 // its gems on the right. Every value and number is POB's own (its controls' text, its labels, its tooltips; read by
 // service/skills.lua), and every change goes through the Skills tab's own controls, so POB's rules apply.
 import { computed, resource, Scroll, signal, View } from "nsh";
-import { Badge, Button, EmptyState, FieldRow, Panel, Select, Text, Icon } from "../../ui";
-import { Star, X } from "nsh-icon-lucide";
-import { ListRow } from "../../ui/list-row";
+import { Badge, Button, Empty, FieldRow, Card, Select, Text, Icon } from "../../ui";
+import { Row } from "../../ui";
 import { GameArt } from "../art";
 import { ColoredText, plain } from "../ColoredText";
 import { language, t, tr } from "../i18n";
@@ -95,7 +94,7 @@ export function SkillsPage() {
   const setItems = () => (view()?.sets ?? []).map((title, i) => ({ value: String(i + 1), title: tr(title) }));
 
   return (
-    <If when={build.open()} else={<EmptyState title={t("noBuild")} />}>
+    <If when={build.open()} else={<Empty class="flex-1" title={t("noBuild")} />}>
       <View class="flex-1 flex-row">
         {/* socket groups and gem options */}
         <View class="w-72 border-r border-border bg-card">
@@ -105,9 +104,9 @@ export function SkillsPage() {
                 {tr("Skill set")}
               </Text>
               <Select
-                items={setItems()}
+                options={setItems()}
                 value={String(view()?.activeSet ?? 1)}
-                accessibilityLabel={tr("Skill set")}
+                label={tr("Skill set")}
                 onChange={(v) => {
                   if (Number(v) === view()?.activeSet) return;
                   choose(1);
@@ -159,16 +158,17 @@ export function SkillsPage() {
 
         {/* the shown group */}
         <Scroll class="flex-1">
-          <If when={detail() && group()} else={<EmptyState title={s("noGroup")} detail={view() && groups().length === 0 ? s("noGroups") : undefined} />}>
+          <If when={detail() && group()} else={<Empty class="flex-1" title={s("noGroup")} description={view() && groups().length === 0 ? s("noGroups") : undefined} />}>
             <View class="max-w-3xl gap-3 p-4">
               {/* the gems first: what is changed most (go-pob's and POB's order) */}
-              <Panel
+              <Card
+                bodyClass=""
                 title={groupTitle(group() ?? NO_GROUP)}
                 actions={
                   <Button
                     size="sm"
-                    variant={isMain() ? "primary" : "secondary"}
-                    icon={isMain() ? Star : undefined}
+                    variant={isMain() ? "primary" : "default"}
+                    icon={isMain() ? "star" : undefined}
                     label={isMain() ? s("isMain") : s("setMain")}
                     disabled={isMain()}
                     onPress={() => void edit("setMain")}
@@ -217,21 +217,21 @@ export function SkillsPage() {
                     <View class="w-5" />
                     <Select
                       class="h-7 w-72"
-                      items={gemItems()}
+                      options={gemItems()}
                       value={null}
                       searchable
                       placeholder={`+ ${s("addGem")}`}
                       onOpen={list}
-                      accessibilityLabel={s("addGem")}
+                      label={s("addGem")}
                       renderItem={(item) => <GemChoiceRow value={item.value} title={item.title} name={nameOf().get(item.value)} attr={attrOf().get(item.value)} group={shown} />}
                       onChange={(id) => void edit("setGem", { id })}
                     />
                   </View>
                 </If>
-              </Panel>
+              </Card>
 
               {/* the group's settings, after its gems and compact (POB's detail above the gems) */}
-              <Panel>
+              <Card> bodyClass=""
                 <View class="gap-1.5 px-3 py-2">
                   <Text variant="caption" tone="muted">
                     {s("settings")}
@@ -252,7 +252,7 @@ export function SkillsPage() {
                         <PobHover id={() => `optimise|${shown()}`} load={() => tipOf({ what: "optimiseSockets", group: shown() })}>
                           <Button
                             size="sm"
-                            variant="secondary"
+                            variant="default"
                             label={tr(detail()?.optimiseSockets?.label)}
                             disabled={!detail()?.optimiseSockets?.enabled}
                             onPress={() => void edit("optimiseSockets")}
@@ -276,11 +276,11 @@ export function SkillsPage() {
                       >
                         <Select
                           class="h-7 w-56"
-                          items={imbuedItems()}
+                          options={imbuedItems()}
                           value={imbuedValue()}
                           searchable
                           placeholder={s("imbuedNone")}
-                          accessibilityLabel={labelText(detail()?.imbuedLabel?.label)}
+                          label={labelText(detail()?.imbuedLabel?.label)}
                           onChange={(id) => id !== imbuedValue() && void edit("setImbued", { id })}
                         />
                       </If>
@@ -291,10 +291,9 @@ export function SkillsPage() {
                           class="w-7 px-0"
                           accessibilityLabel={labelText(detail()?.imbuedLabel?.label)}
                           disabled={!detail()?.imbuedClear?.enabled || !detail()?.imbued?.text}
+                          icon="x"
                           onPress={() => void edit("clearImbued")}
-                        >
-                          <Icon icon={X} size={14} class="text-muted-foreground" />
-                        </Button>
+                        />
                       </PobHover>
                     </View>
                   </If>
@@ -328,7 +327,7 @@ export function SkillsPage() {
                     </View>
                   </If>
                 </View>
-              </Panel>
+              </Card>
             </View>
           </If>
         </Scroll>
@@ -458,17 +457,18 @@ function GroupRow(props: { group: Group; index: number; main: boolean; selected:
   const off = () => !props.group.enabled || !props.group.slotEnabled;
   return (
     <PobHover id={() => `group|${props.index}`} load={() => tipOf({ what: "group", group: props.index })}>
-      <ListRow
+      <Row
+        choose
         selected={props.selected}
         onPress={props.onPress}
-        accessibilityLabel={title()}
-        accessibilityHint={[props.main ? s("isMain") : "", off() ? s("disabled") : "", where()].filter(Boolean).join(", ")}
+        label={title()}
+        hint={[props.main ? s("isMain") : "", off() ? s("disabled") : "", where()].filter(Boolean).join(", ")}
         class="py-1"
       >
         <GemIcon name={props.group.activeGem} size={24} />
         <View class="w-3 items-center">
           <If when={props.main}>
-            <Icon icon={Star} size={12} class="text-primary" />
+            <Icon name="star" size="xs" tone="primary" />
           </If>
         </View>
         <View class="flex-1 gap-0.5" classList={{ "opacity-50": off() }}>
@@ -484,7 +484,7 @@ function GroupRow(props: { group: Group; index: number; main: boolean; selected:
         <If when={props.group.includeInFullDPS}>
           <Badge label={s("fullDps")} />
         </If>
-      </ListRow>
+      </Row>
     </PobHover>
   );
 }
@@ -548,11 +548,11 @@ function GemRow(props: {
           >
             <Select
               class="h-7 flex-1"
-              items={props.choices}
+              options={props.choices}
               value={props.gem.id ?? null}
               searchable
               placeholder={name()}
-              accessibilityLabel={`${tr("Gem name")}: ${name()}`}
+              label={`${tr("Gem name")}: ${name()}`}
               triggerContent={<Text class={`truncate text-sm ${props.gem.known ? GEM_TEXT[props.gem.attr] : "text-destructive"}`}>{name()}</Text>}
               renderItem={(item) => (
                 <GemChoiceRow
@@ -606,10 +606,9 @@ function GemRow(props: {
               class="w-7 px-0"
               accessibilityLabel={`${s("removeGem")}: ${name()}`}
               disabled={!c().delete.enabled}
+              icon="x"
               onPress={() => props.edit("removeGem", {})}
-            >
-              <Icon icon={X} size={14} class="text-muted-foreground" />
-            </Button>
+            />
           </If>
         </PobHover>
       </View>

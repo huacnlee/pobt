@@ -1,5 +1,6 @@
-# Checks pull requests and main: the Rust crate and the TSX type check (`nsh check`), and the Rust tests, side by
-# side: each builds the crate its own way (`cargo check` and nsh's describe program; the test profile).
+# Checks pull requests and main: the Rust crate and the TSX type check (`nsh check`), the Rust tests, and the
+# market's computations (Bun), side by side: each builds the crate its own way (`cargo check` and nsh's describe
+# program; the test profile).
 name: CI
 on:
   push:
@@ -86,3 +87,13 @@ jobs:
           # The dependencies unoptimized (Cargo.toml's -O2 is for running the app): they build in a fraction of the
           # time, and the tests take a second either way.
           cargo test --lib --manifest-path ext/pobt-native/Cargo.toml --config 'profile.dev.package."*".opt-level=0'
+
+  # The market's computations (src/market/core): plain TypeScript with no NSH in it, on Bun.
+  market:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.4"
+      - run: bun test src/market/core

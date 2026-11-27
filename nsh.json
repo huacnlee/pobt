@@ -24,5 +24,33 @@
   "dependencies": {
     "nsh-icon": "^0.2.2",
     "nsh-icon-lucide": "^0.2.1"
+  },
+  "capabilities": {
+    "network": {
+      "hosts": [
+        "poe.ninja",
+        "web.poecdn.com"
+      ]
+    },
+    "openUrl": {
+      "schemes": [
+        "https",
+        "http"
+      ]
+    },
+    "application": true,
+    "notifications": true,
+    "clipboard": true,
+    "homeDir": true,
+    "fs": {
+      "read": [
+        "${homeDir}",
+        "${dataDir}"
+      ],
+      "write": [
+        "${homeDir}",
+        "${dataDir}"
+      ]
+    }
   }
 }

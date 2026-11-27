@@ -49,6 +49,20 @@ test("opens the characters page from the Tools menu, and back", async () => {
   await home(app);
 });
 
+test("opens the market from the Tools menu, and back", async () => {
+  // No poe.ninja here: the market says so, with its sections there all the same.
+  const app = await open("../App.tsx", { width: 1280, height: 820, network: { "https://poe.ninja/*": () => ({ error: "offline" }) } });
+  await app.press("text:工具");
+  await app.press("text:市场与过滤器");
+  await app.waitFor("id:nav-opportunities");
+  // offline with nothing kept, in the title bar, in the launcher's language
+  await app.waitFor("text:离线：连不上 poe.ninja", { timeout: 15000 });
+  await app.press("id:nav-filter");
+  await app.waitFor("id:page-filter");
+  await app.press("text:返回主界面");
+  await home(app);
+});
+
 test("explains how to get the POESESSID", async () => {
   const app = await open("../App.tsx", { width: 1280, height: 820 });
   await app.press("text:工具");

@@ -1,7 +1,7 @@
 // A control of Path of Building's, drawn with POBT's own: a drop-down as a Select, an edit box as a text field, a check
 // box as a Checkbox. Acting on it acts on POB's control, so POB's own handler makes the change.
 import { signal } from "nsh";
-import { Checkbox, Select, TextField } from "../ui";
+import { Checkbox, Select, Input } from "../ui";
 import { plain } from "./ColoredText";
 import { tr } from "./i18n";
 import { act, type Control } from "./session";
@@ -32,14 +32,14 @@ export function PobControl(props: {
     <If when={props.control?.shown}>
       {props.control?.kind === "list" ? (
         <Select
-          accessibilityLabel={props.label}
-          items={(props.control?.items ?? []).map((title, i) => ({ value: String(i + 1), title: tr(plain(title)) }))}
+          label={props.label}
+          options={(props.control?.items ?? []).map((title, i) => ({ value: String(i + 1), title: tr(plain(title)) }))}
           value={props.control?.sel ? String(props.control.sel) : null}
           onChange={(v) => send(Number(v))}
           class={props.class}
         />
       ) : props.control?.kind === "edit" ? (
-        <TextField
+        <Input
           accessibilityLabel={props.label}
           value={draft() ?? props.control?.text ?? ""}
           placeholder={props.control?.placeholder ?? undefined}
@@ -51,7 +51,7 @@ export function PobControl(props: {
           class={props.class}
         />
       ) : props.control?.kind === "check" ? (
-        <Checkbox accessibilityLabel={props.label} checked={!!props.control?.checked} onChange={(on) => send(on)} />
+        <Checkbox hideLabel label={props.label} checked={!!props.control?.checked} onChange={(on) => send(on)} />
       ) : null}
     </If>
   );

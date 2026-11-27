@@ -34,6 +34,8 @@ POBT links its own LuaJIT and stands in for the modules POB uses (lcurl, lzip, l
 | `ext/pobt-native/src/ai.rs`, `src/analysis.ts` | A build analysed by Claude Code or Codex found on the PATH: the build boiled down (POB's stats, skills, items, configuration), given to the agent on stdin with no tools, its JSON report by dimension; the launcher's Analysis page |
 | `ext/pobt-native/src/reverse.rs` | The dictionary the other way: Tencent's Chinese items back to the English POB reads |
 | `src/App.tsx`, `src/gate.ts`, `src/accounts.ts` | The launcher, its backdrop shader, the update check and the Characters page (`App.tsx` mounts it) |
+| `src/ui/` | The controls every screen but the launcher is drawn with (DESIGN.md "Components") |
+| `src/market/` | The market and loot filter (Tools menu): `core/` computes (poe.ninja's pages parsed, rows, opportunities and cycles, the overview, the filter) with no NSH in it; `data/` fetches, keeps and schedules (`engine.ts`); `pages/` and `ui/` show it; its words are `locales/` |
 
 ## Developing
 
@@ -45,6 +47,8 @@ installs the CLI of the commit `Cargo.lock` locks it to.
 ```sh
 nsh run                       # the app, rebuilt as you edit
 nsh check                     # cargo check, then type checks App.tsx
+nsh test                      # the TSX tests headless (run from the root, so the runner has the crates and the theme)
+bun test src/market/core      # the market's computations
 cargo test --lib --manifest-path ext/pobt-native/Cargo.toml  # the Rust tests (dictionary, installs)
 nsh package --target windows  # POBT.zip
 ```
@@ -61,6 +65,9 @@ POBT_DEMO=1 nsh run
 ```
 
 The website is in `website/` (Astro, Bun): `bun install && bun run dev`.
+
+The market's Chinese item names (`src/market/data/names.zh-CN.json`) are Tencent's, made by
+`bun scripts/tencent-names.ts`.
 
 The art in `assets/ui` and `icon.png` is drawn by scripts (`bun add @resvg/resvg-js` first): `bun scripts/ui-art.mjs` (the plaques), `bun scripts/title-art.mjs <Cinzel.ttf>` (the title) and `bun scripts/icon-art.mjs <Cinzel.ttf>` (the icon), with [Cinzel](https://github.com/google/fonts/tree/main/ofl/cinzel).
 

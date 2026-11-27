@@ -1,0 +1,430 @@
+language:
+  name: English
+
+common:
+  loading: Loading…
+  retry: Retry
+  back: Back
+  cancel: Cancel
+  save: Save
+  delete: Delete
+  updated: "%{league} · updated %{ago} · 1 div = %{divine} c"
+  navigation: Navigation
+  trend: Trend
+  loadFailed: Could not load
+  disclaimer: Prices come from poe.ninja, fetched at most once an hour while POBT is open, and change all the time; the game's live price is what counts. The opportunities here are estimates, not promises of profit.
+  notAffiliated: This product isn't affiliated with or endorsed by Grinding Gear Games in any way.
+  level: "level %{level}"
+
+nav:
+  tool: Market & loot filter
+  opportunities: Opportunities
+  market: Market
+  search: Prices
+  watchlist: Watchlist
+  ledger: Ledger
+  filter: Loot filter
+  settings: Settings
+
+category:
+  Currency: Currency
+  Fragment: Fragment
+  DivinationCard: Divination card
+  Scarab: Scarab
+  Oil: Oil
+  Essence: Essence
+  Fossil: Fossil
+  Resonator: Resonator
+  DeliriumOrb: Delirium orb
+  Omen: Omen
+  Tattoo: Tattoo
+  Artifact: Artifact
+  Runegraft: Runegraft
+  AllflameEmber: Allflame ember
+  UniqueWeapon: Unique weapon
+  UniqueArmour: Unique armour
+  UniqueAccessory: Unique accessory
+  UniqueJewel: Unique jewel
+  UniqueFlask: Unique flask
+  BaseType: Base type
+influence:
+  Shaper: Shaper
+  Elder: Elder
+  Crusader: Crusader
+  Redeemer: Redeemer
+  Hunter: Hunter
+  Warlord: Warlord
+kind:
+  currency: Currency
+  card: Cards
+  unique: Uniques
+  base: Bases
+  all: All kinds
+
+where:
+  exchange: Currency Exchange
+  trade: Trade site
+
+risk:
+  low: Low risk
+  medium: Medium risk
+  high: High risk
+
+tag:
+  below7d: Under its 7-day average
+  above7d: Over its 7-day average
+  volumeSpike: Volume spike
+  newHigh: 30-day high
+  newLow: 30-day low
+  thin: Few listings
+
+time:
+  withinHour: Within an hour
+  hours: "About %{n} h"
+  days: "About %{n} d"
+  justNow: just now
+  minutesAgo: "%{n} min ago"
+  hoursAgo: "%{n} h ago"
+  daysAgo: "%{n} d ago"
+
+error:
+  network: Could not reach poe.ninja; check your connection.
+  busy: poe.ninja asked to slow down; POBT tries again later.
+  server: "poe.ninja failed (%{status})"
+
+opp:
+  title: Opportunities
+  type: Type
+  all: All
+  dip: Dips
+  cycle: Cycles
+  risk: Risk
+  anyRisk: Any risk
+  upToMedium: Up to medium risk
+  lowOnly: Low risk only
+  dipTitle: "Buy the dip: %{item}"
+  cycleTitle: "Cycle: %{path}"
+  buyAt: "Buy on the %{where}"
+  sellAt: "Sell on the %{where}"
+  roiHours: "Return %{roi}% · %{hours}"
+  dailyVolume: "%{n} a day"
+  cycles: Arbitrage cycles
+  cyclesHint: "An item's rate in chaos and its rate in divines are a few percent apart every day; that is how the exchange quotes, not a gift. A cycle is only when they are clearly further apart than usual, on enough volume. About 0.5% a trade is already taken off."
+  noCycles: No cycles right now
+  noCyclesHint: "The two rates are as far apart as usual, which is common. The market updates at most every hour while POBT is open; look again later."
+  none: No opportunities match
+  noneHint: "Opportunities come only from what really trades on the exchange: steady for days, then down in the last two on more volume than usual, in chaos and in divines. A fall still going, a fall on no volume, and trade-site items with listings but no trades do not count. Days with none are normal."
+  expired: This opportunity has passed
+  expiredHint: After the market updated, it no longer qualifies. Go back to the list for new ones.
+  profit: Expected profit
+  roi: "Return %{roi}%"
+  stake: Put in
+  stakeHint: "%{qty} × %{price}"
+  target: Target price
+  sellTime: Time to sell
+  why: Why
+  viewChart: Price chart
+  steps: Steps
+  recordTitle: Once bought, write it in the ledger
+  qty: Quantity
+  paid: Price paid each
+  paidHint: The price it actually traded at in the game
+  record: Write in ledger
+  recorded: In the ledger
+  recordedToast: Written in the ledger; fill in the sale price there once sold
+  total: "%{total} c in all"
+  checkFirst: Check step 1 (bought) to write it down
+  viewLedger: Open ledger
+
+ring:
+  title: The loop
+  noLegs: "This cycle came from an older update with no rates for each trade; the next update draws its loop."
+  rate: "1 %{from} → %{rate} %{to}"
+  volume: "%{n} traded today · %{chaos}"
+  value: "1 c is now %{value} c"
+  net: "Back at %{value} c · net %{percent}"
+  perLoop: a loop
+  join: "; "
+  perChaos: "For each 1 c put in, after about 0.5% a trade."
+  usualNote: "The divine side's rate is today's, less the %{percent}% it is always dearer by."
+  label: "Arbitrage loop: %{steps}. Net %{percent} after fees."
+  step: "%{from} to %{to} at 1 to %{rate}, %{volume} traded today, worth %{value} c after"
+
+phrase:
+  steadyThenDrop: "Traded steadily around %{average} for %{days} days, then fell %{percent}% in the last two"
+  volumeOnDrop: "%{ratio}× the usual volume on the drop: people do buy at the low price"
+  tradedDaily: "About %{qty} trade a day as a rule"
+  pricedInPair: "It fell in %{item} too, not just because chaos rose"
+  fillChance: "From the volume, about a %{percent}% chance it all sells at the target"
+  risk:
+    low: Low risk
+    medium: Medium risk
+    high: High risk
+  cycleOffUsual: "The two rates are %{ratio}× further apart than usual"
+  cycleEdge: "About +%{percent}% after fees"
+  pairVolume: "The thinner side trades about %{price} a day; put in at most 2% of it"
+  spreadMayVanish: The rates are a day's average; the gap may be gone before you trade
+  buyOnExchange: "Buy %{qty} × %{item} on the Currency Exchange (Faustus) at %{price} each or less"
+  listAtTraded: "List it at %{price}: it traded at %{average} before the drop, less about %{percent}% for the spread"
+  cutLoss: "If it falls under %{price}, sell and take the loss rather than wait"
+  collectFromExchange: Once it trades, collect the chaos from Faustus
+  record: Check it off in POBT and write it in the ledger
+  cycleStart: "Trade %{price} for %{item} on the Currency Exchange"
+  cycleTrade: "Trade the %{from} for %{to}"
+  checkRate: Check the exchange's live rate before each step; stop once the spread is gone
+
+market:
+  title: Market
+  view: Market view
+  heatmap: Heat map
+  movers: Movers
+  anomalies: Anomalies
+  heatHint: Size is what trades a day (in chaos), color the 24-hour change. Point at a tile for its details.
+  heatDaily: "About %{value} c a day"
+  heatLabel: "Heat map of the %{n} items that trade most"
+  heatFoot: Only the items that trade most are drawn; Chaos Orb itself is not.
+  viewChart: Price chart
+  period: Period
+  hour: 1 hour
+  day: 24 hours
+  week: 7 days
+  hourOnly: Only the Currency Exchange has hourly changes
+  up: Up
+  down: Down
+  noData: No data
+  noAnomalies: No anomalies right now
+  anomaliesHint: Items more than 20% off their 7-day average, trading twice as much, or at a 30-day high or low, by what trades.
+
+search:
+  title: Prices
+  subtitle: "%{league} · %{count} %{kind} · updated %{ago}"
+  placeholder: Search by name
+  label: Search
+  item: Item
+  week: 7 days
+  price: Price
+  day: 24 hours
+  liquidity: Liquidity
+  sellTime: Time to sell
+  none: Nothing found
+  noneHint: Try another name, or another kind.
+  first200: Only the first 200 show; type more to narrow it down
+
+item:
+  trade: Trade site
+  addWatch: Add to watchlist
+  removeWatch: Remove from watchlist
+  added: Added to the watchlist
+  removed: Removed from the watchlist
+  alert: Set alert
+  alertOn: Alert on
+  alertTitle: Price alert
+  alertHint: "Now %{price} c. Checked while POBT is open; a notification comes when it gets there."
+  above: Up to (c) or more
+  below: Down to (c) or less
+  aboveLabel: Up to
+  belowLabel: Down to
+  alertOff: Turn off alert
+  alertSaved: Alert set
+  alertSavedQuiet: Alert set; notifications are off, so it shows only in the watchlist
+  forecast: Forecast
+  forecastShort: Too few days to forecast yet.
+  inDays: "In %{days} days, about"
+  range: Likely range
+  confidence: Confidence
+  lowConfidence: Low, take it lightly
+  forecastHint: A trend line through recent prices, carried forward; it knows nothing of patches or the league's rhythm. A guide, not a promise.
+  now: Price now
+  changes: 1 h / 24 h / 7 d
+  liquidity: Liquidity
+  dailyVolume: "%{n} traded a day"
+  listings: "%{n} listed"
+  sellTime: Time to sell
+  worth: Worth once sold
+  worthHint: After liquidity and the cost to sell
+  chart: Price and volume
+  compare: Compare season
+  noCompare: No comparison
+  compareWith: "Compare %{league}"
+  compareShort: Compare
+  depth: "Traded/listed %{n}"
+  chartLabel: "Price, %{n} days"
+  firstDay: Recording starts today; the curve shows from tomorrow.
+  zonesShort: Too few days to see the zones yet.
+  zoneCheap: It is in the cheap zone now
+  zoneDear: It is in the dear zone now
+  zoneNormal: It is in its usual zone now
+  zones: "%{where}: cheap ≤ %{cheap}, dear ≥ %{dear} (the 20% and 80% points of 30 days)."
+  fromSpark: Few days are kept yet, so the curve is poe.ninja's last 7 days; volume is recorded from today.
+  fromNinja: Few days are kept on this device yet, so the curve is poe.ninja's days of trades on the exchange.
+  seasonAligned: The comparison lines up by day of the league.
+  pairBuys: "Mostly traded for %{currency} on the exchange: 1 %{currency} buys about %{rate}."
+  pairSells: "Mostly traded for %{currency} on the exchange: 1 buys about %{rate} %{currency}."
+
+watch:
+  title: Watchlist
+  subtitle: "%{n} items · kept on this device"
+  check: Check alerts
+  checked: Refreshed; no new alert
+  fired: "%{n} new alerts"
+  empty: Nothing watched yet
+  emptyHint: Star an item on its page to watch it, then set alerts on its price.
+  toSearch: Look up prices
+  addedAt: "Added at %{price}"
+  noAlert: No alert
+  hit: "Hit %{thresholds}"
+  on: Alert on
+  off: Alert off
+  noNotifications: Notifications are off; hits show only here
+  remove: Remove from watchlist
+  alertTitleUp: "%{item} up to %{price} c"
+  alertTitleDown: "%{item} down to %{price} c"
+  alertBodyUp: "It reached your %{price} c or more"
+  alertBodyDown: "It reached your %{price} c or less"
+  oppAlerts: Opportunity alerts
+  oppDipHint: Notify when a new item falls well below its usual price
+  oppCycleHint: Notify when a new loop of currency trades ends with more than it started
+  oppMinProfit: Least profit
+  oppMaxRisk: Most risk
+  oppAlertsHint: Each new opportunity notifies once. Those already listed when you turn a kind on do not notify.
+  oppAlertTitle: "New: %{title}"
+  oppAlertBody: "About %{profit} c profit (%{roi}%) · %{risk}"
+  oppAlertMany: "%{n} new opportunities"
+  oppSwitch: "Alerts for new %{type}"
+
+ledger:
+  title: Ledger
+  subtitle: Your trades and what they made, kept on this device
+  add: Add a trade
+  realized: Realized profit
+  held: Held (cost)
+  closed: Sold
+  closedCount: "%{n}"
+  winRate: Share that made money
+  records: Trades
+  empty: No trades yet
+  emptyHint: Finish an opportunity's steps and press "Write in ledger", or add a trade yourself.
+  chartShort: Once sales span two days, the running profit shows here.
+  chartLabel: Running profit
+  sell: Sell
+  sellPrice: Price sold each
+  sellLabel: Price sold each
+  confirm: Done
+  noted: "Noted: %{profit}"
+  bought: "Bought %{day}"
+  sold: " · sold %{day}"
+  holding: Holding
+  deleteTitle: "Delete the %{item} trade?"
+  deleteHint: It cannot be undone.
+  deleteLabel: Delete trade
+  addTitle: Add a trade
+  addHint: Trades not from an opportunity can be written here too.
+  item: Item
+  itemPlaceholder: e.g. Divine Orb
+  qty: Quantity
+  buy: Price paid each
+  saved: Written in the ledger
+
+filter:
+  title: Loot filter
+  subtitle: "%{league} · from the prices of %{ago}"
+  intro: From the market's prices, what each drop is really worth once sold (how fast it sells counts), hiding what is not worth bending over for and lighting up the rest by worth. Made on this device from each update.
+  stage: Stage
+  custom: Custom
+  campaign: Campaign
+  maps: Maps
+  endgame: Endgame
+  farming: Farming
+  campaignHint: Levels 0–70, the story. Every currency shows, every unique, and what helps level (4-links, RGB items, flasks).
+  mapsHint: Levels 70–90, maps tier 1 to 16. A single currency under 1 c hides; cheap uniques show quietly.
+  endgameHint: Level 90 and on. Cheap cards and normal and magic gear hide; only drops of 5 c or more stand out.
+  farmingHint: A finished build farming what is worth a lot. Rares and worthless uniques hide too; only 20 c or more shows.
+  rules: "%{n} rules"
+  hideBelow: Hide what is worth less than
+  threshold: Threshold
+  tiers: How drops show
+  tier1: Largest text, red border, beam and sound
+  tier2: Large text, orange border, beam
+  tier3: Medium text, yellow border
+  tier4: Shown as usual
+  tier5: "Hidden: not worth bending over for"
+  atLeast: "≥ %{value}"
+  under: "< %{value}"
+  install: Install in the game
+  folder: The game's filter folder
+  folderCustom: Set to your folder
+  folderDefault: Leave empty for the usual place; fill in the path if the game is elsewhere
+  installed: "Installed to %{path}"
+  then: Then in the game
+  thenDesktop: "Open Options → UI → Item Filter and pick %{name}. Once installed, POBT writes it again with each update's prices."
+
+  autoUpdate: Kept current
+  autoUpdateHint: "Installed: %{name}. POBT writes it again whenever an update brings new prices (while POBT is open); press Reload in the game's filter options to pick it up."
+  autoUpdated: The loot filter was updated to the new prices
+  sound: Alert sounds
+  soundGame: Game's sounds
+  soundCustom: My own sounds
+  soundHint: Use sound files you already have in the game's filter folder (such as another filter's sound pack). Each update keeps this choice.
+  soundTier1: "1 div and up"
+  soundTier2: "20 c and up"
+  soundTier3: "5 c and up"
+  soundKeep: Game's sound
+  soundNone: No mp3, wav or ogg files in the filter folder or the folders in it. Copy your sound pack there first.
+  soundsFound: "%{n} sound files in the filter folder"
+update:
+  fetching: "Updating the market… %{done}/%{total}"
+  computing: Computing the market…
+  status: "%{league} · updated %{ago}"
+  failed: The last update failed
+  failedToast: "The update failed: %{error}"
+  fresh: Already up to date; poe.ninja is asked at most once an hour
+  done: The market is updated
+  refresh: Update the market
+  offline: "Offline · updated %{ago}"
+  offlineEmpty: "Offline: poe.ninja can't be reached"
+  offlineToast: Offline; showing the market kept on this device
+  stale: "The update failed · updated %{ago}"
+
+settings:
+  title: Settings
+  general: General
+  language: Language
+  languageHint: Item names follow it; in Chinese, the names on Tencent's servers
+  system: System
+  interval: How often alerts are checked
+  intervalHint: The market itself updates at most once an hour; alerts are checked only while POBT is open
+  minutes: "%{n} minutes"
+  hour: 1 hour
+  notifications: Notifications
+  notificationsHint: Tells you when a price reaches your alert or a new opportunity appears
+  allow: Allow notifications
+  allowed: Notifications allowed
+  denied: Notifications are off; turn them on in the system settings
+  data: Market data
+  noData: No market yet
+  updatedAt: "%{league} · updated %{ago}"
+  limit: "POBT asks poe.ninja at most once every %{minutes} minutes, and only while it is open."
+  nextNow: The next update may run now.
+  nextAt: "The next update may run in %{minutes} min."
+  updateNow: Update now
+  history: Price history kept
+  historyLeague: "%{league}: %{from} – %{to}"
+  historyNone: None yet; a day is kept each day POBT updates
+  location: Where it is kept
+  locationStorage: In the app's own storage
+  clear: Clear market data
+  clearTitle: Clear the market data?
+  clearHint: The prices, opportunities and price history kept on this device go. The watchlist, ledger and settings stay.
+  clearAction: Clear
+  cleared: The market data was cleared
+  cache: Cache
+  cacheSize: "%{size} kept"
+  cacheHint: poe.ninja's pages as they came and the item pictures, so a start needs no network and an offline window still shows the market. Within the hour nothing is asked again; after it, only what changed is downloaded.
+  clearCache: Clear cache
+  clearCacheTitle: Clear the cache?
+  clearCacheHint: poe.ninja's pages and the item pictures kept go; the next update downloads them again. The market and price history stay.
+  cacheCleared: The cache was cleared
+  footnote: POBT reads only public market prices from poe.ninja and keeps everything on this device; there is no account. It never reads the game's memory or trades for you.
+
+names:
+  foulborn: "Foulborn %{name}"

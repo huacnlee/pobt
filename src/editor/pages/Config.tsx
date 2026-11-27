@@ -2,9 +2,8 @@
 // options, which of them affect the build, which are modified or invalid and what their tooltips say are POB's.
 // Changes go through POB's own controls, so POB's handlers make them.
 import { cleanup, computed, resource, Scroll, signal, View } from "nsh";
-import { Button, Checkbox, EmptyState, HoverCard, Panel, Select, Text, TextField } from "../../ui";
+import { Button, Checkbox, Empty, HoverCard, Card, Select, Text, Input } from "../../ui";
 import { WASH } from "../../ui/motion";
-import { RotateCcw } from "nsh-icon-lucide";
 import { ColoredText, plain } from "../ColoredText";
 import { type TipLine, TipLines } from "../PobTip";
 import { page } from "../BuildEditor";
@@ -172,14 +171,14 @@ export function ConfigPage() {
   const sets = () => (data()?.sets ?? []).map((title, i) => ({ value: String(i + 1), title: tr(title) }));
 
   return (
-    <If when={build.open()} else={<EmptyState title={t("noBuild")} />}>
-      <If when={view()} else={<EmptyState title={data.error() ? String((data.error() as Error).message ?? data.error()) : t("calculating")} />}>
+    <If when={build.open()} else={<Empty class="flex-1" title={t("noBuild")} />}>
+      <If when={view()} else={<Empty class="flex-1" title={data.error() ? String((data.error() as Error).message ?? data.error()) : t("calculating")} />}>
         {(v) => (
           <View class="flex-1">
             <View class="flex-row flex-wrap items-center gap-x-4 gap-y-2 border-b border-border px-4 py-3">
-              <TextField value={q()} onChange={(x) => q.set(x)} placeholder={s("filter")} accessibilityLabel={s("filter")} class="w-56" />
-              <Checkbox checked={modOnly()} onChange={(on) => modOnly.set(on)} label={s("modifiedOnly")} accessibilityLabel={s("modifiedOnly")} />
-              <Checkbox checked={showAll()} onChange={(on) => showAll.set(on)} label={s("showAll")} accessibilityLabel={s("showAll")} />
+              <Input value={q()} onChange={(x) => q.set(x)} placeholder={s("filter")} accessibilityLabel={s("filter")} class="w-56" />
+              <Checkbox checked={modOnly()} onChange={(on) => modOnly.set(on)} label={s("modifiedOnly")} />
+              <Checkbox checked={showAll()} onChange={(on) => showAll.set(on)} label={s("showAll")} />
               <View class="flex-1" />
               <If when={sets().length > 1}>
                 <View class="flex-row items-center gap-2">
@@ -187,12 +186,12 @@ export function ConfigPage() {
                     {s("configSet")}
                   </Text>
                   <Select
-                    items={sets()}
+                    options={sets()}
                     value={String(data()?.activeSet ?? 1)}
                     onChange={(i) => {
                       if (Number(i) !== data()?.activeSet) void change("config.selectSet", { index: Number(i) });
                     }}
-                    accessibilityLabel={s("configSet")}
+                    label={s("configSet")}
                     class="w-44"
                   />
                 </View>
@@ -203,7 +202,7 @@ export function ConfigPage() {
             </View>
             <Scroll class="flex-1" contentClass="gap-3 p-4">
               <If when={v().most.length}>
-                <Panel title={s("mostUsed")}>
+                <Card bodyClass="" title={s("mostUsed")}>
                   <View class="flex-row gap-3 py-1">
                     <Each of={[0, 1]}>
                       {(c) => (
@@ -215,9 +214,9 @@ export function ConfigPage() {
                       )}
                     </Each>
                   </View>
-                </Panel>
+                </Card>
               </If>
-              <If when={columns()[0].length || columns()[1].length} else={<EmptyState title={s("noMatch")} />}>
+              <If when={columns()[0].length || columns()[1].length} else={<Empty class="flex-1" title={s("noMatch")} />}>
                 <View class="flex-row items-start gap-3">
                   <Each of={[0, 1]}>
                     {(c) => (
@@ -240,7 +239,8 @@ export function ConfigPage() {
 
 function SectionPanel(props: { section: SectionView; showAll: boolean }) {
   return (
-    <Panel
+    <Card
+      bodyClass=""
       title={tr(props.section.name)}
       actions={
         <Text variant="caption" tone="muted">
@@ -266,7 +266,7 @@ function SectionPanel(props: { section: SectionView; showAll: boolean }) {
           </Text>
         </If>
       </View>
-    </Panel>
+    </Card>
   );
 }
 
@@ -306,7 +306,7 @@ function OptionRow(props: { option: OptionView }) {
           <Button
             variant="ghost"
             size="sm"
-            icon={RotateCcw}
+            icon="rotate-ccw"
             accessibilityLabel={`${s("reset")}: ${name()}`}
             tooltip={s("reset")}
             onPress={() => void change("config.reset", { var: key })}
@@ -314,21 +314,21 @@ function OptionRow(props: { option: OptionView }) {
           />
         </If>
         {kind === "check" ? (
-          <Checkbox checked={!!ctl().checked} onChange={(on) => set(on, { checked: on })} accessibilityLabel={name()} />
+          <Checkbox hideLabel checked={!!ctl().checked} onChange={(on) => set(on, { checked: on })} label={name()} />
         ) : kind === "list" ? (
           <Select
-            items={(ctl().items ?? []).map((title, i) => ({ value: String(i + 1), title: plain(tr(title)) }))}
+            options={(ctl().items ?? []).map((title, i) => ({ value: String(i + 1), title: plain(tr(title)) }))}
             value={ctl().sel ? String(ctl().sel) : null}
             onChange={(i) => {
               if (Number(i) !== ctl().sel) set(Number(i), { sel: Number(i) });
             }}
-            accessibilityLabel={name()}
+            label={name()}
             class="w-44"
           />
         ) : kind === "edit" && row().type === "text" ? (
-          <TextField value={ctl().text ?? ""} onChange={(x) => set(x, { text: x }, true)} accessibilityLabel={name()} class="w-44" />
+          <Input value={ctl().text ?? ""} onChange={(x) => set(x, { text: x }, true)} accessibilityLabel={name()} class="w-44" />
         ) : kind === "edit" ? (
-          <TextField
+          <Input
             value={ctl().text ?? ""}
             onChange={(x) => {
               const text = numberText(row().type, x);

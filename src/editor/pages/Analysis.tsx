@@ -5,7 +5,7 @@ import { Clipboard, effect, signal, untracked, View } from "nsh";
 import { Pob } from "pobt/native";
 import { type Agent, AGENT_SITES, type AiProgress, analysisStrings, reportText, whenText } from "../../analysis";
 import { AnalysisFailed, AnalysisReport, AnalysisRunning, PANEL, watchAnalysis } from "../../AnalysisView";
-import { Button, Segmented, Text, TextField } from "../../ui";
+import { Button, Segmented, Text, Input } from "../../ui";
 import { BODY, C } from "../../ui/launcher";
 import { language } from "../i18n";
 import { build, exportCode } from "../session";
@@ -93,8 +93,8 @@ export function AnalysisPage() {
           }
         >
           <Text tone="muted">{s().agent}</Text>
-          <Segmented items={agents().map((a) => ({ key: a.id, label: a.name }))} value={agent()} onChange={(k) => agent.set(k)} accessibilityLabel={s().agent} />
-          <TextField value={question()} onChange={(v) => question.set(v)} onSubmit={() => void analyse()} placeholder={s().questionHint} accessibilityLabel={s().question} class="flex-1" />
+          <Segmented items={agents().map((a) => ({ value: a.id, label: a.name }))} value={agent()} onChange={(k) => agent.set(k)} label={s().agent} />
+          <Input value={question()} onChange={(v) => question.set(v)} onSubmit={() => void analyse()} placeholder={s().questionHint} accessibilityLabel={s().question} class="flex-1" />
           <Button variant="primary" label={kept() ? s().again : s().analyse} disabled={running()} onPress={() => void analyse()} />
         </If>
       </View>

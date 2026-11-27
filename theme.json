@@ -3,7 +3,9 @@
     "theme": {
       "radius": "6px",
       "font-display": "Cinzel, Microsoft YaHei, Malgun Gothic, serif",
-      "font-sans": "Microsoft YaHei, Malgun Gothic, Segoe UI, system-ui"
+      "font-sans": "Microsoft YaHei, Malgun Gothic, Segoe UI, system-ui",
+      "radius-sm": "4px",
+      "radius-lg": "6px"
     },
     "light": {
       "background": "#f4f1ea",
@@ -45,7 +47,18 @@
       "banner": "#4a0f0d",
       "banner-hi": "#7a1d16",
       "banner-foreground": "#f6e6c2",
-      "gold": "#dcc792"
+      "gold": "#dcc792",
+      "up": "#b3311f",
+      "down": "#2f7d32",
+      "chart-1": "#86652b",
+      "chart-2": "#3f6fbf",
+      "chart-3": "#7d55b8",
+      "chart-4": "#2f7d32",
+      "chart-5": "#b3311f",
+      "heat-up": "#e7b9ae",
+      "heat-flat": "#ebe5d9",
+      "heat-down": "#b9dcb9",
+      "chrome": "#07080a"
     },
     "dark": {
       "background": "#0b0c0f",
@@ -87,7 +100,18 @@
       "banner": "#4a0f0d",
       "banner-hi": "#7a1d16",
       "banner-foreground": "#f6e6c2",
-      "gold": "#dcc792"
+      "gold": "#dcc792",
+      "up": "#e0604a",
+      "down": "#7cc47f",
+      "chart-1": "#c9a45c",
+      "chart-2": "#6f9be8",
+      "chart-3": "#b08be0",
+      "chart-4": "#7cc47f",
+      "chart-5": "#e0604a",
+      "heat-up": "#8a2f22",
+      "heat-flat": "#24242b",
+      "heat-down": "#2f6b33",
+      "chrome": "#07080a"
     }
   }
 }

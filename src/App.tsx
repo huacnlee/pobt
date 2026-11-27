@@ -1,4 +1,5 @@
-import { Clipboard, Image, Scroll, Shader, signal, Text, View, type ViewStyle } from "nsh";
+import { Clipboard, Image, type JSX, Scroll, Shader, signal, Text, View, type ViewStyle } from "nsh";
+import { t as marketT } from "nsh/i18n";
 import { currentWindow } from "nsh/desktop";
 import { checkForUpdate, downloadUpdate, installAndRestart, installOnQuit, shellInfo, type AppUpdate } from "nsh/updater";
 import { Input, Menu, MenuItem, MenuSeparator } from "nsh/base";
@@ -8,8 +9,10 @@ import { GATE } from "./gate";
 import { BODY, BrassButton as Button, C, DISPLAY, ENGRAVED, Gate, GoldCheckbox, GoldRule as Rule, Plaque, PressButton, PrimaryButton, textIn } from "./ui/launcher";
 import { BuildEditor, editorBack, editorBackLabel } from "./editor/BuildEditor";
 import { Icon } from "nsh-icon";
-import { Check, ChevronDown, ChevronLeft, ChevronRight, X } from "nsh-icon-lucide";
+import { ChevronDown, ChevronLeft, ChevronRight } from "nsh-icon-lucide";
 import { t as editorT, useLanguage } from "./editor/i18n";
+import { MarketStatus, MarketView } from "./market/Shell";
+import { Toaster, toast } from "./ui";
 import {
   accountLabel,
   accountStrings,
@@ -222,6 +225,7 @@ const UI: Record<string, Strings> = {
 const editorLabel = () => (void useLanguageOnce(), editorT("goPob"));
 const legacyLabel = () => (void useLanguageOnce(), editorT("legacy"));
 const launcherLabel = () => (void useLanguageOnce(), editorT("launcher"));
+const marketLabel = () => (void useLanguageOnce(), marketT("nav.tool"));
 let languageSet: string | null | undefined;
 /** Puts the build editor in the launcher's language (its dictionary loads off the UI thread). */
 function useLanguageOnce() {
@@ -546,7 +550,10 @@ function TitleBar(props: {
   backLabel?: string;
   onCharacters?: () => void;
   onAnalysis?: () => void;
+  onMarket?: () => void;
   onEditor?: () => void;
+  /** What shows at its end in place of the version (the market's state). */
+  end?: JSX.Element;
   /** The build editor's: the way to the classic (Lua) Path of Building's launcher. */
   onLegacy?: () => void;
   /** The label of `onLegacy`'s menu item. */
@@ -653,6 +660,7 @@ function TitleBar(props: {
           >
             <CardMenuItem label={accountStrings(currentLanguage()).open} onSelect={() => open()()} />
             <If when={props.onAnalysis}>{(analyse) => <CardMenuItem label={analysisStrings(currentLanguage()).open} onSelect={() => analyse()()} />}</If>
+            <If when={props.onMarket}>{(market) => <CardMenuItem label={marketLabel()} onSelect={() => market()()} />}</If>
             <If when={props.onEditor}>
               {(editor) => (
                 <>
@@ -673,6 +681,7 @@ function TitleBar(props: {
         )}
       </If>
       <View style={{ flex: 1 }} />
+      {props.end}
       {/* The update and the packaged version, on the launcher only; a development run has no version to show. */}
       <If when={!props.solid}>
         <UpdateBadge t={props.t} />
@@ -684,7 +693,7 @@ function TitleBar(props: {
   );
 }
 
-function Launcher(props: { onStart: () => void; onCharacters: () => void; onAnalysis: () => void; onEditor: () => void }) {
+function Launcher(props: { onStart: () => void; onCharacters: () => void; onAnalysis: () => void; onMarket: () => void; onEditor: () => void }) {
   const settings = signal<Settings>(JSON.parse(Pob.settings()));
   const available = new Set<string>(JSON.parse(Pob.languages()).map((l: { value: string }) => l.value));
   const languages = LANGUAGES.filter((l) => l.value === null || available.has(l.value));
@@ -758,7 +767,7 @@ function Launcher(props: { onStart: () => void; onCharacters: () => void; onAnal
     <View style={{ flex: 1, backgroundColor: C.bg }}>
       <Gate />
 
-      <TitleBar t={t} onCharacters={props.onCharacters} onAnalysis={props.onAnalysis} onEditor={props.onEditor} />
+      <TitleBar t={t} onCharacters={props.onCharacters} onAnalysis={props.onAnalysis} onMarket={props.onMarket} onEditor={props.onEditor} />
 
       <View style={{ flex: 1, paddingHorizontal: 72, paddingBottom: 16, gap: 24, justifyContent: "center" }}>
         {/* Title */}
@@ -839,73 +848,9 @@ function Launcher(props: { onStart: () => void; onCharacters: () => void; onAnal
 }
 
 // What the app has to say, as a toast in the bottom right corner of every screen for a while (an error in red, for
-// longer): `say` shows one. It slides in and fades in, and fades out before it goes.
-const toast = signal<{ text: string; error: boolean } | null>(null);
-const toastShown = signal(false);
-let toastTimer: ReturnType<typeof setTimeout> | undefined;
-let toastGone: ReturnType<typeof setTimeout> | undefined;
+// longer): `say` shows one, in the Toaster at the root (src/ui/toast.tsx).
 function say(text: string, error = false) {
-  clearTimeout(toastTimer);
-  clearTimeout(toastGone);
-  toast.set({ text, error });
-  // Shown a frame after it is there, so it moves in from where it was hidden.
-  setTimeout(() => toastShown.set(true), 16);
-  toastTimer = setTimeout(hideToast, error ? 6000 : 3500);
-}
-function hideToast() {
-  clearTimeout(toastTimer);
-  toastShown.set(false);
-  toastGone = setTimeout(() => toast.set(null), 260);
-}
-
-/** The toast: in the bottom right corner; a press closes it. */
-function Toast() {
-  return (
-    <If when={toast()}>
-      {(t) => (
-        <View
-          role="alert"
-          onPress={hideToast}
-          style={{
-            position: "absolute",
-            right: 24,
-            bottom: 24,
-            maxWidth: 460,
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 10,
-            paddingHorizontal: 16,
-            paddingVertical: 12,
-            backgroundColor: "rgba(10,8,6,0.95)",
-            borderWidth: 1,
-            borderColor: t().error ? C.red : C.trimHi,
-            boxShadow: "0 10px 30px rgba(0,0,0,0.7)",
-            opacity: toastShown() ? 1 : 0,
-            transform: [{ translateX: toastShown() ? 0 : 40 }],
-            transitionProperty: "opacity, transform",
-            transitionDuration: 240,
-            transitionTimingFunction: "ease-out",
-          }}
-        >
-          {/* A check when it went well, a cross when it did not */}
-          <View
-            style={{
-              width: 20,
-              height: 20,
-              borderRadius: 10,
-              borderWidth: 1,
-              borderColor: t().error ? C.red : C.goldHi,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Icon icon={t().error ? X : Check} size={12} strokeWidth={3} class={textIn(t().error ? C.red : C.goldHi)} />
-          </View>
-          <Text style={{ flexShrink: 1, fontFamily: BODY, fontSize: 13, color: C.text }}>{t().text}</Text>
-        </View>
-      )}
-    </If>
-  );
+  toast(text, error ? "error" : "success");
 }
 
 /** A link in the text, as a help: underlined, lit under the pointer. */
@@ -1776,10 +1721,13 @@ export function App() {
   };
   // The Characters page, over whatever shows: the launcher, or Path of Building, which goes on under it.
   const characters = signal(false);
-  const openCharacters = () => (analysis.set(false), characters.set(true));
+  const openCharacters = () => (analysis.set(false), market.set(false), characters.set(true));
   // The Analysis page, as the Characters page is.
   const analysis = signal(false);
-  const openAnalysis = () => (characters.set(false), analysis.set(true));
+  const openAnalysis = () => (characters.set(false), market.set(false), analysis.set(true));
+  // The market (src/market), as the Characters page is; in the launcher's language.
+  const market = signal(false);
+  const openMarket = () => (useLanguageOnce(), characters.set(false), analysis.set(false), market.set(true));
   // The launcher is the way in: Start opens POBT's build editor (it runs the chosen game's Path of Building with no
   // window), or, with "classic" checked, the classic Lua Path of Building. The editor's Tools menu goes back to it.
   // POBT_EDITOR=1 opens the editor at once (development: POBT_BUILD names a build file to open).
@@ -1789,6 +1737,7 @@ export function App() {
     useLanguageOnce();
     characters.set(false);
     analysis.set(false);
+    market.set(false);
     editor.set(true);
   };
   return (
@@ -1796,16 +1745,16 @@ export function App() {
       <If
         when={running()}
         else={
-          <If when={editor()} else={<Launcher onStart={start} onCharacters={openCharacters} onAnalysis={openAnalysis} onEditor={openEditor} />}>
+          <If when={editor()} else={<Launcher onStart={start} onCharacters={openCharacters} onAnalysis={openAnalysis} onMarket={openMarket} onEditor={openEditor} />}>
             <View style={{ flex: 1 }}>
-              <TitleBar t={t} solid onBack={() => editorBack() || editor.set(false)} backLabel={editorBackLabel()} onCharacters={openCharacters} onAnalysis={openAnalysis} onLegacy={() => editor.set(false)} legacyText={launcherLabel()} />
+              <TitleBar t={t} solid onBack={() => editorBack() || editor.set(false)} backLabel={editorBackLabel()} onCharacters={openCharacters} onAnalysis={openAnalysis} onMarket={openMarket} onLegacy={() => editor.set(false)} legacyText={launcherLabel()} />
               <BuildEditor file={(Pob.devEnv("POBT_BUILD") || undefined)} game={(JSON.parse(Pob.settings()) as Settings).game === "Poe2" ? "poe2" : "poe1"} onBack={() => editor.set(false)} />
             </View>
           </If>
         }
       >
         <View style={{ flex: 1 }}>
-          <TitleBar t={t} solid onBack={back} onCharacters={openCharacters} onAnalysis={openAnalysis} />
+          <TitleBar t={t} solid onBack={back} onCharacters={openCharacters} onAnalysis={openAnalysis} onMarket={openMarket} />
           <View style={{ flex: 1 }}>
             <PobCanvas style={{ flex: 1 }} />
             <If when={!progress().loaded}>
@@ -1824,7 +1773,13 @@ export function App() {
           <Analysis settings={JSON.parse(Pob.settings()) as Settings} t={t} onBack={() => analysis.set(false)} />
         </View>
       </If>
-      <Toast />
+      <If when={market()}>
+        <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
+          <TitleBar t={t} solid onBack={() => market.set(false)} onCharacters={openCharacters} onAnalysis={openAnalysis} end={<MarketStatus />} />
+          <MarketView />
+        </View>
+      </If>
+      <Toaster />
     </View>
   );
 }

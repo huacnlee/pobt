@@ -1,7 +1,7 @@
 // POBT's own build editor on the official Path of Building, running with no window: POB's builds (shared with POB),
 // then a build with its sidebar and pages. Every number is POB's; the screens are POBT's.
 import { Clipboard, type JSX, signal, View } from "nsh";
-import { Button, EmptyState, Modal, ProgressBar, TabBar, Text, TextArea, TextField, type TabItem } from "../ui";
+import { Button, Empty, Modal, ProgressBar, Tabs, Text, TextArea, Input, type TabItem } from "../ui";
 import { BuildList } from "./BuildList";
 import { FADE } from "../ui/motion";
 import { t, tr } from "./i18n";
@@ -49,7 +49,7 @@ function Starting() {
           </View>
         }
       >
-        <EmptyState title={t("dataFailed")} detail={service.error()} />
+        <Empty class="flex-1" title={t("dataFailed")} description={service.error()} />
       </If>
     </View>
   );
@@ -121,9 +121,9 @@ function SaveAs(props: { open: boolean; onClose: () => void }) {
   return (
     <Modal
       open={props.open}
-      onClose={props.onClose}
+      onOpenChange={(open) => open || props.onClose()}
       title={t("saveAs")}
-      actions={
+      footer={
         <View class="flex-row justify-end gap-2">
           <Button label={tr("Cancel")} variant="ghost" onPress={props.onClose} />
           <If when={exists()}>
@@ -134,7 +134,7 @@ function SaveAs(props: { open: boolean; onClose: () => void }) {
       }
     >
       <View class="gap-2">
-        <TextField
+        <Input
           value={name()}
           onChange={(v) => {
             name.set(v);
@@ -225,13 +225,13 @@ const PAGES: Record<PageKey, () => JSX.Element> = {
 
 function BuildView() {
   const tabs = (): TabItem<PageKey>[] => [
-    { key: "tree", label: tr("Tree") },
-    { key: "skills", label: tr("Skills") },
-    { key: "items", label: tr("Items") },
-    { key: "calcs", label: tr("Calcs") },
-    { key: "analysis", label: t("aiTab") },
-    { key: "config", label: tr("Configuration") },
-    { key: "notes", label: tr("Notes") },
+    { value: "tree", label: tr("Tree") },
+    { value: "skills", label: tr("Skills") },
+    { value: "items", label: tr("Items") },
+    { value: "calcs", label: tr("Calcs") },
+    { value: "analysis", label: t("aiTab") },
+    { value: "config", label: tr("Configuration") },
+    { value: "notes", label: tr("Notes") },
   ];
   return (
     <View class="flex-1">
@@ -239,7 +239,7 @@ function BuildView() {
       <View class="flex-1 flex-row">
         <Sidebar />
         <View class="flex-1">
-          <TabBar items={tabs()} value={page()} onChange={(k) => page.set(k)} accessibilityLabel="Build" class="h-9 border-b border-border px-2" />
+          <Tabs items={tabs()} value={page()} onChange={(k) => page.set(k)} label="Build" class="h-9 border-b border-border px-2" />
           <If when={build.error()}>
             <Text tone="destructive" variant="caption" class="px-3 py-1">
               {build.error()}

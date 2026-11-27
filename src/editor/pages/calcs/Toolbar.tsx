@@ -2,7 +2,7 @@
 // part, stages, mines, minion and minion skill the page calculates apart from the sidebar's main skill, and the
 // calculation mode), acted on as the user would act on them in POB; then the page's own search and "show all".
 import { type JSX, View } from "nsh";
-import { Checkbox, Text, TextField } from "../../../ui";
+import { Checkbox, Text, Input } from "../../../ui";
 import { tr } from "../../i18n";
 import { PobControl } from "../../PobControl";
 import type { CalcControl, SectionData } from "./data";
@@ -65,16 +65,16 @@ export function Toolbar(props: {
             }
           >
             <View class="h-8 justify-center self-end">
-              <Checkbox checked={props.showMinion} onChange={props.onShowMinion} accessibilityLabel={tr(e().label)} label={tr(e().label)} />
+              <Checkbox checked={props.showMinion} onChange={props.onShowMinion} label={tr(e().label)} />
             </View>
           </If>
         )}
       </Each>
       <View class="flex-1" />
       <View class="h-8 justify-center self-end">
-        <Checkbox checked={props.showAll} onChange={props.onShowAll} accessibilityLabel={s("showAll")} label={s("showAll")} />
+        <Checkbox checked={props.showAll} onChange={props.onShowAll} label={s("showAll")} />
       </View>
-      <TextField class="w-48 self-end" value={props.query} onChange={props.onQuery} placeholder={s("search")} accessibilityLabel={s("search")} />
+      <Input class="w-48 self-end" value={props.query} onChange={props.onQuery} placeholder={s("search")} accessibilityLabel={s("search")} />
     </View>
   );
 }

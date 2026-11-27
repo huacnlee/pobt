@@ -3,7 +3,7 @@
 // option is POB's, in POB's order), with POB's tooltip of the item it would make. What the window makes becomes POB's
 // display item, shown here with POB's "Add to build" / "Save", "Edit..." and "Cancel".
 import { resource, Scroll, signal, View } from "nsh";
-import { Button, Checkbox, Modal, Select, Text, TextArea, TextField } from "../../../ui";
+import { Button, Checkbox, Modal, Select, Text, TextArea, Input } from "../../../ui";
 import { plain } from "../../ColoredText";
 import { tr } from "../../i18n";
 import { build } from "../../session";
@@ -105,16 +105,16 @@ export function ItemWindow(props: { request: { what: WindowKind; n: number } | n
   return (
     <Modal
       open={!!props.request}
-      onClose={close}
+      onOpenChange={(open) => open || close()}
       title={title()}
       class="w-[620px]"
-      actions={
+      footer={
         <If
           when={popup()}
           else={
             <>
               <Button variant="ghost" label={tr("Cancel")} onPress={close} />
-              <Button variant="secondary" label={tr("Edit...")} disabled={busy() || !display()?.item} onPress={() => void run(() => openWindow("edit"))} />
+              <Button variant="default" label={tr("Edit...")} disabled={busy() || !display()?.item} onPress={() => void run(() => openWindow("edit"))} />
               <Button variant="primary" label={tr(display()?.inBuild ? "Save" : "Add to build")} disabled={!display()?.item} busy={busy()} onPress={() => void save()} />
             </>
           }
@@ -185,21 +185,21 @@ function Field(props: { control: PopupControl; onSet: (v: number | string | bool
       <If when={c().kind === "list"}>
         <Select
           class="flex-1"
-          accessibilityLabel={caption()}
+          label={caption()}
           value={c().sel ? String(c().sel) : null}
           onChange={(v) => props.onSet(Number(v))}
           searchable={(c().items?.length ?? 0) > 12}
-          items={(c().items ?? []).map((title, i) => ({ value: String(i + 1), title: tr(plain(title)) }))}
+          options={(c().items ?? []).map((title, i) => ({ value: String(i + 1), title: tr(plain(title)) }))}
         />
       </If>
       <If when={c().kind === "edit" && c().name === "edit"}>
         <TextArea value={draft()} onChange={type} accessibilityLabel={s("itemText")} placeholder={s("itemText")} autoFocus class="h-56 flex-1 font-mono" />
       </If>
       <If when={c().kind === "edit" && c().name !== "edit"}>
-        <TextField value={draft()} onChange={type} accessibilityLabel={caption()} placeholder={tr(c().placeholder ?? "")} class="flex-1" />
+        <Input value={draft()} onChange={type} accessibilityLabel={caption()} placeholder={tr(c().placeholder ?? "")} class="flex-1" />
       </If>
       <If when={c().kind === "check"}>
-        <Checkbox checked={!!c().checked} onChange={(on) => props.onSet(on)} accessibilityLabel={caption()} />
+        <Checkbox hideLabel checked={!!c().checked} onChange={(on) => props.onSet(on)} label={caption()} />
       </If>
     </View>
   );

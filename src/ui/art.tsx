@@ -17,7 +17,7 @@ export function Rule(props: { class?: string }) {
   return (
     <View class={`h-4 flex-row items-center ${props.class ?? ""}`}>
       <View class="h-0.5 flex-1 bg-linear-to-r from-transparent to-trim-hi" />
-      <View class="mx-1 size-2.5 rotate-45 border-2 border-trim-hi bg-jewel" />
+      <Jewel class="mx-1" />
       <View class="h-0.5 flex-1 bg-linear-to-l from-transparent to-trim-hi" />
     </View>
   );
@@ -30,4 +30,9 @@ export function Framed(props: { class?: string; children?: JSX.Element }) {
       <View class="flex-1 border border-trim/50">{props.children}</View>
     </View>
   );
+}
+
+/** A red diamond set in gold (the title bar's mark, the rule's jewel). */
+export function Jewel(props: { class?: string }) {
+  return <View class={`size-2.5 rotate-45 border-2 border-trim-hi bg-jewel ${props.class ?? ""}`} />;
 }

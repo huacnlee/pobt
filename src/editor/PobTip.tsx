@@ -2,7 +2,7 @@
 // their colour codes, each translated whole. POB's large font (a name) is a small bold heading, every other line the
 // smallest text, set tight, so a long tooltip fits on screen as POB's does.
 import { View } from "nsh";
-import { Divider } from "../ui";
+import { Separator } from "../ui";
 import { ColoredText } from "./ColoredText";
 
 /** One of POB's tooltip lines: text (with `^` colour codes) at POB's font size, or a rule. */
@@ -25,7 +25,7 @@ export function TipLines(props: { lines: TipLine[]; center?: boolean; class?: st
     <View class={`${props.center ? "items-center" : ""} ${props.class ?? ""}`}>
       <Each of={trimmed(props.lines)}>
         {(line) => (
-          <If when={!line().sep} else={<Divider class="my-0.5 self-stretch" />}>
+          <If when={!line().sep} else={<Separator class="my-0.5 self-stretch" />}>
             <ColoredText text={line().text ?? ""} class={`${props.center ? "text-center" : ""} ${lineClass(line().size)}`} />
           </If>
         )}

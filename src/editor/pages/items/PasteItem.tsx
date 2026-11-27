@@ -61,10 +61,10 @@ export function PasteItem(props: { open: boolean; onClose: () => void; onAdded: 
   return (
     <Modal
       open={props.open}
-      onClose={close}
+      onOpenChange={(open) => open || close()}
       title={s("pasteTitle")}
       class="w-[600px]"
-      actions={
+      footer={
         <>
           <Button variant="ghost" label={s("cancel")} onPress={close} />
           <Button variant="primary" label={chosen() ? s("addEquip") : s("add")} disabled={!item() || parsed.loading()} busy={busy()} onPress={() => void save()} />
@@ -78,10 +78,10 @@ export function PasteItem(props: { open: boolean; onClose: () => void; onAdded: 
           <Text>{s("equipIn")}</Text>
           <Select
             class="w-56"
-            accessibilityLabel={s("equipIn")}
+            label={s("equipIn")}
             value={chosen()}
             onChange={(v) => slot.set(v)}
-            items={[{ value: NO_SLOT, title: s("dontEquip") }, ...fits().map((f) => ({ value: f.name, title: tr(f.label) }))]}
+            options={[{ value: NO_SLOT, title: s("dontEquip") }, ...fits().map((f) => ({ value: f.name, title: tr(f.label) }))]}
           />
         </View>
       </If>

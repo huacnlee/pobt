@@ -1,11 +1,11 @@
 import { split, Text as NshText, type TextProps } from "nsh";
 
 export type TextVariant = "display" | "title" | "heading" | "body" | "label" | "caption" | "mono";
-export type TextTone = "default" | "muted" | "primary" | "warning" | "positive" | "negative" | "destructive";
+export type TextTone = "default" | "muted" | "primary" | "warning" | "positive" | "negative" | "up" | "down" | "destructive";
 
 const VARIANT: Record<TextVariant, string> = {
-  display: "font-(family-name:--font-display) text-2xl tracking-wide",
-  title: "font-(family-name:--font-display) text-lg tracking-wide",
+  display: "font-display text-2xl tracking-wide",
+  title: "font-display text-lg tracking-wide",
   heading: "text-sm font-semibold",
   body: "text-sm",
   label: "text-xs font-medium",
@@ -20,6 +20,9 @@ const TONE: Record<TextTone, string> = {
   warning: "text-warning",
   positive: "text-positive",
   negative: "text-negative",
+  // the market's rises and falls: up is red, down is green
+  up: "text-up",
+  down: "text-down",
   destructive: "text-destructive",
 };
 

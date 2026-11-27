@@ -19,3 +19,9 @@ export const GROW = "transition-all duration-360 ease-out motion-reduce:transiti
 export const POPUP_START = "opacity-0 scale-95";
 export const POPUP_END = "opacity-0 scale-95";
 export const POPUP = "transition duration-180 ease-out motion-reduce:transition-none";
+
+/** The popup surface every menu, select and popover shares (the popover box), with its motion. */
+export const popup = `min-w-48 rounded-(--radius) border border-border bg-popover p-1 shadow-lg ${POPUP}`;
+
+export const popupStarting = POPUP_START;
+export const popupEnding = POPUP_END;

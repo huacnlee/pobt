@@ -2,7 +2,7 @@
 // slots POB shows (equipment, flasks, the tree's jewel sockets) and every item of the build; the chosen one drawn as
 // POB's tooltip (stat comparisons included). Equipping, flasks and sets go through POB's own controls.
 import { resource, Scroll, signal, View } from "nsh";
-import { Badge, Button, EmptyState, FADE, ListRow, Panel, ProgressBar, Segmented, Select, Checkbox, Text } from "../../ui";
+import { Badge, Button, Empty, FADE, Row, Card, ProgressBar, Segmented, Select, Checkbox, Text } from "../../ui";
 import { GameArt } from "../art";
 import { plain } from "../ColoredText";
 import { tr } from "../i18n";
@@ -48,7 +48,7 @@ export function ItemsPage() {
   const width = signal(0);
   const wide = () => width() >= 1180;
   const allItems = () => (
-    <Panel title={`${s("allItems")} (${d()!.items.length})`}>
+    <Card bodyClass="" title={`${s("allItems")} (${d()!.items.length})`}>
       <View class="p-1">
         <If when={d()!.items.length} else={<Text tone="muted" class="p-2">{s("noItems")}</Text>}>
           <Each of={d()!.items} key={(i) => i.id}>
@@ -63,7 +63,7 @@ export function ItemsPage() {
           </Each>
         </If>
       </View>
-    </Panel>
+    </Card>
   );
   const isSelected = (sel: Selection) => {
     const cur = selection();
@@ -101,48 +101,48 @@ export function ItemsPage() {
 
   return (
     <View class="flex-1">
-      <If when={build.open()} else={<EmptyState title={s("loading")} />}>
+      <If when={build.open()} else={<Empty class="flex-1" title={s("loading")} />}>
         <View class="h-12 flex-row items-center gap-3 border-b border-border px-4">
           <Text variant="label" tone="muted">
             {tr("Item set:")}
           </Text>
           <Select
             class="w-60"
-            accessibilityLabel={s("itemSet")}
+            label={s("itemSet")}
             value={d()?.sets.sel ? String(d()!.sets.sel) : null}
             onChange={(v) => void setActiveSet(Number(v))}
-            items={(d()?.sets.items ?? []).map((title, i) => ({ value: String(i + 1), title: tr(title) }))}
+            options={(d()?.sets.items ?? []).map((title, i) => ({ value: String(i + 1), title: tr(title) }))}
           />
           <Text variant="label" tone="muted">
             {tr("Weapon Set:")}
           </Text>
           <Segmented
-            accessibilityLabel={s("weaponSet")}
+            label={s("weaponSet")}
             value={d()?.weaponSet === 2 ? "2" : "1"}
             onChange={(k) => void setWeaponSet(k === "2" ? 2 : 1)}
             items={[
-              { key: "1", label: "I" },
-              { key: "2", label: "II" },
+              { value: "1", label: "I" },
+              { value: "2", label: "II" },
             ]}
           />
           <View class="flex-1" />
           <If when={build.busy() || data.loading()}>
             <ProgressBar value={null} class="w-24" />
           </If>
-          <Button variant="secondary" size="md" label={tr("Craft item...")} onPress={() => making.set({ what: "craft", n: ++makes })} />
-          <Button variant="secondary" size="md" label={tr("Create custom...")} onPress={() => making.set({ what: "custom", n: ++makes })} />
-          <Button variant="secondary" size="md" label={s("paste")} onPress={() => pasting.set(true)} />
+          <Button variant="default" size="md" label={tr("Craft item...")} onPress={() => making.set({ what: "craft", n: ++makes })} />
+          <Button variant="default" size="md" label={tr("Create custom...")} onPress={() => making.set({ what: "custom", n: ++makes })} />
+          <Button variant="default" size="md" label={s("paste")} onPress={() => pasting.set(true)} />
         </View>
         <If when={data.error()}>
           <View class="border-b border-border bg-destructive/10 px-4 py-2">
             <Text tone="destructive">{`${s("failed")}: ${String(data.error())}`}</Text>
           </View>
         </If>
-        <If when={d()} else={<EmptyState title={data.error() ? s("failed") : s("loading")} />}>
+        <If when={d()} else={<Empty class="flex-1" title={data.error() ? s("failed") : s("loading")} />}>
           <View class="flex-1 flex-row" onLayout={(e) => width.set(e.bounds.size.width)}>
             {/* the slots, the build's items beside them (under them when there is no room), and what is chosen */}
             <Scroll class={wide() ? "w-[520px] shrink-0" : "flex-1"} contentClass="gap-3 p-4">
-              <Panel title={tr("Equipped items:").replace(/[:：]\s*$/, "")}>
+              <Card bodyClass="" title={tr("Equipped items:").replace(/[:：]\s*$/, "")}>
                 <View class="p-1">
                   <Each of={gear()} key={(x) => x.name}>
                     {(row) => (
@@ -156,10 +156,10 @@ export function ItemsPage() {
                     )}
                   </Each>
                 </View>
-              </Panel>
+              </Card>
               <If when={flasks().length}>
                 {/* PoE2 has charms in this row too ("Charm 1") */}
-                <Panel title={flasks().some((x) => /^Charm /.test(x.name)) ? s("flasksCharms") : s("flasks")}>
+                <Card bodyClass="" title={flasks().some((x) => /^Charm /.test(x.name)) ? s("flasksCharms") : s("flasks")}>
                   <View class="p-1">
                     <Each of={flasks()} key={(x) => x.name}>
                       {(row) => (
@@ -176,9 +176,10 @@ export function ItemsPage() {
                           <View class="w-6 items-center">
                             <If when={row().itemId > 0}>
                               <Checkbox
+                                hideLabel
                                 checked={row().active}
                                 disabled={build.busy()}
-                                accessibilityLabel={`${slotLabel(row())} ${s("active")}`}
+                                label={`${slotLabel(row())} ${s("active")}`}
                                 onChange={(on) => void setFlask(row().name, on)}
                               />
                             </If>
@@ -187,10 +188,10 @@ export function ItemsPage() {
                       )}
                     </Each>
                   </View>
-                </Panel>
+                </Card>
               </If>
               <If when={jewels().length}>
-                <Panel title={s("jewels")}>
+                <Card bodyClass="" title={s("jewels")}>
                   <View class="p-1">
                     <Each of={jewels()} key={(x) => x.name}>
                       {(row) => (
@@ -204,7 +205,7 @@ export function ItemsPage() {
                       )}
                     </Each>
                   </View>
-                </Panel>
+                </Card>
               </If>
               <If when={!wide()}>{allItems()}</If>
             </Scroll>
@@ -266,10 +267,10 @@ function SlotSelect(props: { slot: SlotInfo; itemOf: (id: number) => ItemInfo | 
   return (
     <Select
       class={props.class}
-      accessibilityLabel={props.label}
+      label={props.label}
       value={String(props.slot.itemId || 0)}
       onChange={(v) => void equip(props.slot, Number(v))}
-      items={choices()}
+      options={choices()}
       searchable={(props.slot.choices?.length ?? 0) > 8}
       triggerContent={
         <If when={props.itemOf(props.slot.itemId)} else={<Text tone="muted" class="text-sm">{s("empty")}</Text>}>
@@ -293,17 +294,18 @@ function SlotRow(props: {
   return (
     <ItemHover class={props.class} id={props.item?.id} rarity={rarityOf(props.item?.rarity)} slot={props.row.name}>
       <View class="flex-row items-center gap-2">
-        <ListRow
+        <Row
+          choose
           selected={props.selected}
           onPress={props.onPress}
-          accessibilityLabel={`${slotLabel(props.row)}: ${props.item ? tr(props.item.name) : s("empty")}`}
+          label={`${slotLabel(props.row)}: ${props.item ? tr(props.item.name) : s("empty")}`}
           class="w-40"
         >
           <ItemArt item={props.item} size={24} />
           <Text variant="caption" tone="muted" class="flex-1 truncate">
             {slotLabel(props.row)}
           </Text>
-        </ListRow>
+        </Row>
         <SlotSelect slot={props.row} itemOf={props.itemOf} label={slotLabel(props.row)} class="flex-1" />
       </View>
     </ItemHover>
@@ -314,7 +316,7 @@ function SlotRow(props: {
 function ItemRow(props: { item: ItemInfo; equipped: boolean; selected: boolean; onPress: () => void }) {
   return (
     <ItemHover id={props.item.id} rarity={rarityOf(props.item.rarity)}>
-      <ListRow selected={props.selected} onPress={props.onPress} accessibilityLabel={tr(props.item.name)}>
+      <Row choose selected={props.selected} onPress={props.onPress} label={tr(props.item.name)}>
         <ItemArt item={props.item} size={24} />
         <View class="flex-1 flex-row items-center gap-2">
           <Text class={`shrink truncate ${RARITY_TEXT[rarityOf(props.item.rarity)]}`}>{tr(props.item.title ?? props.item.name)}</Text>
@@ -327,7 +329,7 @@ function ItemRow(props: { item: ItemInfo; equipped: boolean; selected: boolean; 
         <If when={props.equipped}>
           <Badge label={s("equipped")} tone="primary" />
         </If>
-      </ListRow>
+      </Row>
     </ItemHover>
   );
 }
@@ -374,7 +376,7 @@ function Detail(props: {
               <SlotSelect slot={slot()} itemOf={props.itemOf} label={s("inSlot")} />
               <If when={slot().flask && slot().itemId > 0}>
                 <View class="flex-row items-center gap-2">
-                  <Checkbox checked={slot().active} disabled={build.busy()} accessibilityLabel={s("flaskActive")} onChange={(on) => void setFlask(slot().name, on)} />
+                  <Checkbox hideLabel checked={slot().active} disabled={build.busy()} label={s("flaskActive")} onChange={(on) => void setFlask(slot().name, on)} />
                   <Text>{s("flaskActive")}</Text>
                 </View>
               </If>
@@ -393,19 +395,18 @@ function Detail(props: {
                           onMouseEnter={() => props.onPreview(it().id)}
                         >
                           <ItemHover id={it().id} rarity={rarityOf(it().rarity)} slot={slot().name}>
-                            <ListRow
-                              pressOnRelease
+                            <Row
                               selected={slot().itemId === it().id}
                               onPress={() => void equip(slot(), it().id)}
-                              accessibilityLabel={tr(it().name)}
-                              accessibilityHint={s("compareHint")}
+                              label={tr(it().name)}
+                              hint={s("compareHint")}
                             >
                               <ItemArt item={it()} size={24} />
                               <Text class={`flex-1 truncate ${RARITY_TEXT[rarityOf(it().rarity)]}`}>{tr(it().name)}</Text>
                               <If when={slot().itemId === it().id}>
                                 <Badge label={s("equipped")} tone="primary" />
                               </If>
-                            </ListRow>
+                            </Row>
                           </ItemHover>
                         </View>
                       )}
@@ -429,14 +430,14 @@ function Detail(props: {
                 <If when={fitting().length}>
                   <Select
                     class="flex-1"
-                    accessibilityLabel={s("equipIn")}
+                    label={s("equipIn")}
                     placeholder={s("equipIn")}
                     value={null}
                     onChange={(name) => {
                       const slot = props.data.slots.find((x) => x.name === name);
                       if (slot) void equip(slot, it().id);
                     }}
-                    items={fitting()}
+                    options={fitting()}
                   />
                 </If>
               </View>

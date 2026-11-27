@@ -3,8 +3,7 @@
 // tree does (allocate the path, deallocate with dependants, change ascendancy, choose a mastery effect); the tooltip is
 // POB's own, stat changes included.
 import { computed, resource, Scroll, signal, View } from "nsh";
-import { Button, EmptyState, ListRow, Modal, Text, TextField, Icon } from "../../ui";
-import { TriangleAlert } from "nsh-icon-lucide";
+import { Button, Empty, Row, Modal, Text, Input, Icon } from "../../ui";
 import { ColoredText, plain } from "../ColoredText";
 import { t, tr } from "../i18n";
 import { PobControl } from "../PobControl";
@@ -219,7 +218,7 @@ export function TreePage() {
   const lines = (text: string) => text.split("\n").map((l) => tr(plain(l)));
 
   return (
-    <If when={build.open()} else={<EmptyState title={t("noBuild")} />}>
+    <If when={build.open()} else={<Empty class="flex-1" title={t("noBuild")} />}>
       <View class="flex-1">
         <View class="flex-row flex-wrap items-center gap-3 border-b border-border px-4 py-2">
           <PobControl
@@ -236,7 +235,7 @@ export function TreePage() {
             <ColoredText raw text={state()?.points ?? ""} class="font-mono text-xs" />
           </View>
           <View class="flex-1" />
-          <TextField value={query()} onChange={search} placeholder={tt("searchPlaceholder")} accessibilityLabel={tt("searchLabel")} class="w-64" />
+          <Input value={query()} onChange={search} placeholder={tt("searchPlaceholder")} accessibilityLabel={tt("searchLabel")} class="w-64" />
           <If when={query().trim()}>
             <Text variant="caption" tone="muted">
               {matchIds().length ? `${matchIds().length} ${tt("matches")}` : tt("noMatches")}
@@ -248,11 +247,11 @@ export function TreePage() {
         <If when={state()?.convert}>
           {(c) => (
             <View class="flex-row flex-wrap items-center gap-2 border-b border-border px-4 py-1.5" role="alert" accessibilityLiveRegion="polite">
-              <Icon icon={TriangleAlert} size={14} class="text-warning" />
+              <Icon name="triangle-alert" size="sm" tone="warning" />
               <Text variant="caption" tone="warning" class="flex-1">
                 {tr(plain(c().text))}
               </Text>
-              <Button size="sm" variant="secondary" label={tr(plain(c().allButton))} disabled={build.busy()} onPress={() => void convert({ all: true })} />
+              <Button size="sm" variant="default" label={tr(plain(c().allButton))} disabled={build.busy()} onPress={() => void convert({ all: true })} />
               <Button size="sm" variant="primary" label={tr(plain(c().button))} disabled={build.busy()} onPress={() => void convert({})} />
             </View>
           )}
@@ -262,7 +261,7 @@ export function TreePage() {
           <If
             when={model()}
             else={
-              <EmptyState title={state.error() || geometry.error() ? tt("failed") : tt("loading")} detail={String(state.error() ?? geometry.error() ?? "") || undefined} />
+              <Empty class="flex-1" title={state.error() || geometry.error() ? tt("failed") : tt("loading")} description={String(state.error() ?? geometry.error() ?? "") || undefined} />
             }
           >
             <TreeView
@@ -298,21 +297,22 @@ export function TreePage() {
                   <Each of={results().slice(0, RESULTS)} key={(r) => r.id}>
                     {(r) => (
                       <View class="flex-row items-center gap-1">
-                        <ListRow
+                        <Row
+                          choose
                           class="flex-1"
                           selected={chosen() === r().id}
                           onPress={() => show(r().id)}
-                          accessibilityLabel={tr(r().name)}
-                          accessibilityHint={alloc().has(r().id) ? tt("allocated") : undefined}
+                          label={tr(r().name)}
+                          hint={alloc().has(r().id) ? tt("allocated") : undefined}
                         >
                           <Text tone={alloc().has(r().id) ? "primary" : "default"} class="flex-1 truncate">
                             {tr(r().name)}
                           </Text>
-                        </ListRow>
+                        </Row>
                         <If when={chosen() === r().id}>
                           <Button
                             size="sm"
-                            variant={alloc().has(r().id) ? "secondary" : "primary"}
+                            variant={alloc().has(r().id) ? "default" : "primary"}
                             label={alloc().has(r().id) ? tt("deallocate") : tt("allocate")}
                             accessibilityLabel={`${alloc().has(r().id) ? tt("deallocate") : tt("allocate")} ${tr(r().name)}`}
                             disabled={build.busy()}
@@ -336,9 +336,9 @@ export function TreePage() {
         {/* POB's "Convert all to Version …" popup: its text and buttons */}
         <Modal
           open={!!convertAsk()}
-          onClose={() => convertAsk.set(null)}
+          onOpenChange={(open) => open || (() => convertAsk.set(null))()}
           title={tr(convertAsk()?.title ?? "")}
-          actions={
+          footer={
             <Each of={convertAsk()?.buttons ?? []} key={(b) => b.id}>
               {(b) => (
                 <Button
@@ -359,22 +359,22 @@ export function TreePage() {
         {/* POB's "Tree Converted" message */}
         <Modal
           open={!!convertDone()}
-          onClose={() => convertDone.set(null)}
+          onOpenChange={(open) => open || (() => convertDone.set(null))()}
           title={tr(convertDone()?.title ?? "")}
-          actions={<Button variant="primary" label={tr(convertDone()?.buttons[0]?.label ?? "Ok")} onPress={() => convertDone.set(null)} />}
+          footer={<Button variant="primary" label={tr(convertDone()?.buttons[0]?.label ?? "Ok")} onPress={() => convertDone.set(null)} />}
         >
           <Each of={lines(convertDone()?.text ?? "")}>{(line) => <Text>{line()}</Text>}</Each>
         </Modal>
 
         <Modal
           open={!!confirm()}
-          onClose={() => confirm.set(null)}
+          onOpenChange={(open) => open || (() => confirm.set(null))()}
           title={tr(confirm()?.ask.title ?? "")}
-          actions={
+          footer={
             <>
               <Button variant="ghost" label={tt("cancel")} onPress={() => confirm.set(null)} />
               <Button
-                variant="secondary"
+                variant="default"
                 label={tr(confirm()?.ask.connect ?? "")}
                 onPress={() => {
                   const c = confirm();
@@ -399,18 +399,17 @@ export function TreePage() {
 
         <Modal
           open={!!mastery()}
-          onClose={() => mastery.set(null)}
+          onOpenChange={(open) => open || (() => mastery.set(null))()}
           title={`${tr(mastery()?.name ?? "")} · ${tt("chooseMastery")}`}
-          actions={<Button variant="ghost" label={tt("cancel")} onPress={() => mastery.set(null)} />}
+          footer={<Button variant="ghost" label={tt("cancel")} onPress={() => mastery.set(null)} />}
         >
           <If when={mastery()?.effects.length} else={<Text tone="muted">{tt("noEffects")}</Text>}>
             <Scroll class="max-h-96">
               <View class="gap-0.5" role="list" accessibilityLabel={tt("chooseMastery")}>
                 <Each of={mastery()?.effects ?? []} key={(e) => e.id}>
                   {(e) => (
-                    <ListRow
-                      pressOnRelease
-                      accessibilityLabel={e().label.split(" / ").map((s) => tr(s)).join(" / ")}
+                    <Row
+                      label={e().label.split(" / ").map((s) => tr(s)).join(" / ")}
                       onPress={() => {
                         const m = mastery();
                         mastery.set(null);
@@ -420,7 +419,7 @@ export function TreePage() {
                       <View class="flex-1 gap-0.5 py-1">
                         <Each of={e().label.split(" / ")}>{(s) => <Text>{tr(s())}</Text>}</Each>
                       </View>
-                    </ListRow>
+                    </Row>
                   )}
                 </Each>
               </View>
