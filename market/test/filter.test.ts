@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { generateFilter, tiers, uniqueTiers } from "../src/filter";
+import { countRules, generateFilter, tiers, uniqueTiers } from "../src/filter";
 import { SNAPSHOT } from "./fixture";
 
 /** The blocks of a filter, each as its lines without indentation. */
@@ -96,4 +96,13 @@ describe("generateFilter", () => {
       expect(b.length).toBeGreaterThan(2);
     }
   });
+});
+
+test("counts a filter's rules per tier, as the launcher's page shows them", () => {
+  const text = generateFilter(SNAPSHOT);
+  const { byTier, total } = countRules(text);
+  expect(total).toBe((text.match(/^(Show|Hide)$/gm) ?? []).length);
+  const tiered = [...byTier.values()].reduce((a, b) => a + b, 0);
+  expect(tiered).toBe((text.match(/^# .*, tier \d+ /gm) ?? []).length);
+  expect(byTier.get(1)).toBeGreaterThan(0);
 });

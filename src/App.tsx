@@ -27,6 +27,7 @@ import {
   type Realm,
 } from "./accounts";
 import { AGENT_SITES, aiErrorText, analysisStrings, reportText, whenText, type Agent, type AiProgress, type BuildEntry, type BuildRoot } from "./analysis";
+import { filterStrings, makeFilter, MIN_WORTH, STRICTNESS, type FilterResult, type Strictness } from "./lootfilter";
 import { AnalysisFailed, AnalysisReport, AnalysisRunning, PANEL, SmallButton, watchAnalysis } from "./AnalysisView";
 // The icon at the size the launcher shows it (icon.png is the app's, 1024 square).
 import icon from "../assets/ui/icon-64.png";
@@ -546,6 +547,7 @@ function TitleBar(props: {
   backLabel?: string;
   onCharacters?: () => void;
   onAnalysis?: () => void;
+  onFilter?: () => void;
   onEditor?: () => void;
   /** The build editor's: the way to the classic (Lua) Path of Building's launcher. */
   onLegacy?: () => void;
@@ -653,6 +655,7 @@ function TitleBar(props: {
           >
             <CardMenuItem label={accountStrings(currentLanguage()).open} onSelect={() => open()()} />
             <If when={props.onAnalysis}>{(analyse) => <CardMenuItem label={analysisStrings(currentLanguage()).open} onSelect={() => analyse()()} />}</If>
+            <If when={props.onFilter}>{(filter) => <CardMenuItem label={filterStrings(currentLanguage()).open} onSelect={() => filter()()} />}</If>
             <If when={props.onEditor}>
               {(editor) => (
                 <>
@@ -684,7 +687,7 @@ function TitleBar(props: {
   );
 }
 
-function Launcher(props: { onStart: () => void; onCharacters: () => void; onAnalysis: () => void; onEditor: () => void }) {
+function Launcher(props: { onStart: () => void; onCharacters: () => void; onAnalysis: () => void; onFilter: () => void; onEditor: () => void }) {
   const settings = signal<Settings>(JSON.parse(Pob.settings()));
   const available = new Set<string>(JSON.parse(Pob.languages()).map((l: { value: string }) => l.value));
   const languages = LANGUAGES.filter((l) => l.value === null || available.has(l.value));
@@ -758,7 +761,7 @@ function Launcher(props: { onStart: () => void; onCharacters: () => void; onAnal
     <View style={{ flex: 1, backgroundColor: C.bg }}>
       <Gate />
 
-      <TitleBar t={t} onCharacters={props.onCharacters} onAnalysis={props.onAnalysis} onEditor={props.onEditor} />
+      <TitleBar t={t} onCharacters={props.onCharacters} onAnalysis={props.onAnalysis} onFilter={props.onFilter} onEditor={props.onEditor} />
 
       <View style={{ flex: 1, paddingHorizontal: 72, paddingBottom: 16, gap: 24, justifyContent: "center" }}>
         {/* Title */}
@@ -1693,6 +1696,123 @@ function Analysis(props: { settings: Settings; t: () => Strings; onBack: () => v
   );
 }
 
+/** Tools → Smart loot filter: a Path of Exile item filter from the league's prices now, by strictness or by the
+ * player's own threshold, written where the game reads filters (`lootfilter.ts`). */
+function LootFilter(props: { settings: Settings; t: () => Strings; onBack: () => void }) {
+  const s = () => filterStrings(props.settings.language);
+  const strictness = signal<Strictness>("regular");
+  const custom = signal("");
+  const step = signal<{ done: number; of: number } | null>(null);
+  const result = signal<FilterResult | null>(null);
+  const error = signal<string | null>(null);
+  const generate = async () => {
+    if (step()) return;
+    const text = custom().trim();
+    const minWorth = text ? Number(text) : undefined;
+    if (minWorth !== undefined && !(minWorth >= 0)) {
+      say(s().badNumber, true);
+      return;
+    }
+    error.set(null);
+    step.set({ done: 0, of: 1 });
+    try {
+      result.set(await makeFilter(strictness(), minWorth, (done, of) => step.set({ done, of })));
+    } catch (e) {
+      error.set(String((e as Error)?.message ?? e));
+    }
+    step.set(null);
+  };
+  const dirOfPath = (path: string) => path.replace(/[\\/][^\\/]*$/, "");
+  const chaos = (n: number) => (n >= 10 ? n.toFixed(0) : n.toFixed(1));
+
+  return (
+    <View style={{ flex: 1, backgroundColor: C.bg }}>
+      <Shader source={GATE} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} />
+      <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.45)" }} />
+      <TitleBar t={props.t} onBack={props.onBack} backLabel={s().back} />
+
+      <View style={{ flex: 1, flexDirection: "row", gap: 20, paddingHorizontal: 32, paddingTop: 12, paddingBottom: 24 }}>
+        {/* How strict, and making it */}
+        <View style={{ ...PANEL, width: 360 }}>
+          <Text style={{ fontFamily: DISPLAY, fontSize: 16, fontWeight: "700", letterSpacing: 3, color: C.goldHi }}>{s().title}</Text>
+          <Rule width={320} />
+          <Text style={{ fontFamily: BODY, fontSize: 13, color: C.text, lineHeight: 20 }}>{s().intro}</Text>
+          <View style={{ gap: 5 }}>
+            <Text style={{ fontFamily: BODY, fontSize: 12, color: C.gold }}>{s().strictness}</Text>
+            <Segmented items={STRICTNESS.map((v) => ({ value: v, label: s().levels[v] }))} value={strictness()} onChange={(v) => strictness.set(v as Strictness)} />
+            <Text style={{ fontFamily: BODY, fontSize: 12, color: C.muted }}>{s().levelHint[strictness()]}</Text>
+          </View>
+          <Field label={s().custom} hint={s().customHint} placeholder={`${MIN_WORTH[strictness()]}`} value={custom} onChange={custom.set} onSubmit={generate} />
+          <View style={{ flex: 1 }} />
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 10 }}>
+            <If when={step()}>{(p) => <Text style={{ flex: 1, fontFamily: BODY, fontSize: 12, color: C.muted }}>{s().fetching(p().done, p().of)}</Text>}</If>
+            <Button label={s().generate} onPress={generate} />
+          </View>
+        </View>
+
+        {/* What was made */}
+        <View style={{ flex: 1 }}>
+          <If when={error()}>
+            {(e) => (
+              <View style={{ ...PANEL, flex: 1, alignItems: "center", justifyContent: "center" }}>
+                <Text style={{ fontFamily: BODY, fontSize: 13, color: C.red, maxWidth: 460, textAlign: "center", lineHeight: 20 }}>{s().failed(e())}</Text>
+              </View>
+            )}
+          </If>
+          <If when={!error() && !result()}>
+            <View style={{ ...PANEL, flex: 1, alignItems: "center", justifyContent: "center" }}>
+              <Text style={{ fontFamily: BODY, fontSize: 13, color: C.dim, maxWidth: 420, textAlign: "center", lineHeight: 20 }}>{s().empty}</Text>
+            </View>
+          </If>
+          <If when={!error() ? result() : null}>
+            {(r) => (
+              <View style={{ ...PANEL, flex: 1 }}>
+                <View style={{ flexDirection: "row", gap: 28 }}>
+                  <FilterFact label={s().league} value={r().league} />
+                  <FilterFact label={s().pricedAt} value={new Date(r().at).toLocaleString()} />
+                  <FilterFact label={"\u00a0"} value={s().divine(chaos(r().divine))} />
+                </View>
+                <Rule width={560} dim />
+                <Text style={{ fontFamily: BODY, fontSize: 12, color: C.gold }}>{s().tierRules}</Text>
+                <View style={{ gap: 6 }}>
+                  <Each of={r().tiers}>
+                    {(tier) => (
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                        <Text style={{ width: 150, fontFamily: BODY, fontSize: 13, color: C.text }}>{tier().label}</Text>
+                        <Text style={{ fontFamily: BODY, fontSize: 13, color: C.unique, fontVariant: ["tabular-nums"] }}>{s().rules(tier().rules)}</Text>
+                      </View>
+                    )}
+                  </Each>
+                  <Text style={{ fontFamily: BODY, fontSize: 12, color: C.muted }}>{s().total(r().rules)}</Text>
+                </View>
+                <Rule width={560} dim />
+                <View style={{ gap: 4 }}>
+                  <Text style={{ fontFamily: BODY, fontSize: 12, color: C.gold }}>{s().written}</Text>
+                  <Text style={{ fontFamily: BODY, fontSize: 13, color: C.text }}>{r().path}</Text>
+                </View>
+                <Text style={{ fontFamily: BODY, fontSize: 13, color: C.text, lineHeight: 20 }}>{s().reload}</Text>
+                <View style={{ flexDirection: "row" }}>
+                  <SmallButton label={s().openFolder} onPress={() => Pob.openDir(dirOfPath(r().path))} />
+                </View>
+              </View>
+            )}
+          </If>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+/** A labelled value at the top of the filter's result: its league, its prices' time. */
+function FilterFact(props: { label: string; value: string }) {
+  return (
+    <View style={{ gap: 3 }}>
+      <Text style={{ fontFamily: BODY, fontSize: 11, color: C.muted }}>{props.label}</Text>
+      <Text style={{ fontFamily: BODY, fontSize: 14, fontWeight: "700", color: C.goldHi }}>{props.value}</Text>
+    </View>
+  );
+}
+
 // How far POB has loaded (`Pob.loadProgress`).
 interface LoadProgress {
   loaded: boolean;
@@ -1776,10 +1896,13 @@ export function App() {
   };
   // The Characters page, over whatever shows: the launcher, or Path of Building, which goes on under it.
   const characters = signal(false);
-  const openCharacters = () => (analysis.set(false), characters.set(true));
+  const openCharacters = () => (analysis.set(false), filter.set(false), characters.set(true));
   // The Analysis page, as the Characters page is.
   const analysis = signal(false);
-  const openAnalysis = () => (characters.set(false), analysis.set(true));
+  const openAnalysis = () => (characters.set(false), filter.set(false), analysis.set(true));
+  // The smart loot filter page, as the Characters page is.
+  const filter = signal(!!Pob.devEnv("POBT_FILTER"));
+  const openFilter = () => (characters.set(false), analysis.set(false), filter.set(true));
   // The launcher is the way in: Start opens POBT's build editor (it runs the chosen game's Path of Building with no
   // window), or, with "classic" checked, the classic Lua Path of Building. The editor's Tools menu goes back to it.
   // POBT_EDITOR=1 opens the editor at once (development: POBT_BUILD names a build file to open).
@@ -1789,6 +1912,7 @@ export function App() {
     useLanguageOnce();
     characters.set(false);
     analysis.set(false);
+    filter.set(false);
     editor.set(true);
   };
   return (
@@ -1796,16 +1920,16 @@ export function App() {
       <If
         when={running()}
         else={
-          <If when={editor()} else={<Launcher onStart={start} onCharacters={openCharacters} onAnalysis={openAnalysis} onEditor={openEditor} />}>
+          <If when={editor()} else={<Launcher onStart={start} onCharacters={openCharacters} onAnalysis={openAnalysis} onFilter={openFilter} onEditor={openEditor} />}>
             <View style={{ flex: 1 }}>
-              <TitleBar t={t} solid onBack={() => editorBack() || editor.set(false)} backLabel={editorBackLabel()} onCharacters={openCharacters} onAnalysis={openAnalysis} onLegacy={() => editor.set(false)} legacyText={launcherLabel()} />
+              <TitleBar t={t} solid onBack={() => editorBack() || editor.set(false)} backLabel={editorBackLabel()} onCharacters={openCharacters} onAnalysis={openAnalysis} onFilter={openFilter} onLegacy={() => editor.set(false)} legacyText={launcherLabel()} />
               <BuildEditor file={(Pob.devEnv("POBT_BUILD") || undefined)} game={(JSON.parse(Pob.settings()) as Settings).game === "Poe2" ? "poe2" : "poe1"} onBack={() => editor.set(false)} />
             </View>
           </If>
         }
       >
         <View style={{ flex: 1 }}>
-          <TitleBar t={t} solid onBack={back} onCharacters={openCharacters} onAnalysis={openAnalysis} />
+          <TitleBar t={t} solid onBack={back} onCharacters={openCharacters} onAnalysis={openAnalysis} onFilter={openFilter} />
           <View style={{ flex: 1 }}>
             <PobCanvas style={{ flex: 1 }} />
             <If when={!progress().loaded}>
@@ -1822,6 +1946,11 @@ export function App() {
       <If when={analysis()}>
         <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
           <Analysis settings={JSON.parse(Pob.settings()) as Settings} t={t} onBack={() => analysis.set(false)} />
+        </View>
+      </If>
+      <If when={filter()}>
+        <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
+          <LootFilter settings={JSON.parse(Pob.settings()) as Settings} t={t} onBack={() => filter.set(false)} />
         </View>
       </If>
       <Toast />

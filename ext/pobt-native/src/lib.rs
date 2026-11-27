@@ -12,6 +12,7 @@ pub mod host;
 pub mod images;
 pub mod install;
 pub mod loading;
+pub mod lootfilter;
 pub mod lua;
 #[cfg(not(windows))]
 pub mod modules;
@@ -134,6 +135,34 @@ impl Pob {
             let _ = tx.send(art::picture(&url).map(|p| crate::images::uri_of(&p).to_string()).unwrap_or_default());
         });
         rx.await.unwrap_or_default()
+    }
+
+    /// A poe.ninja price page (`https://poe.ninja/poe1/api/…`), off the UI thread: JSON `{ "body": "…" }`, or
+    /// `{ "error": "…" }` when it cannot be had.
+    pub async fn market_fetch(url: String) -> String {
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        std::thread::spawn(move || {
+            let out = match lootfilter::fetch(&url) {
+                Ok(body) => serde_json::json!({ "body": body }),
+                Err(error) => serde_json::json!({ "error": error }),
+            };
+            let _ = tx.send(out.to_string());
+        });
+        rx.await.unwrap_or_default()
+    }
+
+    /// Where the smart loot filter goes: the game's item filter folder (`…/My Games/Path of Exile`); "" if unknown.
+    pub fn filter_dir() -> String {
+        lootfilter::filter_dir().map(|d| d.to_string_lossy().into_owned()).unwrap_or_default()
+    }
+
+    /// Writes the smart loot filter as POBT.filter in `filter_dir`: JSON `{ "path": "…" }` or `{ "error": "…" }`.
+    pub fn write_filter(text: String) -> String {
+        let out = match lootfilter::filter_dir().ok_or_else(|| "no Documents folder".to_string()).and_then(|d| lootfilter::write_in(&d, &text)) {
+            Ok(path) => serde_json::json!({ "path": path.to_string_lossy() }),
+            Err(error) => serde_json::json!({ "error": error }),
+        };
+        out.to_string()
     }
 
     /// The size in pixels of a picture from `art_picture`, as JSON `[width, height]` (`[0, 0]` when unreadable). The

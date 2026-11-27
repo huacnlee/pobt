@@ -234,6 +234,18 @@ function baseRules(prices: Price[], levels: Tier[], model: ValueModel): Rule[] {
     }));
 }
 
+/** Rules in a filter `generateFilter` wrote, per tier id (read from its "…, tier 2 (…)" comments), and in all. */
+export function countRules(text: string): { byTier: Map<number, number>; total: number } {
+  const byTier = new Map<number, number>();
+  let total = 0;
+  for (const block of text.split("\n\n").slice(1)) {
+    total++;
+    const tier = /^# .*?, tier (\d+) /.exec(block)?.[1];
+    if (tier) byTier.set(Number(tier), (byTier.get(Number(tier)) ?? 0) + 1);
+  }
+  return { byTier, total };
+}
+
 function fmt(n: number): string {
   return Number.isInteger(n) ? String(n) : n.toFixed(n < 10 ? 1 : 0);
 }
