@@ -86,3 +86,16 @@ jobs:
           # The dependencies unoptimized (Cargo.toml's -O2 is for running the app): they build in a fraction of the
           # time, and the tests take a second either way.
           cargo test --lib --manifest-path ext/pobt-native/Cargo.toml --config 'profile.dev.package."*".opt-level=0'
+
+  # The market service and its loot filter generator (market/): plain TypeScript, on Bun.
+  market:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: market
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run check
+      - run: bun test

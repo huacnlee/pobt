@@ -1,0 +1,13 @@
+// The market service on Cloudflare Workers' free plan. Not deployed: the owner's account and a bucket are needed
+// (`wrangler r2 bucket create pobt-market`, `wrangler secret put ACCESS_TOKEN`, `wrangler deploy`).
+{
+  "name": "pobt-market",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-11-01",
+  "triggers": {
+    // Hourly prices, and the day's filters (must match DAILY in src/worker.ts).
+    "crons": ["7 * * * *", "17 3 * * *"]
+  },
+  "r2_buckets": [{ "binding": "MARKET", "bucket_name": "pobt-market" }],
+  "observability": { "enabled": true }
+}
