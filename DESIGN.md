@@ -94,6 +94,7 @@ Everything has `motion-reduce:` off.
 | Calcs wide table | scrolls sideways; its right fade shows while more is hidden | FADE 240 |
 | POB recalculating (calcs) | the page dims | FADE 240 |
 | Item and gem pictures | appear when loaded, in a box of fixed size | none |
+| Copy a name for the market (items' rows and slots, gems) | a small icon button at the row's end; a Toast says what was copied | 240 |
 
 ### The market
 

@@ -4,8 +4,9 @@
 import { resource, Scroll, signal, View } from "nsh";
 import { Badge, Button, Empty, FADE, Row, Card, ProgressBar, Segmented, Select, Checkbox, Text } from "../../ui";
 import { GameArt } from "../art";
+import { CopyName, copyName, marketName } from "../copy";
 import { plain } from "../ColoredText";
-import { tr } from "../i18n";
+import { t, tr } from "../i18n";
 import { build } from "../session";
 import { equip, equipItem, type ItemInfo, type ItemsData, rarityOf, readItems, setActiveSet, setFlask, setWeaponSet, type SlotInfo, type TipLine, tooltipOf } from "./items/data";
 import { ItemHover } from "./items/ItemHover";
@@ -307,6 +308,10 @@ function SlotRow(props: {
           </Text>
         </Row>
         <SlotSelect slot={props.row} itemOf={props.itemOf} label={slotLabel(props.row)} class="flex-1" />
+        {/* a slot with nothing keeps the room, so the drop-downs line up */}
+        <View class="w-6">
+          <If when={props.item}>{(it) => <CopyName english={marketName(it())} />}</If>
+        </View>
       </View>
     </ItemHover>
   );
@@ -315,8 +320,8 @@ function SlotRow(props: {
 /** An item of the build's list: its name in its rarity's colour, and its base. */
 function ItemRow(props: { item: ItemInfo; equipped: boolean; selected: boolean; onPress: () => void }) {
   return (
-    <ItemHover id={props.item.id} rarity={rarityOf(props.item.rarity)}>
-      <Row choose selected={props.selected} onPress={props.onPress} label={tr(props.item.name)}>
+    <ItemHover id={props.item.id} rarity={rarityOf(props.item.rarity)} class="flex-row items-center gap-1">
+      <Row choose selected={props.selected} onPress={props.onPress} label={tr(props.item.name)} class="flex-1">
         <ItemArt item={props.item} size={24} />
         <View class="flex-1 flex-row items-center gap-2">
           <Text class={`shrink truncate ${RARITY_TEXT[rarityOf(props.item.rarity)]}`}>{tr(props.item.title ?? props.item.name)}</Text>
@@ -330,6 +335,7 @@ function ItemRow(props: { item: ItemInfo; equipped: boolean; selected: boolean; 
           <Badge label={s("equipped")} tone="primary" />
         </If>
       </Row>
+      <CopyName english={marketName(props.item)} />
     </ItemHover>
   );
 }
@@ -424,6 +430,7 @@ function Detail(props: {
                 {props.equippedIn.length ? `${s("equippedIn")}: ${props.equippedIn.map(slotLabel).join(", ")}` : s("notEquipped")}
               </Text>
               <View class="flex-row items-center gap-2">
+                <Button size="md" icon="copy" label={t("copyName")} onPress={() => void copyName(marketName(it()))} />
                 <If when={canEquip()}>
                   <Button variant="primary" size="md" label={s("equip")} disabled={build.busy()} onPress={() => void equipItem(it().id)} />
                 </If>

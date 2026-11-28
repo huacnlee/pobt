@@ -15,6 +15,7 @@ pub mod loading;
 pub mod lua;
 #[cfg(not(windows))]
 pub mod modules;
+pub mod names;
 mod oauth;
 pub mod reverse;
 pub mod settings;
@@ -166,6 +167,19 @@ impl Pob {
             Some(d) => texts.into_iter().map(|t| d.translate(&t).unwrap_or(t)).collect(),
             None => texts,
         };
+        serde_json::to_string(&out).unwrap_or_default()
+    }
+
+    /// The names of a JSON array of items' and gems' English names as `game` (`"poe1"`, `"poe2"`) shows them in
+    /// `language` (a `trs` folder, "" for English), to find them on its market: Tencent's in Simplified Chinese, else
+    /// the dictionary `tr_load` loaded; a JSON array in the same order.
+    pub fn game_names(game: String, language: String, json: String) -> String {
+        let names: Vec<String> = serde_json::from_str(&json).unwrap_or_default();
+        let dict = TR_DICT.read().unwrap().clone();
+        let out: Vec<String> = names
+            .iter()
+            .map(|n| names::game_name(&game, &language, n, |s| dict.as_ref().and_then(|d| d.translate(s))))
+            .collect();
         serde_json::to_string(&out).unwrap_or_default()
     }
 
