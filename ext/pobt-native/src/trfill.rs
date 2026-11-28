@@ -67,7 +67,7 @@ fn fill(req: &Request) -> Result<(Value, String), String> {
     if req.lines.is_empty() {
         return Err("nothingMissing".into());
     }
-    let folder = crate::trs::root().map(|r| r.join(&req.language)).filter(|d| d.is_dir()).ok_or("noDictionary")?;
+    let folder = crate::trs::dir(&req.language).filter(|d| d.is_dir()).ok_or("noDictionary")?;
     let text = ai::run_agent(&JOB, &req.agent, &prompt(req), Some(&folder))?;
     JOB.update(|p| p.step = "parsing".into());
     let file = folder.join(FILE);

@@ -8,7 +8,7 @@ import { Button, Empty, Icon, Modal, Select, Text, Input } from "../ui";
 import { BODY, BrassButton, C, DISPLAY, Gate, GoldRule, Plaque, Subtitle, textIn, Title } from "../ui/launcher";
 import { WASH } from "../ui/motion";
 import { t, tr } from "./i18n";
-import { build, type BuildEntry, deleteEntry, listBuilds, newBuild, newFolder, openFile, renameEntry, type SortMode } from "./session";
+import { applyPobUpdate, build, type BuildEntry, checkPobUpdate, deleteEntry, listBuilds, newBuild, newFolder, openFile, pobUpdate, renameEntry, type SortMode } from "./session";
 
 /** The folders expanded and the sort: kept while the editor is open, as POB keeps them. */
 const expanded = signal<string[]>([]);
@@ -63,6 +63,52 @@ function Row(props: { entry?: BuildEntry; tree: TreeEntry; onMenu?: (e: ContextM
         </Text>
       </If>
     </View>
+  );
+}
+
+/** Path of Building's version and its own update, as the Check for Update / Update Ready button of its build list: an
+ * update POB downloaded shows as a button that applies it; otherwise a check, which says so when it is up to date. */
+function PobUpdateBar() {
+  const u = () => pobUpdate.state();
+  // A check the user asked for that found nothing says so for a while.
+  const upToDate = signal(false);
+  let asked = 0;
+  effect(() => {
+    const s = u();
+    if (!asked || !s || s.checking || s.checked < asked) return;
+    asked = 0;
+    if (!s.available && !s.error) {
+      untracked(() => upToDate.set(true));
+      setTimeout(() => upToDate.set(false), 4000);
+    }
+  });
+  const check = () => {
+    asked = Math.floor(Date.now() / 1000);
+    upToDate.set(false);
+    checkPobUpdate();
+  };
+  const note = () => {
+    const s = u();
+    if (pobUpdate.error()) return pobUpdate.error();
+    if (!s) return "";
+    if (s.checking) return t("pobUpdateChecking");
+    if (s.error) return t("pobUpdateFailed");
+    return upToDate() ? t("pobUpToDate") : "";
+  };
+  return (
+    <If when={u() && !u()!.dev}>
+      <View class="flex-row items-center gap-3">
+        <Text style={{ fontFamily: BODY, fontSize: 12, color: pobUpdate.error() || u()?.error ? C.red : C.muted }}>
+          {[`Path of Building ${u()?.version ?? ""}`, note()].filter(Boolean).join("  ·  ")}
+        </Text>
+        <If
+          when={u()?.available}
+          else={<Button label={t("pobUpdateCheck")} size="sm" variant="ghost" busy={u()?.checking} onPress={check} />}
+        >
+          <Button label={t("pobUpdateApply")} size="sm" busy={pobUpdate.applying()} tooltip={t("pobUpdateHint")} onPress={() => void applyPobUpdate()} />
+        </If>
+      </View>
+    </If>
   );
 }
 
@@ -274,6 +320,7 @@ export function BuildList(props: { onImport: () => void; onOpened: () => void })
             {"  ·  "}
             {t("openHint")}
           </Text>
+          <PobUpdateBar />
         </View>
       </View>
       <NameDialog

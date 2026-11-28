@@ -23,7 +23,8 @@ Chinese, Traditional Chinese and Korean are included.
 - Your Path of Building files are never modified; your builds stay where they are.
 - Press **Ctrl+Shift+T** at any time to switch to English and back.
 - The translations are plain CSV files in the `trs` folder beside `POBT.exe`: edit them to fix one or add your own (an update of POBT replaces the folder, so keep a copy of your changes).
-- POBT updates itself when a new version is out.
+- POBT updates itself when a new version is out, and its translations in between: a fix to them reaches you within a few hours, with no new version, in POBT's settings folder (`%APPDATA%\pobt\trs`), which it then reads instead of the `trs` beside `POBT.exe`.
+- Path of Building's own updates (its game data and calculations) come as in Path of Building: once it has downloaded one, the build list shows **Update Path of Building**.
 - **Import characters** from an account, as a build code or a build saved in Path of Building: see below.
 - **AI build analysis**: from the Tools menu, choose one of your builds (or paste a build code) and have the AI already on your computer, Claude Code or Codex, rate it by damage, defence, recovery, ailments, utility and gear, with what to change first. POBT sends it no account and keeps no key: the agent runs as you signed it in.
 

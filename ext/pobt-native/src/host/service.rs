@@ -86,6 +86,13 @@ pub fn start(pob_dir: PathBuf) -> String {
         drop(r.jobs);
         let _ = r.thread.join();
     }
+    // A runtime update POB downloaded goes in before its DLLs load (in a POBT that loaded them already, at its next
+    // start: `apply_update`).
+    if lua::loaded_from().is_none() {
+        if let Err(e) = crate::install::apply_runtime_update(&pob_dir) {
+            log::warn!("updating Path of Building's runtime: {e}");
+        }
+    }
     if let Err(e) = lua::init(&pob_dir) {
         set_status("failed", &e, "");
         return e;
@@ -103,6 +110,21 @@ pub fn start(pob_dir: PathBuf) -> String {
     };
     *running = Some(Running { pob_dir, jobs: tx, thread });
     String::new()
+}
+
+/// Applies the update Path of Building downloaded (`pobUpdate`), as its Update button does: the service stops, the
+/// update goes in, and the next `start` loads the new POB. "" once done; "restart" when this process loaded POB's
+/// runtime (its DLLs on Windows) and must start again for the rest of it; or why it failed.
+pub fn apply_update() -> String {
+    let Some(r) = RUNNING.lock().unwrap().take() else { return "Path of Building is not running".into() };
+    drop(r.jobs);
+    let _ = r.thread.join();
+    set_status("idle", "", "");
+    let loaded = lua::loaded_from().is_some_and(|d| d == r.pob_dir);
+    if let Err(e) = crate::install::apply_update(&r.pob_dir, loaded) {
+        return format!("updating Path of Building: {e}");
+    }
+    if loaded && crate::install::pending_runtime_update(&r.pob_dir).is_some() { "restart".into() } else { String::new() }
 }
 
 /// Runs operation `op` of `service.lua` with `args` (JSON); its answer as JSON `{ ok }` or `{ err }`.
@@ -169,6 +191,8 @@ fn serve(pob_dir: PathBuf, jobs: mpsc::Receiver<Job>) {
         }
     }
     for job in jobs {
+        // What POB's sub scripts (its update check, its downloads) finished meanwhile, as its window's frames would.
+        super::run_subscripts(l);
         let answer = run(l, &shared, &job.op, &job.args).unwrap_or_else(|e| serde_json::json!({ "err": e }).to_string());
         let _ = job.reply.send(answer);
     }
@@ -240,6 +264,58 @@ mod tests {
         assert!(opened.contains("\"ok\""), "{opened}");
     }
 
+    /// Path of Building's own update, as the build list shows it: its version, whether one is ready; and a check the
+    /// user asks for runs POB's `UpdateCheck.lua` and its answer comes back. Needs `POB_DIR`; skipped without it.
+    #[test]
+    fn reports_its_own_update() {
+        let Some(dir) = std::env::var_os("POB_DIR") else {
+            eprintln!("POB_DIR not set: skipped");
+            return;
+        };
+        assert_eq!(start(PathBuf::from(dir)), "");
+        while status().contains("\"loading\"") {
+            std::thread::sleep(std::time::Duration::from_millis(50));
+        }
+        assert!(status().contains("\"ready\""), "{}", status());
+        let read = |op: &str| -> serde_json::Value {
+            let answer = block(request(op.into(), String::new()));
+            serde_json::from_str::<serde_json::Value>(&answer).unwrap()["ok"].clone()
+        };
+        let u = read("pobUpdate");
+        eprintln!("{u}");
+        assert!(u["version"].as_str().is_some_and(|v| !v.is_empty()), "{u}");
+        assert!(u["available"].is_string() && u["checking"].is_boolean(), "{u}");
+        // A check the user asks for (or the one POB started with) runs POB's sub script, whose progress and answer
+        // come back. Followed for POBT_TEST_UPDATE_WAIT seconds (20): long enough to see it run; a POB missing files
+        // (scripts/fetch-pob.mjs leaves some out) downloads them all, which takes longer.
+        let wait = std::env::var("POBT_TEST_UPDATE_WAIT").ok().and_then(|s| s.parse().ok()).unwrap_or(20);
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(wait);
+        let mut u = read("pobUpdateCheck");
+        let mut ran = false;
+        while u["checked"].as_i64() == Some(0) && std::time::Instant::now() < deadline {
+            ran |= u["progress"].as_str().is_some_and(|p| !p.is_empty());
+            std::thread::sleep(std::time::Duration::from_millis(500));
+            u = read("pobUpdate");
+        }
+        eprintln!("{u}");
+        assert!(ran || u["checked"].as_i64().is_some_and(|t| t > 0), "{u}");
+        // POBT_TEST_APPLY_UPDATE: an update found is applied, and POB starts again with none left.
+        if std::env::var_os("POBT_TEST_APPLY_UPDATE").is_some() && u["available"].as_str().is_some_and(|a| !a.is_empty()) {
+            let dir = RUNNING.lock().unwrap().as_ref().unwrap().pob_dir.clone();
+            assert!(crate::install::pending_update(&dir).is_some());
+            assert_eq!(apply_update(), "");
+            assert!(crate::install::pending_update(&dir).is_none());
+            assert_eq!(start(dir), "");
+            while status().contains("\"loading\"") {
+                std::thread::sleep(std::time::Duration::from_millis(50));
+            }
+            assert!(status().contains("\"ready\""), "{}", status());
+            let after = read("pobUpdate");
+            eprintln!("after the update: {after}");
+            assert_eq!(after["available"], "", "{after}");
+        }
+    }
+
     /// Needs `POB_DIR` (an installed Path of Building) and `POBT_TEST_BUILD` (a build's XML); skipped without them.
     #[test]
     fn opens_a_build_and_reads_its_sidebar() {
@@ -251,6 +327,11 @@ mod tests {
         assert_eq!(start(PathBuf::from(dir)), "");
         let opened = block(request("open".into(), serde_json::json!({ "xml": xml }).to_string()));
         assert!(opened.contains("\"ok\""), "{opened}");
+        // POB's own update, as the build list shows it: its version, and no update ready in a fresh install.
+        let update = block(request("pobUpdate".into(), String::new()));
+        let u: serde_json::Value = serde_json::from_str(&update).unwrap();
+        assert!(u["ok"]["version"].as_str().is_some_and(|v| !v.is_empty()), "{update}");
+        assert!(u["ok"]["available"].is_string() && u["ok"]["checking"].is_boolean(), "{update}");
         let sidebar = block(request("sidebar".into(), String::new()));
         let v: serde_json::Value = serde_json::from_str(&sidebar).unwrap();
         let lines = v["ok"]["lines"].as_array().unwrap_or_else(|| panic!("{sidebar}"));
