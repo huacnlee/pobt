@@ -151,6 +151,15 @@ impl Dictionary {
         dict
     }
 
+    /// A dictionary of only `rows` (English, translation), as a CSV of them would be read.
+    pub fn of(rows: &[(String, String)]) -> Self {
+        let mut dict = Dictionary::default();
+        for (en, zh) in rows {
+            dict.insert(en.clone(), zh.clone());
+        }
+        dict
+    }
+
     fn insert(&mut self, en: String, zh: String) {
         let en_t = en.trim();
         if en_t.is_empty() || zh.trim().is_empty() || en_t.starts_with("##") {
