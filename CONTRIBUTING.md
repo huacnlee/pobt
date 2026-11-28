@@ -9,6 +9,13 @@ draws, without its colour codes (`^7`, `^xRRGGBB`). Press **Ctrl+Shift+T** in PO
 They are not built into the app: the release puts the `trs` folder beside `POBT.exe`, where anyone can edit them
 (an update of POBT replaces it). A development run reads the one in the source tree.
 
+A change to `trs/` on main reaches installed POBTs without a release: the Translations workflow
+(`.github/workflows/trs.yml`, `scripts/trs-bundle.mjs`) publishes each language as `trs-<language>.zip` on the `trs`
+release, with `trs.json` saying when each last changed; the release writes the same dates into `trs/version.json`. A
+running POBT compares the languages in use with it every six hours (`ext/pobt-native/src/trs_update.rs`), unpacks a
+newer one into `%APPDATA%\pobt\trs` and reads that instead, at once. A development run (no `version.json`) never
+updates.
+
 ## How it works
 
 POBT changes no file of Path of Building. It runs POB's Lua on the LuaJIT POB ships (`lua51.dll`) and implements the
@@ -26,8 +33,8 @@ POBT links its own LuaJIT and stands in for the modules POB uses (lcurl, lzip, l
 | `ext/pobt-native/src/text.rs` | Colour escapes, measuring and laying out text with Segoe UI, Microsoft YaHei UI and Consolas |
 | `ext/pobt-native/src/images.rs`, `dds.rs` | Images for the canvas: tinted copies, art slices, POB2's `.dds.zst` textures |
 | `ext/pobt-native/src/lib.rs` | The `PobCanvas` component (an NSH canvas, mouse and keys) and the `Pob` module |
-| `ext/pobt-native/src/trs.rs` | The translations: the `trs` folder beside the program |
-| `ext/pobt-native/src/install.rs`, `loading.rs` | Installing Path of Building from its release and its runtime updates; how far it has loaded |
+| `ext/pobt-native/src/trs.rs`, `trs_update.rs` | The translations: the `trs` folder beside the program, or a newer copy of a language the `trs` release brought |
+| `ext/pobt-native/src/install.rs`, `loading.rs` | Installing Path of Building from its release, and applying the updates it downloads itself (its Lua and data, its runtime); how far it has loaded |
 | `ext/pobt-native/src/account.rs`, `export.lua` | Characters from an account on Path of Exile's site or Tencent's (with its `POESESSID`), made builds by POB's own Import tab on a POB with no window (`host::export`) |
 | `ext/pobt-native/src/oauth.rs` | Signing in to Path of Exile 2's API (OAuth, as Path of Building 2 does) for its characters |
 | `ext/pobt-native/src/wegame.rs` | Tencent's Path of Exile 2 characters, from a WeGame share link, back in English (names by their art, mods by `trs/zh-rCN/tencent-poe2`) |

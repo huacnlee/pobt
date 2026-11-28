@@ -211,11 +211,36 @@ pub fn pending_runtime_update(pob_dir: &Path) -> Option<PathBuf> {
     Some(pob_dir.join("Update").join("opFileRuntime.txt")).filter(|p| p.is_file())
 }
 
+/// The update of its Lua and data POB downloaded (`Update/opFile.txt`, by its `UpdateCheck.lua`), which its window's
+/// Update Ready button applies, if there is one.
+pub fn pending_update(pob_dir: &Path) -> Option<PathBuf> {
+    Some(pob_dir.join("Update").join("opFile.txt")).filter(|p| p.is_file())
+}
+
+/// Applies the update POB downloaded, as its Update button does, with no POB running in the folder: its Lua and data
+/// (`pending_update`), and its runtime (`pending_runtime_update`) unless `runtime_loaded` (this process loaded its
+/// DLLs: that part waits for the next start, `apply_runtime_update`).
+pub fn apply_update(pob_dir: &Path, runtime_loaded: bool) -> Result<(), String> {
+    if let Some(ops) = pending_update(pob_dir) {
+        apply_ops(pob_dir, &ops)?;
+    }
+    if !runtime_loaded {
+        apply_runtime_update(pob_dir)?;
+    }
+    Ok(())
+}
+
 /// Applies a runtime update as POB's `UpdateApply.lua` would, before POB's
 /// DLLs are loaded: its `move` and `delete` lines; not its `start`, which would
 /// open POB's own program.
 pub fn apply_runtime_update(pob_dir: &Path) -> Result<(), String> {
     let Some(ops) = pending_runtime_update(pob_dir) else { return Ok(()) };
+    apply_ops(pob_dir, &ops)
+}
+
+/// The `move` and `delete` lines of an operations file of POB's updates, as its `UpdateApply.lua` runs them; the file
+/// is removed first, as there.
+fn apply_ops(pob_dir: &Path, ops: &Path) -> Result<(), String> {
     let text = fs::read_to_string(&ops).map_err(|e| format!("{}: {e}", ops.display()))?;
     let _ = fs::remove_file(&ops);
     let at = |s: &str| {
@@ -307,6 +332,31 @@ mod tests {
         assert_eq!(fs::read(dir.join("lua51.dll")).unwrap(), b"new");
         assert!(!dir.join("gone.dll").exists());
         assert!(!dir.join("Update/new.dll").exists());
+        assert!(pending_runtime_update(&dir).is_none());
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn applies_an_update_of_lua_and_data() {
+        let dir = temp("update");
+        fs::create_dir_all(dir.join("Update/Data")).unwrap();
+        fs::write(dir.join("Update/Data/Gems.lua"), b"new gems").unwrap();
+        fs::write(dir.join("Update/lua51.dll"), b"new runtime").unwrap();
+        fs::write(dir.join("lua51.dll"), b"old runtime").unwrap();
+        // POB's own operations: relative to its folder, where it runs.
+        fs::write(dir.join("Update/opFile.txt"), "move \"Update/Data/Gems.lua\" \"Data/Gems.lua\"\n").unwrap();
+        fs::write(dir.join("Update/opFileRuntime.txt"), "move \"Update/lua51.dll\" \"lua51.dll\"\n").unwrap();
+        assert!(pending_update(&dir).is_some());
+
+        // This process loaded the runtime: only the Lua and data now.
+        apply_update(&dir, true).unwrap();
+        assert_eq!(fs::read(dir.join("Data/Gems.lua")).unwrap(), b"new gems");
+        assert!(pending_update(&dir).is_none());
+        assert_eq!(fs::read(dir.join("lua51.dll")).unwrap(), b"old runtime");
+        assert!(pending_runtime_update(&dir).is_some());
+
+        apply_update(&dir, false).unwrap();
+        assert_eq!(fs::read(dir.join("lua51.dll")).unwrap(), b"new runtime");
         assert!(pending_runtime_update(&dir).is_none());
         let _ = fs::remove_dir_all(&dir);
     }

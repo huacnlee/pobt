@@ -1,3 +1,5 @@
 .nsh/
 target/
 .env
+# Written by scripts/trs-bundle.mjs in CI only: a source tree without it never updates its translations.
+/trs/version.json

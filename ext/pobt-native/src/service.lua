@@ -96,6 +96,42 @@ function ops.init()
 	return { version = launch.versionNumber or "" }
 end
 
+-- Path of Building's own update, as its window's "Check for Update" and "Update Ready" buttons: POB checks at start and
+-- every 12 hours in its frames (Launch.lua), and downloads an update into its Update folder; POBT applies it
+-- (`host::service::apply_update`). Each check's answer is kept here, as POB's window clears it once shown.
+local update = { }
+local onSubFinished = launch.OnSubFinished
+function launch:OnSubFinished(id, ...)
+	if self.subScripts[id] and self.subScripts[id].type == "UPDATE" then
+		local available, err = ...
+		update = { available = available, error = err, at = os.time() }
+	end
+	return onSubFinished(self, id, ...)
+end
+
+-- `{ version, available ("normal" or "basic" when one is ready, else ""), checking, progress, error, checked }`.
+function ops.pobUpdate()
+	local available = update.available or launch.updateAvailable
+	return {
+		version = launch.versionNumber or "",
+		available = (available and available ~= "none") and available or "",
+		checking = launch.updateCheckRunning and true or false,
+		progress = launch.updateCheckRunning and launch.updateProgress or "",
+		error = update.error or "",
+		checked = update.at or 0,
+		dev = launch.devMode and true or false,
+	}
+end
+
+-- Checks for an update now, as POB's "Check for Update" button.
+function ops.pobUpdateCheck()
+	if not launch.devMode then
+		update = { }
+		launch:CheckForUpdate(false)
+	end
+	return ops.pobUpdate()
+end
+
 -- After opening a build. POB refusing one (a PoE1 build in PoE2's) shows its error and goes back to its build list:
 -- its message is the answer, and its prompt is dismissed so the next error shows too.
 local function opened()

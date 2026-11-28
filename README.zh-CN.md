@@ -22,7 +22,8 @@ POBT 直接运行你电脑上已有的 [Path of Building Community](https://path
 - 不修改任何 Path of Building 文件，你的 BD 仍在原来的位置。
 - 随时按 **Ctrl+Shift+T** 切换中文 / 英文。
 - 翻译是 `POBT.exe` 旁边 `trs` 文件夹里的 CSV 文件，可以自己修改或补充（POBT 更新时会覆盖这个文件夹，改过的内容请自己备份）。
-- 有新版本时自动更新。
+- 有新版本时自动更新；翻译在两次发版之间也会自动更新：翻译的修正几小时内就会送到，无需新版本，存放在 POBT 的设置目录（`%APPDATA%\pobt\trs`），之后 POBT 改读这里而不是 `POBT.exe` 旁边的 `trs`。
+- Path of Building 自己的更新（游戏数据与计算规则）和在 Path of Building 里一样：它下载好更新后，Build 列表会出现“更新 Path of Building”按钮。
 - **角色导入**：从账号导入角色，复制 POB 代码或保存到 Path of Building，见下文。
 - **AI 构筑分析**：在「工具」菜单里选一个构筑（或粘贴构筑代码），调用你电脑上已安装的 Claude Code 或 Codex，从伤害、防御、恢复、异常状态、功能、装备六个维度打分，并给出优先改进项。POBT 不保存任何密钥，AI 以你已登录的身份运行。
 

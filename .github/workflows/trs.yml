@@ -1,0 +1,40 @@
+# Publishes the translations on their own, so an installed POBT takes a fix to them without a new release
+# (ext/pobt-native/src/trs_update.rs): on every change to `trs/` on main, each language as `trs-<language>.zip`, and
+# `trs.json` listing them with when each last changed, on the `trs` release (a prerelease, so `releases/latest` stays
+# POBT's own). The assets are replaced each time; the tag stays where it was first made.
+name: Translations
+on:
+  push:
+    branches: [main]
+    paths: ["trs/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: trs
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Bundle each language
+        run: node scripts/trs-bundle.mjs bundle "$RUNNER_TEMP/trs"
+
+      - name: Publish on the trs release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view trs > /dev/null 2>&1; then
+            gh release create trs --prerelease --target "$GITHUB_SHA" --title "Translations" \
+              --notes "The translations POBT updates itself with between releases. Replaced on every change to trs/; not an app release."
+          fi
+          gh release upload trs "$RUNNER_TEMP"/trs/trs-*.zip --clobber
+          # The list last: a POBT reading it finds every bundle it names already in place.
+          gh release upload trs "$RUNNER_TEMP/trs/trs.json" --clobber

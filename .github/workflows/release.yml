@@ -51,6 +51,9 @@ jobs:
       ASSET: ${{ matrix.asset }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The translations' dates (trs/version.json) come from their history.
+          fetch-depth: 0
 
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
@@ -76,6 +79,9 @@ jobs:
       # must be the same bytes, as the updater checks $ASSET against the hash the manifest takes of the versioned one.
       - name: Package
         run: |
+          # When each language's translations last changed, against which an installed POBT compares the ones
+          # published on the `trs` release (.github/workflows/trs.yml) and takes newer ones.
+          node scripts/trs-bundle.mjs version
           args=(--build "$GITHUB_RUN_NUMBER")
           [ "$GITHUB_REF_TYPE" != tag ] || args+=(--app-version "${GITHUB_REF_NAME#v}")
           out="$RUNNER_TEMP/out"

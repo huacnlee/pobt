@@ -24,7 +24,7 @@ pub struct Dictionary {
     /// ones, and the second ones, which the files write after a space.
     words: [HashMap<String, String>; 2],
     /// Its language, and its files' `trs::stamp` as they were read, for `watch`.
-    language: String,
+    pub(crate) language: String,
     stamp: u64,
 }
 

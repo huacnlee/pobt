@@ -201,10 +201,78 @@ export async function startService(game: Game): Promise<void> {
         service.error.set(s.error);
         service.state.set(s.state === "ready" ? "ready" : "failed");
       });
+      watchPobUpdate();
       resolve();
     };
     poll();
   });
+}
+
+/** Path of Building's own update (service.lua `pobUpdate`), as its window's Check for Update / Update Ready button. */
+export type PobUpdate = {
+  version: string;
+  /** "normal" or "basic" once POB has downloaded one, ready to apply; "" otherwise. */
+  available: string;
+  checking: boolean;
+  progress: string;
+  error: string;
+  /** When a check last finished (Unix seconds), 0 before one has. */
+  checked: number;
+  /** A POB run from its source (no updates). */
+  dev: boolean;
+};
+
+export const pobUpdate = {
+  state: signal<PobUpdate | null>(null),
+  /** "applying" while the update goes in; the error of the last try. */
+  applying: signal(false),
+  error: signal(""),
+};
+
+let pobUpdateTimer: ReturnType<typeof setTimeout> | undefined;
+/** Reads POB's update state now, then every few seconds while it checks and every minute otherwise (POB checks at
+ * start and every 12 hours in its frames, which only run on the screens' requests: each read runs what it finished). */
+function watchPobUpdate(op = "pobUpdate") {
+  clearTimeout(pobUpdateTimer);
+  if (service.state() !== "ready") return;
+  void pob<PobUpdate>(op).then(
+    (u) => {
+      pobUpdate.state.set(u);
+      pobUpdateTimer = setTimeout(watchPobUpdate, u.checking ? 2000 : 60000);
+    },
+    () => {
+      pobUpdateTimer = setTimeout(watchPobUpdate, 60000);
+    },
+  );
+}
+
+/** Checks for an update of Path of Building now. */
+export function checkPobUpdate() {
+  watchPobUpdate("pobUpdateCheck");
+}
+
+/** Applies the update Path of Building downloaded: POB stops (the open build closes, as POB's own Update restarts it)
+ * and starts again on the new version; when POB's runtime changed too, POBT starts again itself. */
+export async function applyPobUpdate(): Promise<void> {
+  const game = service.game();
+  if (!game || pobUpdate.applying()) return;
+  clearTimeout(pobUpdateTimer);
+  batch(() => {
+    pobUpdate.applying.set(true);
+    pobUpdate.error.set("");
+  });
+  const why = Pob.serviceApplyUpdate();
+  if (why === "restart") return; // POBT starts again
+  batch(() => {
+    build.open.set(false);
+    build.sidebar.set(null);
+    build.error.set("");
+    pobUpdate.state.set(null);
+    service.state.set("idle");
+  });
+  if (why) pobUpdate.error.set(why);
+  await startService(game);
+  pobUpdate.applying.set(false);
 }
 
 /** What the user pasted, as POB opens it: the XML, or a build code (a link is fetched first, by POB's site list). */

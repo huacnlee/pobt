@@ -23,6 +23,7 @@ pub mod text;
 pub mod translate;
 pub mod trfill;
 pub mod trs;
+pub mod trs_update;
 mod wegame;
 
 use std::{
@@ -74,6 +75,15 @@ fn watch_dictionaries() {
             }
         });
         translate::watch(&TR_DICT, || TR_RELOADS.send_modify(|n| *n += 1));
+        // The languages in use, kept up to date with the published translations; `watch` then reads them again.
+        trs_update::start(|| {
+            let mut in_use: Vec<String> = [&translate::DICT, &TR_DICT]
+                .iter()
+                .filter_map(|slot| slot.read().unwrap().as_ref().map(|d| d.language.clone()))
+                .collect();
+            in_use.dedup();
+            in_use
+        });
     });
 }
 
@@ -249,6 +259,20 @@ impl Pob {
 
     /// Where the build screens' Path of Building stands, as JSON `{ state: "idle" | "loading" | "ready" | "failed",
     /// error, version }`.
+    /// Applies the update the build screens' Path of Building downloaded (`pobUpdate`): "" once done (start it
+    /// again), "restart" when POBT must start again to finish it (it does, after `restart` is answered), or why not.
+    pub fn service_apply_update() -> String {
+        let answer = host::service::apply_update();
+        if answer == "restart" {
+            // The rest of it (the runtime POB's DLLs are) goes in as the new POBT starts the service.
+            std::thread::spawn(|| {
+                std::thread::sleep(std::time::Duration::from_millis(300));
+                relaunch();
+            });
+        }
+        answer
+    }
+
     pub fn service_status() -> String {
         host::service::status()
     }
