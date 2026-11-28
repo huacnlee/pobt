@@ -56,6 +56,24 @@ fn native(registry: &mut Registry) {
 /// The dictionary of POBT's own build screens (`tr_load`), apart from the one the Lua Path of Building draws with.
 static TR_DICT: std::sync::RwLock<Option<Arc<translate::Dictionary>>> = std::sync::RwLock::new(None);
 
+/// How many times `TR_DICT` was read again as its files changed (`translate::watch`), for `tr_reloaded`.
+static TR_RELOADS: std::sync::LazyLock<tokio::sync::watch::Sender<u64>> =
+    std::sync::LazyLock::new(|| tokio::sync::watch::Sender::new(0));
+
+/// Watches the files of both dictionaries, once: an edited CSV shows without starting POBT again.
+fn watch_dictionaries() {
+    static ONCE: std::sync::Once = std::sync::Once::new();
+    ONCE.call_once(|| {
+        translate::watch(&translate::DICT, || {
+            // POB's frames drawn again: their `translate::Cache` follows the new dictionary
+            if let Some(s) = session() {
+                s.poke.store(true, Ordering::SeqCst);
+            }
+        });
+        translate::watch(&TR_DICT, || TR_RELOADS.send_modify(|n| *n += 1));
+    });
+}
+
 /// The running POB, and its thread.
 static SESSION: Mutex<Option<(Arc<Shared>, std::thread::JoinHandle<()>)>> = Mutex::new(None);
 
@@ -155,7 +173,19 @@ impl Pob {
         let dict = rx.await.ok().flatten();
         let on = dict.is_some();
         *TR_DICT.write().unwrap() = dict;
+        watch_dictionaries();
         on
+    }
+
+    /// How many times the dictionary `tr_load` loaded was read again because its files changed, once that is more
+    /// than `after` (both numbers as text): for the screens to translate their text again.
+    pub async fn tr_reloaded(after: String) -> String {
+        let after: u64 = after.parse().unwrap_or(0);
+        let mut rx = TR_RELOADS.subscribe();
+        match rx.wait_for(|n| *n > after).await {
+            Ok(n) => n.to_string(),
+            Err(_) => after.to_string(),
+        }
     }
 
     /// The English texts of a JSON array translated by the dictionary `tr_load` loaded (each as it was when there is
@@ -540,6 +570,7 @@ fn load_dictionary(language: Option<String>) {
         let dict = translate::Dictionary::load(&language);
         *translate::DICT.write().unwrap() = Some(Arc::new(dict));
     });
+    watch_dictionaries();
 }
 
 /// The running Path of Building: start it with `Pob.start` first.
