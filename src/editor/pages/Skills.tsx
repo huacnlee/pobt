@@ -6,6 +6,7 @@ import { computed, resource, Scroll, signal, View } from "nsh";
 import { Badge, Button, Empty, FieldRow, Card, Select, Text, Icon } from "../../ui";
 import { Row } from "../../ui";
 import { GameArt } from "../art";
+import { CopyName } from "../copy";
 import { ColoredText, plain } from "../ColoredText";
 import { language, t, tr } from "../i18n";
 import { PobControl } from "../PobControl";
@@ -569,6 +570,9 @@ function GemRow(props: {
             />
           </If>
         </PobHover>
+        <If when={props.gem.known}>
+          <CopyName english={props.gem.name} />
+        </If>
         <GemNumber control={c().level} label={`${name()} ${tr("Level")}`} onAct={(v) => props.edit("setGemLevel", { value: v })} />
         <GemNumber
           control={c().quality}

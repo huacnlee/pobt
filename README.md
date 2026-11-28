@@ -27,6 +27,7 @@ Chinese, Traditional Chinese and Korean are included.
 - **Import characters** from an account, as a build code or a build saved in Path of Building: see below.
 - **AI build analysis**: from the Tools menu, choose one of your builds (or paste a build code) and have the AI already on your computer, Claude Code or Codex, rate it by damage, defence, recovery, ailments, utility and gear, with what to change first. POBT sends it no account and keeps no key: the agent runs as you signed it in.
 
+- **Copy for the market**: every item and gem of a build has a copy button for its name as the game writes it (a unique's name, another item's base, a gem's name; Tencent's names in Simplified Chinese), to paste into the game's trade search.
 - **Market and loot filter** (Path of Exile): from the Tools menu, the trades worth making now, what the market is doing, prices and their history, a watchlist with alerts, a ledger of your trades, and a loot filter made from the prices. See below.
 
 <p align="center"><img src="website/public/screenshots/ai-en.webp" alt="AI build analysis" width="800"></p>

@@ -56,6 +56,22 @@ test("creates a custom item from its text and adds it to the build", async () =>
   await app.waitUntil(() => app.texts().some((t) => t.startsWith("Doom Loop")), { timeout: 15000 });
 });
 
+// Needs an installed Path of Building. A unique is found on the market by its name, a gem by its own.
+test("copies an item's and a gem's name for the game's market", async () => {
+  const app = await itemsPage();
+  await app.press("label:Copy the name, to find it on the game's market >> nth=0");
+  await app.waitUntil(() => app.texts().some((t) => t.startsWith("Copied: ")), { timeout: 5000 });
+  // Weapon 2 holds a rare, "Torment Mark, Lacquered Buckler": its name is made up, its base is what sells
+  const copied = app.clipboard();
+  expect(copied).toBe("Lacquered Buckler");
+  expect(app.texts()).toContain("Copied: Lacquered Buckler");
+  await app.press("text:Skills");
+  await app.waitFor("label:Copy the name, to find it on the game's market", { timeout: 15000 });
+  await app.press("label:Copy the name, to find it on the game's market >> nth=0");
+  await app.waitUntil(() => app.clipboard() !== copied, { timeout: 5000 });
+  expect(app.clipboard()?.length).toBeGreaterThan(0);
+});
+
 // Needs an installed Path of Building. The AI analysis tab, after Calcs: a build with no report yet asks for one (or
 // for an AI to be installed); no AI is run.
 test("shows the AI analysis tab after Calcs", async () => {
