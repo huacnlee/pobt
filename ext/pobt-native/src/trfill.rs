@@ -59,13 +59,7 @@ pub fn cancel() {
 
 /// Starts translating in the background; false while a translation runs. Its report: `{rows: [Row], file, kept}`.
 pub fn start(req: Request) -> bool {
-    let first = Progress {
-        agent: req.agent.clone(),
-        build: req.build.clone(),
-        language: req.language.clone(),
-        step: "starting".into(),
-        ..Default::default()
-    };
+    let first = Progress { agent: req.agent.clone(), build: req.build.clone(), language: req.language.clone(), step: "starting".into(), ..Default::default() };
     JOB.start(first, move || fill(&req), |_| {})
 }
 
@@ -73,35 +67,17 @@ fn fill(req: &Request) -> Result<(Value, String), String> {
     if req.lines.is_empty() {
         return Err("nothingMissing".into());
     }
-    let folder = crate::trs::root()
-        .map(|r| r.join(&req.language))
-        .filter(|d| d.is_dir())
-        .ok_or("noDictionary")?;
+    let folder = crate::trs::root().map(|r| r.join(&req.language)).filter(|d| d.is_dir()).ok_or("noDictionary")?;
     let text = ai::run_agent(&JOB, &req.agent, &prompt(req), Some(&folder))?;
     JOB.update(|p| p.step = "parsing".into());
     let file = folder.join(FILE);
-    let known = rows_of(&std::fs::read(&file).unwrap_or_default())
-        .into_iter()
-        .map(|(en, _)| en)
-        .collect::<HashSet<_>>();
-    let rows = check(
-        answer(&text)
-            .ok_or_else(|| format!("agentFailed: {}", text.trim().lines().last().unwrap_or("")))?,
-        &req.lines,
-        &known,
-    );
-    let kept: Vec<(String, String)> = rows
-        .iter()
-        .filter(|r| r.why.is_empty())
-        .map(|r| (r.en.clone(), r.zh.clone()))
-        .collect();
+    let known = rows_of(&std::fs::read(&file).unwrap_or_default()).into_iter().map(|(en, _)| en).collect::<HashSet<_>>();
+    let rows = check(answer(&text).ok_or_else(|| format!("agentFailed: {}", text.trim().lines().last().unwrap_or("")))?, &req.lines, &known);
+    let kept: Vec<(String, String)> = rows.iter().filter(|r| r.why.is_empty()).map(|r| (r.en.clone(), r.zh.clone())).collect();
     if !kept.is_empty() {
         append(&file, &kept).map_err(|e| format!("notSaved: {e}"))?;
     }
-    Ok((
-        json!({ "rows": rows, "file": file.display().to_string(), "kept": kept.len() }),
-        text,
-    ))
+    Ok((json!({ "rows": rows, "file": file.display().to_string(), "kept": kept.len() }), text))
 }
 
 /// The language's name as the agent is told it.
@@ -145,12 +121,7 @@ pub fn answer(text: &str) -> Option<Vec<(String, String)>> {
     let rows = json.get("rows")?.as_array()?;
     Some(
         rows.iter()
-            .filter_map(|r| {
-                Some((
-                    r.get("en")?.as_str()?.trim().to_string(),
-                    r.get("zh")?.as_str()?.trim().to_string(),
-                ))
-            })
+            .filter_map(|r| Some((r.get("en")?.as_str()?.trim().to_string(), r.get("zh")?.as_str()?.trim().to_string())))
             .filter(|(en, zh)| !en.is_empty() && !zh.is_empty())
             .collect(),
     )
@@ -181,11 +152,7 @@ pub fn check(rows: Vec<(String, String)>, lines: &[String], known: &HashSet<Stri
     rows.into_iter()
         .map(|(en, zh)| {
             let dict = Dictionary::of(&[(en.clone(), zh.clone())]);
-            let covered: Vec<String> = lines
-                .iter()
-                .filter(|l| dict.translate(l).is_some())
-                .cloned()
-                .collect();
+            let covered: Vec<String> = lines.iter().filter(|l| dict.translate(l).is_some()).cloned().collect();
             let why = if holes(&en) != holes(&zh) {
                 "holes"
             } else if covered.is_empty() {
@@ -195,32 +162,19 @@ pub fn check(rows: Vec<(String, String)>, lines: &[String], known: &HashSet<Stri
             } else {
                 ""
             };
-            Row {
-                en,
-                zh,
-                lines: covered,
-                why: why.into(),
-            }
+            Row { en, zh, lines: covered, why: why.into() }
         })
         .collect()
 }
 
 /// The rows of a CSV of the dictionary's (no header).
 fn rows_of(data: &[u8]) -> Vec<(String, String)> {
-    let mut reader = csv::ReaderBuilder::new()
-        .has_headers(false)
-        .flexible(true)
-        .from_reader(data);
+    let mut reader = csv::ReaderBuilder::new().has_headers(false).flexible(true).from_reader(data);
     reader
         .records()
         .flatten()
         .filter(|r| r.len() >= 2)
-        .map(|r| {
-            (
-                r[0].trim_start_matches('\u{feff}').to_string(),
-                r[1].to_string(),
-            )
-        })
+        .map(|r| (r[0].trim_start_matches('\u{feff}').to_string(), r[1].to_string()))
         .collect()
 }
 
@@ -234,9 +188,7 @@ fn appended(data: &[u8], rows: &[(String, String)]) -> (Vec<u8>, usize) {
         out.push(b'\n');
     }
     let mut added = 0;
-    let mut writer = csv::WriterBuilder::new()
-        .quote_style(csv::QuoteStyle::Always)
-        .from_writer(Vec::new());
+    let mut writer = csv::WriterBuilder::new().quote_style(csv::QuoteStyle::Always).from_writer(Vec::new());
     for (en, zh) in rows.iter().filter(|(en, _)| !known.contains(en)) {
         if writer.write_record([en, zh]).is_ok() {
             added += 1;
@@ -255,10 +207,7 @@ fn append(file: &PathBuf, rows: &[(String, String)]) -> std::io::Result<()> {
 fn gh(args: &[&str], body: Option<&Value>) -> Result<String, String> {
     let program = ai::find_program("gh").ok_or("noGh")?;
     let mut cmd = Command::new(program);
-    cmd.args(args)
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
+    cmd.args(args).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;
@@ -275,11 +224,7 @@ fn gh(args: &[&str], body: Option<&Value>) -> Result<String, String> {
     if out.status.success() {
         Ok(String::from_utf8_lossy(&out.stdout).trim().to_string())
     } else {
-        Err(format!(
-            "gh {}: {}",
-            args.first().unwrap_or(&""),
-            String::from_utf8_lossy(&out.stderr).trim()
-        ))
+        Err(format!("gh {}: {}", args.first().unwrap_or(&""), String::from_utf8_lossy(&out.stderr).trim()))
     }
 }
 
@@ -302,88 +247,33 @@ pub struct Offer {
 /// to it, else of their fork (made if need be), `trs/<language>/POBT-ai.csv` with the rows it has not; the pull
 /// request's address.
 pub fn submit(offer: &Offer) -> Result<String, String> {
-    let rows: Vec<(String, String)> = offer
-        .rows
-        .iter()
-        .filter(|r| r.why.is_empty())
-        .map(|r| (r.en.clone(), r.zh.clone()))
-        .collect();
+    let rows: Vec<(String, String)> = offer.rows.iter().filter(|r| r.why.is_empty()).map(|r| (r.en.clone(), r.zh.clone())).collect();
     if rows.is_empty() || offer.language.contains(['/', '\\', '.']) {
         return Err("nothingNew".into());
     }
     let login = gh(&["api", "user", "--jq", ".login"], None)?;
-    let push = gh(
-        &[
-            "api",
-            &format!("repos/{UPSTREAM}"),
-            "--jq",
-            ".permissions.push",
-        ],
-        None,
-    )? == "true";
+    let push = gh(&["api", &format!("repos/{UPSTREAM}"), "--jq", ".permissions.push"], None)? == "true";
     let repo = if push {
         UPSTREAM.to_string()
     } else {
         gh(&["repo", "fork", UPSTREAM, "--clone=false"], None)?;
         let fork = format!("{login}/pobt");
         // the fork as POBT is now, for the branch to start from POBT's last commit
-        let _ = gh(
-            &[
-                "api",
-                "-X",
-                "POST",
-                &format!("repos/{fork}/merge-upstream"),
-                "--input",
-                "-",
-            ],
-            Some(&json!({ "branch": "main" })),
-        );
+        let _ = gh(&["api", "-X", "POST", &format!("repos/{fork}/merge-upstream"), "--input", "-"], Some(&json!({ "branch": "main" })));
         fork
     };
-    let sha = gh(
-        &[
-            "api",
-            &format!("repos/{UPSTREAM}/git/ref/heads/main"),
-            "--jq",
-            ".object.sha",
-        ],
-        None,
-    )?;
-    let now = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_secs())
-        .unwrap_or(0);
+    let sha = gh(&["api", &format!("repos/{UPSTREAM}/git/ref/heads/main"), "--jq", ".object.sha"], None)?;
+    let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
     let branch = format!("trs-ai/{}-{now}", offer.language);
-    gh(
-        &[
-            "api",
-            "-X",
-            "POST",
-            &format!("repos/{repo}/git/refs"),
-            "--input",
-            "-",
-        ],
-        Some(&json!({ "ref": format!("refs/heads/{branch}"), "sha": sha })),
-    )?;
+    gh(&["api", "-X", "POST", &format!("repos/{repo}/git/refs"), "--input", "-"], Some(&json!({ "ref": format!("refs/heads/{branch}"), "sha": sha })))?;
 
     let path = format!("trs/{}/{FILE}", offer.language);
     let b64 = base64::engine::general_purpose::STANDARD;
-    let (old, old_sha) = match gh(
-        &["api", &format!("repos/{repo}/contents/{path}?ref={branch}")],
-        None,
-    ) {
+    let (old, old_sha) = match gh(&["api", &format!("repos/{repo}/contents/{path}?ref={branch}")], None) {
         Ok(json) => {
             let v: Value = serde_json::from_str(&json).map_err(|e| e.to_string())?;
-            let content: String = v["content"]
-                .as_str()
-                .unwrap_or("")
-                .chars()
-                .filter(|c| !c.is_whitespace())
-                .collect();
-            (
-                b64.decode(content).unwrap_or_default(),
-                v["sha"].as_str().map(str::to_string),
-            )
+            let content: String = v["content"].as_str().unwrap_or("").chars().filter(|c| !c.is_whitespace()).collect();
+            (b64.decode(content).unwrap_or_default(), v["sha"].as_str().map(str::to_string))
         }
         Err(_) => (Vec::new(), None),
     };
@@ -391,36 +281,14 @@ pub fn submit(offer: &Offer) -> Result<String, String> {
     if added == 0 {
         return Err("nothingNew".into());
     }
-    let what = format!(
-        "trs: {added} {} rows from {}, by POBT's translation check",
-        offer.language, offer.build
-    );
+    let what = format!("trs: {added} {} rows from {}, by POBT's translation check", offer.language, offer.build);
     let mut put = json!({ "message": what, "content": b64.encode(&data), "branch": branch });
     if let Some(s) = old_sha {
         put["sha"] = json!(s);
     }
-    gh(
-        &[
-            "api",
-            "-X",
-            "PUT",
-            &format!("repos/{repo}/contents/{path}"),
-            "--input",
-            "-",
-        ],
-        Some(&put),
-    )?;
+    gh(&["api", "-X", "PUT", &format!("repos/{repo}/contents/{path}"), "--input", "-"], Some(&put))?;
 
-    let table: String = rows
-        .iter()
-        .map(|(en, zh)| {
-            format!(
-                "| {} | {} |\n",
-                en.replace('|', "\\|"),
-                zh.replace('|', "\\|")
-            )
-        })
-        .collect();
+    let table: String = rows.iter().map(|(en, zh)| format!("| {} | {} |\n", en.replace('|', "\\|"), zh.replace('|', "\\|"))).collect();
     let agent = match offer.agent.as_str() {
         "claude" => "Claude Code",
         "codex" => "Codex",
@@ -430,24 +298,8 @@ pub fn submit(offer: &Offer) -> Result<String, String> {
         "## Description\n\nText of the build \"{}\" that POBT showed in English in `{}`, translated by {agent} in POBT's translation check (it read `trs/{}` to word it as the dictionary does) and checked by POBT: each row's holes match, and it translates a line of that build.\n\n| English | Translation |\n|---|---|\n{table}\n🤖 Generated with POBT's translation check",
         offer.build, offer.language, offer.language,
     );
-    let head = if push {
-        branch.clone()
-    } else {
-        format!("{login}:{branch}")
-    };
-    gh(
-        &[
-            "api",
-            "-X",
-            "POST",
-            &format!("repos/{UPSTREAM}/pulls"),
-            "--jq",
-            ".html_url",
-            "--input",
-            "-",
-        ],
-        Some(&json!({ "title": what, "head": head, "base": "main", "body": body })),
-    )
+    let head = if push { branch.clone() } else { format!("{login}:{branch}") };
+    gh(&["api", "-X", "POST", &format!("repos/{UPSTREAM}/pulls"), "--jq", ".html_url", "--input", "-"], Some(&json!({ "title": what, "head": head, "base": "main", "body": body })))
 }
 
 #[cfg(test)]
@@ -461,10 +313,7 @@ mod tests {
     #[test]
     fn finds_the_rows_in_an_answer() {
         let text = "Here:\n```json\n{\"rows\": [{\"en\": \"Gain {0} Life\", \"zh\": \"获得 {0} 生命\"}, {\"en\": \"\", \"zh\": \"x\"}]}\n```";
-        assert_eq!(
-            answer(text),
-            Some(vec![("Gain {0} Life".into(), "获得 {0} 生命".into())])
-        );
+        assert_eq!(answer(text), Some(vec![("Gain {0} Life".into(), "获得 {0} 生命".into())]));
         assert_eq!(answer("no json"), None);
     }
 
@@ -475,18 +324,9 @@ mod tests {
         let known: HashSet<String> = ["Storm Mitts".to_string()].into();
         let rows = check(
             vec![
-                (
-                    "Gain {0} Life per Enemy Killed".into(),
-                    "每击败一个敌人获得 {0} 生命".into(),
-                ),
-                (
-                    "Gain {0} Mana per Enemy Killed".into(),
-                    "每击败一个敌人获得 {0} 魔力".into(),
-                ),
-                (
-                    "Gain {0} Life per Enemy Killed".into(),
-                    "每击败一个敌人获得生命".into(),
-                ),
+                ("Gain {0} Life per Enemy Killed".into(), "每击败一个敌人获得 {0} 生命".into()),
+                ("Gain {0} Mana per Enemy Killed".into(), "每击败一个敌人获得 {0} 魔力".into()),
+                ("Gain {0} Life per Enemy Killed".into(), "每击败一个敌人获得生命".into()),
                 ("Storm Mitts".into(), "风暴 手套".into()),
             ],
             &lines,
@@ -500,28 +340,15 @@ mod tests {
     /// The file gets a first line when it is new, and only rows it has not.
     #[test]
     fn appends_rows_it_has_not() {
-        let rows = vec![
-            ("A \"quoted\" line".to_string(), "一行".to_string()),
-            ("B".to_string(), "乙".to_string()),
-        ];
+        let rows = vec![("A \"quoted\" line".to_string(), "一行".to_string()), ("B".to_string(), "乙".to_string())];
         let (first, added) = appended(b"", &rows);
         assert_eq!(added, 2);
         let text = String::from_utf8(first.clone()).unwrap();
         assert!(text.starts_with("\"## "));
         assert!(text.contains("\"A \"\"quoted\"\" line\",\"一行\"\n"));
-        let (again, added) = appended(
-            &first,
-            &[
-                ("B".to_string(), "乙".to_string()),
-                ("C".to_string(), "丙".to_string()),
-            ],
-        );
+        let (again, added) = appended(&first, &[("B".to_string(), "乙".to_string()), ("C".to_string(), "丙".to_string())]);
         assert_eq!(added, 1);
-        assert!(
-            String::from_utf8(again)
-                .unwrap()
-                .ends_with("\"C\",\"丙\"\n")
-        );
+        assert!(String::from_utf8(again).unwrap().ends_with("\"C\",\"丙\"\n"));
         // read as the dictionary reads it: the first line is no row
         let dict = Dictionary::of(&rows_of(&first));
         assert_eq!(dict.translate("B").as_deref(), Some("乙"));
@@ -530,12 +357,7 @@ mod tests {
 
     #[test]
     fn asks_for_the_lines_in_the_language() {
-        let p = prompt(&Request {
-            agent: "claude".into(),
-            language: "zh-rCN".into(),
-            build: "Xiaobo".into(),
-            lines: s(&["Storm Mitts", "Gain 24 Life"]),
-        });
+        let p = prompt(&Request { agent: "claude".into(), language: "zh-rCN".into(), build: "Xiaobo".into(), lines: s(&["Storm Mitts", "Gain 24 Life"]) });
         assert!(p.contains("Simplified Chinese"));
         assert!(p.contains("\"Xiaobo\":\nStorm Mitts\nGain 24 Life\n"));
         assert!(p.contains("{0}"));
@@ -546,20 +368,9 @@ mod tests {
     #[test]
     #[ignore]
     fn live_fill() {
-        let lines = s(&[
-            "Bottomless Quartz Flask of the Cheetah",
-            "Brewer's Quicksilver Flask of the Owl",
-            "The Covetous Dark",
-            "Gain 37 Life per Enemy Hit with Attacks",
-        ]);
+        let lines = s(&["Bottomless Quartz Flask of the Cheetah", "Brewer's Quicksilver Flask of the Owl", "The Covetous Dark", "Gain 37 Life per Enemy Hit with Attacks"]);
         let agent = std::env::var("POBT_AGENT").unwrap_or("claude".into());
-        let (report, text) = fill(&Request {
-            agent,
-            language: "zh-rCN".into(),
-            build: "Xiaobo_Covens".into(),
-            lines,
-        })
-        .unwrap();
+        let (report, text) = fill(&Request { agent, language: "zh-rCN".into(), build: "Xiaobo_Covens".into(), lines }).unwrap();
         println!("{text}\n{}", serde_json::to_string_pretty(&report).unwrap());
     }
 }

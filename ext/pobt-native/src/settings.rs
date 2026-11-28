@@ -56,23 +56,12 @@ pub fn github_url(url: &str) -> String {
 }
 
 fn proxied(url: &str, on: bool) -> String {
-    let host = url
-        .strip_prefix("https://")
-        .and_then(|r| r.split('/').next())
-        .unwrap_or("");
+    let host = url.strip_prefix("https://").and_then(|r| r.split('/').next()).unwrap_or("");
     let github = matches!(
         host,
-        "github.com"
-            | "raw.githubusercontent.com"
-            | "objects.githubusercontent.com"
-            | "codeload.github.com"
-            | "api.github.com"
+        "github.com" | "raw.githubusercontent.com" | "objects.githubusercontent.com" | "codeload.github.com" | "api.github.com"
     );
-    if on && github {
-        format!("{GITHUB_PROXY}{url}")
-    } else {
-        url.to_string()
-    }
+    if on && github { format!("{GITHUB_PROXY}{url}") } else { url.to_string() }
 }
 
 fn file() -> Option<PathBuf> {
@@ -88,16 +77,10 @@ impl Settings {
             .and_then(|b| serde_json::from_slice(&b).ok())
             .unwrap_or_default();
         USE_GITHUB_PROXY.store(s.github_proxy, Ordering::Relaxed);
-        if s.poe1_dir
-            .as_deref()
-            .is_none_or(|d| !is_pob_dir(d, Game::Poe1))
-        {
+        if s.poe1_dir.as_deref().is_none_or(|d| !is_pob_dir(d, Game::Poe1)) {
             s.poe1_dir = detect(Game::Poe1);
         }
-        if s.poe2_dir
-            .as_deref()
-            .is_none_or(|d| !is_pob_dir(d, Game::Poe2))
-        {
+        if s.poe2_dir.as_deref().is_none_or(|d| !is_pob_dir(d, Game::Poe2)) {
             s.poe2_dir = detect(Game::Poe2);
         }
         s
@@ -127,23 +110,13 @@ impl Settings {
 
 /// A Path of Building install we can run: its Launch.lua and its LuaJIT.
 pub fn is_pob_dir(dir: &Path, game: Game) -> bool {
-    dir.join("Launch.lua").is_file()
-        && dir.join("lua51.dll").is_file()
-        && dir.join(game.exe()).is_file()
+    dir.join("Launch.lua").is_file() && dir.join("lua51.dll").is_file() && dir.join(game.exe()).is_file()
 }
 
 fn detect(game: Game) -> Option<PathBuf> {
     let names: &[&str] = match game {
-        Game::Poe1 => &[
-            "Path of Building Community",
-            "PathOfBuildingCommunity",
-            "Path of Building",
-        ],
-        Game::Poe2 => &[
-            "Path of Building Community (PoE2)",
-            "PathOfBuildingCommunity-PoE2",
-            "Path of Building-PoE2",
-        ],
+        Game::Poe1 => &["Path of Building Community", "PathOfBuildingCommunity", "Path of Building"],
+        Game::Poe2 => &["Path of Building Community (PoE2)", "PathOfBuildingCommunity-PoE2", "Path of Building-PoE2"],
     };
     let mut roots: Vec<PathBuf> = Vec::new();
     if let Some(d) = dirs::data_dir() {
@@ -169,6 +142,7 @@ fn detect(game: Game) -> Option<PathBuf> {
         .find(|d| is_pob_dir(d, game))
 }
 
+
 #[cfg(test)]
 mod tests {
     use super::proxied;
@@ -183,9 +157,6 @@ mod tests {
         // Not GitHub's: as it is.
         let other = "https://www.pathofexile.com/character-window/get-characters";
         assert_eq!(proxied(other, true), other);
-        assert_eq!(
-            proxied("https://github.com.evil.example/x", true),
-            "https://github.com.evil.example/x"
-        );
+        assert_eq!(proxied("https://github.com.evil.example/x", true), "https://github.com.evil.example/x");
     }
 }

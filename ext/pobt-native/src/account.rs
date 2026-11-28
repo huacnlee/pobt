@@ -50,11 +50,7 @@ fn is_zero(n: &u64) -> bool {
 impl Account {
     /// Who the account is, for what is kept of it: its realm and name, or its POESESSID without a name.
     fn key(&self) -> String {
-        let who = if self.name.is_empty() {
-            &self.sessid
-        } else {
-            &self.name
-        };
+        let who = if self.name.is_empty() { &self.sessid } else { &self.name };
         format!("{}|{}", self.realm, who.to_lowercase())
     }
 
@@ -72,11 +68,7 @@ impl Account {
     }
 
     fn host(&self) -> &'static str {
-        if self.tencent() {
-            "https://poe.game.qq.com/"
-        } else {
-            "https://www.pathofexile.com/"
-        }
+        if self.tencent() { "https://poe.game.qq.com/" } else { "https://www.pathofexile.com/" }
     }
 
     /// The query of a `character-window` call for this account. Tencent's
@@ -129,12 +121,8 @@ fn remember(account: &Account) {
 
 /// The account's token as last kept: the launcher's copy may be older, renewed since.
 fn kept_token(account: &mut Account) {
-    if let Some(kept) = accounts()
-        .into_iter()
-        .find(|a| a.key() == account.key() && !a.token.is_empty())
-    {
-        (account.token, account.refresh, account.expires) =
-            (kept.token, kept.refresh, kept.expires);
+    if let Some(kept) = accounts().into_iter().find(|a| a.key() == account.key() && !a.token.is_empty()) {
+        (account.token, account.refresh, account.expires) = (kept.token, kept.refresh, kept.expires);
     }
 }
 
@@ -153,9 +141,7 @@ fn keep_token(account: &Account) {
 fn encode(s: &str) -> String {
     s.bytes()
         .map(|b| match b {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
-                (b as char).to_string()
-            }
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => (b as char).to_string(),
             _ => format!("%{b:02X}"),
         })
         .collect()
@@ -170,10 +156,7 @@ fn get(account: &Account, path: &str) -> Result<String, String> {
         // Tencent's site is for browsers.
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36".to_string()
     } else {
-        format!(
-            "POBT/{} (+https://github.com/huacnlee/pobt)",
-            env!("CARGO_PKG_VERSION")
-        )
+        format!("POBT/{} (+https://github.com/huacnlee/pobt)", env!("CARGO_PKG_VERSION"))
     };
     let mut req = ureq::get(&url)
         .timeout(std::time::Duration::from_secs(30))
@@ -185,22 +168,13 @@ fn get(account: &Account, path: &str) -> Result<String, String> {
     if account.tencent() {
         req = req.set("Referer", "https://poe.game.qq.com/");
     }
-    log::info!(
-        "account: GET {}{}",
-        account.host(),
-        path.split('?').next().unwrap_or("")
-    );
+    log::info!("account: GET {}{}", account.host(), path.split('?').next().unwrap_or(""));
     let body = match req.call() {
         Ok(r) => r.into_string().map_err(|e| format!("network: {e}"))?,
         Err(ureq::Error::Status(401 | 403, _)) => return Err("private".into()),
         Err(ureq::Error::Status(404, _)) => return Err("notFound".into()),
         // Too many calls: the site says for how long it refuses more (`Retry-After`), most often.
-        Err(ureq::Error::Status(429, r)) => {
-            return Err(format!(
-                "rateLimited:{}",
-                r.header("Retry-After").unwrap_or_default()
-            ));
-        }
+        Err(ureq::Error::Status(429, r)) => return Err(format!("rateLimited:{}", r.header("Retry-After").unwrap_or_default())),
         Err(ureq::Error::Status(code, _)) => return Err(format!("network: HTTP {code}")),
         Err(e) => return Err(format!("network: {e}")),
     };
@@ -223,10 +197,7 @@ fn json(body: &str) -> Result<Value, String> {
             Some(1) => "notFound".into(),
             Some(3) => "rateLimited:".into(),
             Some(6) => "private".into(),
-            _ => format!(
-                "network: {}",
-                e.get("message").and_then(Value::as_str).unwrap_or("error")
-            ),
+            _ => format!("network: {}", e.get("message").and_then(Value::as_str).unwrap_or("error")),
         });
     }
     Ok(v)
@@ -246,25 +217,15 @@ fn account_name(account: &Account) -> Result<String, String> {
             return Err("needAccount".into());
         }
         let v = json(&get(account, "character-window/get-account-name")?)?;
-        return v
-            .get("accountName")
-            .and_then(Value::as_str)
-            .map(str::to_string)
-            .ok_or_else(|| "needAccount".into());
+        return v.get("accountName").and_then(Value::as_str).map(str::to_string).ok_or_else(|| "needAccount".into());
     }
     let mut name = name.replace(' ', "");
-    if let Some(i) = name
-        .rfind('-')
-        .filter(|&i| name[i + 1..].len() == 4 && name[i + 1..].bytes().all(|b| b.is_ascii_digit()))
-    {
+    if let Some(i) = name.rfind('-').filter(|&i| name[i + 1..].len() == 4 && name[i + 1..].bytes().all(|b| b.is_ascii_digit())) {
         name.replace_range(i..i + 1, "#");
     }
     let page = get(account, &format!("account/view-profile/{}", encode(&name)));
     if let Ok(page) = page {
-        let found = page
-            .split("/view-profile/")
-            .skip(1)
-            .find_map(|s| s.split_once("/characters").map(|(n, _)| n.to_string()));
+        let found = page.split("/view-profile/").skip(1).find_map(|s| s.split_once("/characters").map(|(n, _)| n.to_string()));
         if let Some(found) = found.filter(|n| !n.contains(['"', '<', '>', '/'])) {
             return Ok(found.replace("%23", "#").replace("%2523", "#"));
         }
@@ -280,27 +241,8 @@ fn reverse() -> &'static Reverse {
 
 /// Where an item is that POB imports: worn, a flask, a jewel in the tree.
 const WORN: &[&str] = &[
-    "Weapon",
-    "Offhand",
-    "Weapon2",
-    "Offhand2",
-    "Helm",
-    "BodyArmour",
-    "Gloves",
-    "Boots",
-    "Amulet",
-    "Ring",
-    "Ring2",
-    "Ring3",
-    "Belt",
-    "Flask",
-    "PassiveJewels",
-    "BrequelGrafts",
-    "BrequelGrafts2",
-    "VisceraHead",
-    "VisceraBody",
-    "VisceraArm",
-    "VisceraLeg",
+    "Weapon", "Offhand", "Weapon2", "Offhand2", "Helm", "BodyArmour", "Gloves", "Boots", "Amulet", "Ring", "Ring2", "Ring3", "Belt", "Flask",
+    "PassiveJewels", "BrequelGrafts", "BrequelGrafts2", "VisceraHead", "VisceraBody", "VisceraArm", "VisceraLeg",
 ];
 
 const MOD_LISTS: &[&str] = &[
@@ -333,16 +275,7 @@ const PROPERTIES: &[(&str, &str)] = &[
 ];
 
 /// A jewel's radius, as Tencent words it.
-const RADII: &[(&str, &str)] = &[
-    ("小", "Small"),
-    ("中", "Medium"),
-    ("大", "Large"),
-    ("非常大", "Very Large"),
-    ("超大", "Very Large"),
-    ("极大", "Very Large"),
-    ("可变", "Variable"),
-    ("变量", "Variable"),
-];
+const RADII: &[(&str, &str)] = &[("小", "Small"), ("中", "Medium"), ("大", "Large"), ("非常大", "Very Large"), ("超大", "Very Large"), ("极大", "Very Large"), ("可变", "Variable"), ("变量", "Variable")];
 
 fn has_chinese(s: &str) -> bool {
     s.chars().any(|c| c as u32 >= 0x2e80)
@@ -351,67 +284,34 @@ fn has_chinese(s: &str) -> bool {
 /// Tencent's item in English, as far as the dictionary goes; `missed` counts
 /// the lines of mods it does not know, which stay in Chinese.
 fn translate_item(rev: &Reverse, item: &mut Value, missed: &mut usize) {
-    let Some(obj) = item.as_object_mut() else {
-        return;
-    };
+    let Some(obj) = item.as_object_mut() else { return };
     // A gem: POB reads its name only, which may be a support's.
     if obj.get("frameType").and_then(Value::as_i64) == Some(4) {
         for key in ["typeLine", "baseType"] {
-            if let Some(en) = obj
-                .get(key)
-                .and_then(Value::as_str)
-                .filter(|s| has_chinese(s))
-                .and_then(|s| rev.gem(s))
-            {
+            if let Some(en) = obj.get(key).and_then(Value::as_str).filter(|s| has_chinese(s)).and_then(|s| rev.gem(s)) {
                 obj.insert(key.into(), en.into());
             }
         }
         if let Some(hybrid) = obj.get_mut("hybrid").and_then(Value::as_object_mut) {
-            if let Some(en) = hybrid
-                .get("baseTypeName")
-                .and_then(Value::as_str)
-                .filter(|s| has_chinese(s))
-                .and_then(|s| rev.gem(s))
-            {
+            if let Some(en) = hybrid.get("baseTypeName").and_then(Value::as_str).filter(|s| has_chinese(s)).and_then(|s| rev.gem(s)) {
                 hybrid.insert("baseTypeName".into(), en.into());
             }
         }
         translate_properties(rev, obj);
         return;
     }
-    let english = |s: &str| {
-        if has_chinese(s) {
-            rev.english(s)
-        } else {
-            Some(s.to_string())
-        }
-    };
+    let english = |s: &str| if has_chinese(s) { rev.english(s) } else { Some(s.to_string()) };
 
-    let base = obj
-        .get("baseType")
-        .and_then(Value::as_str)
-        .and_then(english);
-    if let Some(name) = obj
-        .get("name")
-        .and_then(Value::as_str)
-        .filter(|s| has_chinese(s))
-    {
+    let base = obj.get("baseType").and_then(Value::as_str).and_then(english);
+    if let Some(name) = obj.get("name").and_then(Value::as_str).filter(|s| has_chinese(s)) {
         if let Some(en) = rev.english(name) {
             obj.insert("name".into(), en.into());
         }
     }
-    if let Some(type_line) = obj
-        .get("typeLine")
-        .and_then(Value::as_str)
-        .filter(|s| has_chinese(s))
-    {
+    if let Some(type_line) = obj.get("typeLine").and_then(Value::as_str).filter(|s| has_chinese(s)) {
         // A magic item's line has its affixes' names around the base's: its base alone.
         let magic = obj.get("frameType").and_then(Value::as_i64) == Some(1);
-        let en = if magic {
-            base.clone().or_else(|| rev.english(type_line))
-        } else {
-            rev.english(type_line).or_else(|| base.clone())
-        };
+        let en = if magic { base.clone().or_else(|| rev.english(type_line)) } else { rev.english(type_line).or_else(|| base.clone()) };
         if let Some(en) = en {
             obj.insert("typeLine".into(), en.into());
         }
@@ -423,12 +323,7 @@ fn translate_item(rev: &Reverse, item: &mut Value, missed: &mut usize) {
     translate_properties(rev, obj);
 
     for list in MOD_LISTS {
-        for m in obj
-            .get_mut(*list)
-            .and_then(Value::as_array_mut)
-            .into_iter()
-            .flatten()
-        {
+        for m in obj.get_mut(*list).and_then(Value::as_array_mut).into_iter().flatten() {
             // A mod is its text, or `{ description, … }` (the newer API's).
             let text = match m {
                 Value::String(s) => s,
@@ -462,12 +357,7 @@ fn translate_item(rev: &Reverse, item: &mut Value, missed: &mut usize) {
         }
     }
 
-    for socketed in obj
-        .get_mut("socketedItems")
-        .and_then(Value::as_array_mut)
-        .into_iter()
-        .flatten()
-    {
+    for socketed in obj.get_mut("socketedItems").and_then(Value::as_array_mut).into_iter().flatten() {
         translate_item(rev, socketed, missed);
     }
 }
@@ -476,45 +366,15 @@ fn translate_item(rev: &Reverse, item: &mut Value, missed: &mut usize) {
 /// a jewel's radius too.
 fn translate_properties(rev: &Reverse, obj: &mut serde_json::Map<String, Value>) {
     for list in ["properties", "requirements", "additionalProperties"] {
-        for prop in obj
-            .get_mut(list)
-            .and_then(Value::as_array_mut)
-            .into_iter()
-            .flatten()
-        {
-            let Some(p) = prop.as_object_mut() else {
-                continue;
-            };
-            let Some(name) = p
-                .get("name")
-                .and_then(Value::as_str)
-                .filter(|s| has_chinese(s))
-            else {
-                continue;
-            };
-            let key: String = name
-                .chars()
-                .filter(|c| !c.is_whitespace())
-                .map(|c| if c == '：' { ':' } else { c })
-                .collect();
-            let en = PROPERTIES
-                .iter()
-                .find(|(zh, _)| *zh == key)
-                .map(|(_, en)| en.to_string())
-                .or_else(|| rev.english(name));
+        for prop in obj.get_mut(list).and_then(Value::as_array_mut).into_iter().flatten() {
+            let Some(p) = prop.as_object_mut() else { continue };
+            let Some(name) = p.get("name").and_then(Value::as_str).filter(|s| has_chinese(s)) else { continue };
+            let key: String = name.chars().filter(|c| !c.is_whitespace()).map(|c| if c == '：' { ':' } else { c }).collect();
+            let en = PROPERTIES.iter().find(|(zh, _)| *zh == key).map(|(_, en)| en.to_string()).or_else(|| rev.english(name));
             let Some(en) = en else { continue };
             if en == "Radius" {
-                for v in p
-                    .get_mut("values")
-                    .and_then(Value::as_array_mut)
-                    .into_iter()
-                    .flatten()
-                {
-                    if let Some(r) = v
-                        .get(0)
-                        .and_then(Value::as_str)
-                        .and_then(|s| RADII.iter().find(|(zh, _)| *zh == s.trim()))
-                    {
+                for v in p.get_mut("values").and_then(Value::as_array_mut).into_iter().flatten() {
+                    if let Some(r) = v.get(0).and_then(Value::as_str).and_then(|s| RADII.iter().find(|(zh, _)| *zh == s.trim())) {
                         v[0] = r.1.into();
                     }
                 }
@@ -528,27 +388,12 @@ fn translate_properties(rev: &Reverse, obj: &mut serde_json::Map<String, Value>)
 /// POB finds a tattoo by its name.
 fn translate_overrides(passives: &mut Value, missed: &mut usize) {
     let rev = reverse();
-    let Some(overrides) = passives
-        .get_mut("skill_overrides")
-        .and_then(Value::as_object_mut)
-    else {
-        return;
-    };
+    let Some(overrides) = passives.get_mut("skill_overrides").and_then(Value::as_object_mut) else { return };
     for o in overrides.values_mut() {
-        if let Some(en) = o
-            .get("name")
-            .and_then(Value::as_str)
-            .filter(|s| has_chinese(s))
-            .and_then(|s| rev.english(s))
-        {
+        if let Some(en) = o.get("name").and_then(Value::as_str).filter(|s| has_chinese(s)).and_then(|s| rev.english(s)) {
             o["name"] = en.into();
         }
-        for stat in o
-            .get_mut("stats")
-            .and_then(Value::as_array_mut)
-            .into_iter()
-            .flatten()
-        {
+        for stat in o.get_mut("stats").and_then(Value::as_array_mut).into_iter().flatten() {
             if let Some(s) = stat.as_str().filter(|s| has_chinese(s)) {
                 match rev.english(s) {
                     Some(en) => *stat = en.into(),
@@ -570,8 +415,7 @@ fn translate_items(list: Option<&mut Value>, missed: &mut usize) {
 /// list was last got, by the account's key and the character: copying a
 /// character's code, then saving it, asks the site once (Tencent allows few
 /// calls).
-static ITEMS: Mutex<std::collections::BTreeMap<(String, String), (Value, Value)>> =
-    Mutex::new(std::collections::BTreeMap::new());
+static ITEMS: Mutex<std::collections::BTreeMap<(String, String), (Value, Value)>> = Mutex::new(std::collections::BTreeMap::new());
 
 /// What a job asks: an account's characters, or one of them made a build.
 #[derive(Debug, Clone, Deserialize)]
@@ -614,12 +458,7 @@ pub fn fail(kind: &str, error: &str) -> bool {
     if job.as_ref().is_some_and(|p| p.state == "running") {
         return false;
     }
-    *job = Some(Progress {
-        kind: kind.into(),
-        state: "failed".into(),
-        error: error.into(),
-        ..Default::default()
-    });
+    *job = Some(Progress { kind: kind.into(), state: "failed".into(), error: error.into(), ..Default::default() });
     true
 }
 
@@ -631,11 +470,7 @@ pub fn start(kind: &str, request: Request) -> bool {
         if job.as_ref().is_some_and(|p| p.state == "running") {
             return false;
         }
-        *job = Some(Progress {
-            kind: kind.to_string(),
-            state: "running".into(),
-            ..Default::default()
-        });
+        *job = Some(Progress { kind: kind.to_string(), state: "running".into(), ..Default::default() });
     }
     let kind = kind.to_string();
     std::thread::spawn(move || {
@@ -683,33 +518,18 @@ fn characters(req: &Request) -> Result<Value, String> {
     set_step("account");
     account.name = account_name(&account)?;
     set_step("characters");
-    let mut list = json(&get(
-        &account,
-        &format!("character-window/get-characters?{}", account.query(None)),
-    )?)?;
-    let Some(chars) = list.as_array_mut() else {
-        return Err("network: not a list".into());
-    };
+    let mut list = json(&get(&account, &format!("character-window/get-characters?{}", account.query(None)))?)?;
+    let Some(chars) = list.as_array_mut() else { return Err("network: not a list".into()) };
     if !account.tencent() {
-        chars.retain(|c| {
-            c.get("realm")
-                .and_then(Value::as_str)
-                .is_none_or(|r| r == account.realm)
-        });
+        chars.retain(|c| c.get("realm").and_then(Value::as_str).is_none_or(|r| r == account.realm));
     }
     if chars.is_empty() {
         return Err("noCharacters".into());
     }
     // Their items are the site's again, from now.
-    ITEMS
-        .lock()
-        .unwrap()
-        .retain(|(who, _), _| *who != account.key());
+    ITEMS.lock().unwrap().retain(|(who, _), _| *who != account.key());
     account.characters = Some(list);
-    account.updated = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .ok()
-        .map(|d| d.as_secs());
+    account.updated = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).ok().map(|d| d.as_secs());
     remember(&account);
     Ok(serde_json::to_value(&account).unwrap_or_default())
 }
@@ -720,31 +540,17 @@ fn poe2_characters(mut account: Account) -> Result<Value, String> {
     kept_token(&mut account);
     let before = account.key();
     let mut list = crate::oauth::api(&mut account, "/character/poe2", &|| set_step("signin"))?;
-    let list = list
-        .get_mut("characters")
-        .map(Value::take)
-        .unwrap_or_default();
+    let list = list.get_mut("characters").map(Value::take).unwrap_or_default();
     if list.as_array().is_none_or(Vec::is_empty) {
         return Err("noCharacters".into());
     }
     // Signed in, the account has its name: as it was kept without, it goes.
     if before != account.key() {
-        save_accounts(
-            &accounts()
-                .into_iter()
-                .filter(|a| a.key() != before)
-                .collect::<Vec<_>>(),
-        );
+        save_accounts(&accounts().into_iter().filter(|a| a.key() != before).collect::<Vec<_>>());
     }
-    ITEMS
-        .lock()
-        .unwrap()
-        .retain(|(who, _), _| *who != account.key());
+    ITEMS.lock().unwrap().retain(|(who, _), _| *who != account.key());
     account.characters = Some(list);
-    account.updated = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .ok()
-        .map(|d| d.as_secs());
+    account.updated = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).ok().map(|d| d.as_secs());
     remember(&account);
     Ok(serde_json::to_value(&account).unwrap_or_default())
 }
@@ -757,10 +563,7 @@ fn wegame_characters(mut account: Account) -> Result<Value, String> {
     account.sessid = code;
     account.name = role["name"].as_str().unwrap_or_default().to_string();
     account.characters = Some(Value::Array(vec![crate::wegame::listed(&role)]));
-    account.updated = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .ok()
-        .map(|d| d.as_secs());
+    account.updated = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).ok().map(|d| d.as_secs());
     remember(&account);
     Ok(serde_json::to_value(&account).unwrap_or_default())
 }
@@ -787,9 +590,7 @@ pub struct Entry {
 /// The folders and builds (`.xml`) under `dir`, folders first, each by name;
 /// so deep, and so many, at most.
 pub(crate) fn entries(dir: &Path, rel: &str, depth: u32, budget: &mut u32) -> Vec<Entry> {
-    let Ok(read) = std::fs::read_dir(dir) else {
-        return Vec::new();
-    };
+    let Ok(read) = std::fs::read_dir(dir) else { return Vec::new() };
     let mut list: Vec<(bool, String)> = read
         .flatten()
         .filter_map(|e| {
@@ -799,32 +600,16 @@ pub(crate) fn entries(dir: &Path, rel: &str, depth: u32, budget: &mut u32) -> Ve
         })
         .filter(|(_, name)| !name.starts_with('.'))
         .collect();
-    list.sort_by(|a, b| {
-        b.0.cmp(&a.0)
-            .then_with(|| a.1.to_lowercase().cmp(&b.1.to_lowercase()))
-    });
+    list.sort_by(|a, b| b.0.cmp(&a.0).then_with(|| a.1.to_lowercase().cmp(&b.1.to_lowercase())));
     let mut out = Vec::new();
     for (is_dir, name) in list {
         if *budget == 0 {
             break;
         }
         *budget -= 1;
-        let path = if rel.is_empty() {
-            name.clone()
-        } else {
-            format!("{rel}/{name}")
-        };
-        let children = if is_dir && depth > 0 {
-            entries(&dir.join(&name), &path, depth - 1, budget)
-        } else {
-            Vec::new()
-        };
-        out.push(Entry {
-            name,
-            path,
-            dir: is_dir,
-            children,
-        });
+        let path = if rel.is_empty() { name.clone() } else { format!("{rel}/{name}") };
+        let children = if is_dir && depth > 0 { entries(&dir.join(&name), &path, depth - 1, budget) } else { Vec::new() };
+        out.push(Entry { name, path, dir: is_dir, children });
     }
     out
 }
@@ -845,17 +630,12 @@ pub fn save_build(path: &str) -> Result<PathBuf, String> {
     let root = build.file.parent().ok_or("no builds folder")?;
     let rel = Path::new(path.trim());
     // Nowhere but in the builds folder.
-    let inside = rel
-        .components()
-        .all(|c| matches!(c, std::path::Component::Normal(_)));
+    let inside = rel.components().all(|c| matches!(c, std::path::Component::Normal(_)));
     if !inside || rel.as_os_str().is_empty() {
         return Err(format!("{path}: not in {}", root.display()));
     }
     let mut file = root.join(rel);
-    if !file
-        .extension()
-        .is_some_and(|e| e.eq_ignore_ascii_case("xml"))
-    {
+    if !file.extension().is_some_and(|e| e.eq_ignore_ascii_case("xml")) {
         let mut name = file.file_name().unwrap_or_default().to_os_string();
         name.push(".xml");
         file.set_file_name(name);
@@ -869,16 +649,7 @@ pub fn save_build(path: &str) -> Result<PathBuf, String> {
 
 /// A file name for the build of `name`: what Windows does not take, out.
 fn file_name(name: &str) -> String {
-    let n: String = name
-        .chars()
-        .map(|c| {
-            if r#"<>:"/\|?*"#.contains(c) || c.is_control() {
-                '_'
-            } else {
-                c
-            }
-        })
-        .collect();
+    let n: String = name.chars().map(|c| if r#"<>:"/\|?*"#.contains(c) || c.is_control() { '_' } else { c }).collect();
     let n = n.trim().trim_end_matches('.').to_string();
     if n.is_empty() { "Imported".into() } else { n }
 }
@@ -899,11 +670,7 @@ fn free_path(dir: &Path, name: &str) -> PathBuf {
 fn export(req: &Request) -> Result<Value, String> {
     let account = &req.account;
     let character = req.character.clone().ok_or("no character")?;
-    let name = character
-        .get("name")
-        .and_then(Value::as_str)
-        .ok_or("no character")?
-        .to_string();
+    let name = character.get("name").and_then(Value::as_str).ok_or("no character")?.to_string();
     if req.pob_dir.is_empty() || !Path::new(&req.pob_dir).join("Launch.lua").is_file() {
         return Err("noPob".into());
     }
@@ -921,24 +688,14 @@ fn export(req: &Request) -> Result<Value, String> {
         None => {
             let q = account.query(Some(&name));
             let items = json(&get(account, &format!("character-window/get-items?{q}"))?)?;
-            let passives = json(&get(
-                account,
-                &format!("character-window/get-passive-skills?{q}"),
-            )?)?;
-            ITEMS
-                .lock()
-                .unwrap()
-                .insert(key, (items.clone(), passives.clone()));
+            let passives = json(&get(account, &format!("character-window/get-passive-skills?{q}"))?)?;
+            ITEMS.lock().unwrap().insert(key, (items.clone(), passives.clone()));
             (items, passives)
         }
     };
     // What POB imports: the rest (the inventory) is not translated, nor counted.
     if let Some(list) = items.get_mut("items").and_then(Value::as_array_mut) {
-        list.retain(|i| {
-            i["inventoryId"]
-                .as_str()
-                .is_some_and(|id| WORN.contains(&id))
-        });
+        list.retain(|i| i["inventoryId"].as_str().is_some_and(|id| WORN.contains(&id)));
     }
     let mut missed = 0;
     if account.tencent() {
@@ -949,10 +706,7 @@ fn export(req: &Request) -> Result<Value, String> {
     }
     // The list's entry, with what the items' call says of the character.
     let mut char = character.clone();
-    if let (Some(c), Some(from)) = (
-        char.as_object_mut(),
-        items.get("character").and_then(Value::as_object),
-    ) {
+    if let (Some(c), Some(from)) = (char.as_object_mut(), items.get("character").and_then(Value::as_object)) {
         for key in ["classId", "ascendancyClass", "level", "league"] {
             if let (false, Some(v)) = (c.contains_key(key), from.get(key)) {
                 c.insert(key.into(), v.clone());
@@ -973,58 +727,31 @@ fn export(req: &Request) -> Result<Value, String> {
 /// The build made kept for `save_build`, which asks where: in POB's builds
 /// folder, to begin with; its code.
 fn keep_build(req: &Request, name: &str, out: crate::host::Exported) -> String {
-    let dir = if out.build_path.is_empty() {
-        Path::new(&req.pob_dir).join("Builds")
-    } else {
-        PathBuf::from(&out.build_path)
-    };
-    *BUILD.lock().unwrap() = Some(Build {
-        file: free_path(&dir, &file_name(name)),
-        xml: out.xml,
-    });
+    let dir = if out.build_path.is_empty() { Path::new(&req.pob_dir).join("Builds") } else { PathBuf::from(&out.build_path) };
+    *BUILD.lock().unwrap() = Some(Build { file: free_path(&dir, &file_name(name)), xml: out.xml });
     out.code
 }
 
 /// A Path of Exile 2 character made a build: the whole of it (items, skills,
 /// passives) from one call, imported by Path of Building 2's Import tab.
-fn export_poe2(
-    req: &Request,
-    name: &str,
-    key: (String, String),
-    kept: Option<Value>,
-) -> Result<Value, String> {
+fn export_poe2(req: &Request, name: &str, key: (String, String), kept: Option<Value>) -> Result<Value, String> {
     let char = match kept {
         Some(c) => c,
         None => {
             let mut account = req.account.clone();
             kept_token(&mut account);
             let token = account.token.clone();
-            let mut v = crate::oauth::api(
-                &mut account,
-                &format!("/character/poe2/{}", encode(name)),
-                &|| set_step("signin"),
-            )?;
+            let mut v = crate::oauth::api(&mut account, &format!("/character/poe2/{}", encode(name)), &|| set_step("signin"))?;
             if account.token != token {
                 keep_token(&account);
             }
-            let c = v
-                .get_mut("character")
-                .map(Value::take)
-                .filter(Value::is_object)
-                .ok_or("notFound")?;
+            let c = v.get_mut("character").map(Value::take).filter(Value::is_object).ok_or("notFound")?;
             ITEMS.lock().unwrap().insert(key, (c.clone(), Value::Null));
             c
         }
     };
     // The character alone: Path of Building 2 reads its items and passives from it.
-    let out = crate::host::export(
-        PathBuf::from(&req.pob_dir),
-        name.to_string(),
-        char.to_string(),
-        String::new(),
-        String::new(),
-        set_step,
-    )?;
+    let out = crate::host::export(PathBuf::from(&req.pob_dir), name.to_string(), char.to_string(), String::new(), String::new(), set_step)?;
     Ok(serde_json::json!({ "code": keep_build(req, name, out), "untranslated": 0 }))
 }
 
@@ -1034,14 +761,7 @@ fn export_wegame(req: &Request, name: &str) -> Result<Value, String> {
     let code = crate::wegame::share_code(&req.account.sessid).ok_or("needShare")?;
     set_step("translating");
     let (char, missed) = crate::wegame::character(&code)?;
-    let out = crate::host::export(
-        PathBuf::from(&req.pob_dir),
-        name.to_string(),
-        char.to_string(),
-        String::new(),
-        String::new(),
-        set_step,
-    )?;
+    let out = crate::host::export(PathBuf::from(&req.pob_dir), name.to_string(), char.to_string(), String::new(), String::new(), set_step)?;
     Ok(serde_json::json!({ "code": keep_build(req, name, out), "untranslated": missed }))
 }
 
@@ -1057,22 +777,9 @@ mod tests {
 
     #[test]
     fn queries() {
-        let pc = Account {
-            realm: "pc".into(),
-            name: "A#1".into(),
-            sessid: String::new(),
-            ..Default::default()
-        };
-        assert_eq!(
-            pc.query(Some("B C")),
-            "accountName=A%231&character=B%20C&realm=pc"
-        );
-        let qq = Account {
-            realm: "tencent".into(),
-            name: "甲".into(),
-            sessid: "x".into(),
-            ..Default::default()
-        };
+        let pc = Account { realm: "pc".into(), name: "A#1".into(), sessid: String::new(), ..Default::default() };
+        assert_eq!(pc.query(Some("B C")), "accountName=A%231&character=B%20C&realm=pc");
+        let qq = Account { realm: "tencent".into(), name: "甲".into(), sessid: "x".into(), ..Default::default() };
         assert_eq!(qq.query(None), "accountName=%E7%94%B2");
     }
 
@@ -1099,10 +806,7 @@ mod tests {
         assert_eq!(item["properties"][0]["name"], "Quality");
         assert_eq!(item["requirements"][0]["name"], "Level");
         assert_eq!(item["explicitMods"][0], "+80 to maximum Life");
-        assert_eq!(
-            item["socketedItems"][0]["typeLine"],
-            "Added Fire Damage Support"
-        );
+        assert_eq!(item["socketedItems"][0]["typeLine"], "Added Fire Damage Support");
         assert_eq!(missed, 1);
     }
 
@@ -1113,27 +817,13 @@ mod tests {
         let root = std::env::temp_dir().join(format!("pobt-builds-{}", std::process::id()));
         std::fs::create_dir_all(root.join("Leagues")).unwrap();
         std::fs::write(root.join("Old.xml"), "old").unwrap();
-        *BUILD.lock().unwrap() = Some(Build {
-            file: root.join("New.xml"),
-            xml: "<PathOfBuilding/>".into(),
-        });
+        *BUILD.lock().unwrap() = Some(Build { file: root.join("New.xml"), xml: "<PathOfBuilding/>".into() });
 
         let (_, tree) = builds().unwrap();
-        assert_eq!(
-            tree.iter()
-                .map(|e| (e.path.as_str(), e.dir))
-                .collect::<Vec<_>>(),
-            [("Leagues", true), ("Old.xml", false)]
-        );
-        assert_eq!(
-            save_build("Leagues/Mine").unwrap(),
-            root.join("Leagues").join("Mine.xml")
-        );
+        assert_eq!(tree.iter().map(|e| (e.path.as_str(), e.dir)).collect::<Vec<_>>(), [("Leagues", true), ("Old.xml", false)]);
+        assert_eq!(save_build("Leagues/Mine").unwrap(), root.join("Leagues").join("Mine.xml"));
         assert_eq!(save_build("Old.xml").unwrap(), root.join("Old.xml"));
-        assert_eq!(
-            std::fs::read_to_string(root.join("Old.xml")).unwrap(),
-            "<PathOfBuilding/>"
-        );
+        assert_eq!(std::fs::read_to_string(root.join("Old.xml")).unwrap(), "<PathOfBuilding/>");
         assert!(save_build("../Out").is_err());
         assert!(save_build("").is_err());
         let _ = std::fs::remove_dir_all(&root);
@@ -1141,12 +831,7 @@ mod tests {
 
     #[test]
     fn tencent_query_without_a_name() {
-        let qq = Account {
-            realm: "tencent".into(),
-            name: String::new(),
-            sessid: "x".into(),
-            ..Default::default()
-        };
+        let qq = Account { realm: "tencent".into(), name: String::new(), sessid: "x".into(), ..Default::default() };
         assert_eq!(qq.query(Some("甲")), "character=%E7%94%B2");
     }
 
@@ -1157,44 +842,25 @@ mod tests {
     #[test]
     #[ignore = "uses a real Tencent account"]
     fn live_tencent_account() {
-        let Some(sessid) = std::env::var("POBT_TEST_TENCENT_SESSID")
-            .ok()
-            .filter(|s| !s.is_empty())
-        else {
+        let Some(sessid) = std::env::var("POBT_TEST_TENCENT_SESSID").ok().filter(|s| !s.is_empty()) else {
             eprintln!("POBT_TEST_TENCENT_SESSID not set: skipped");
             return;
         };
-        let account = Account {
-            realm: "tencent".into(),
-            name: String::new(),
-            sessid,
-            ..Default::default()
-        };
-        let list = json(
-            &get(
-                &account,
-                &format!("character-window/get-characters?{}", account.query(None)),
-            )
-            .unwrap(),
-        )
-        .unwrap();
+        let account = Account { realm: "tencent".into(), name: String::new(), sessid, ..Default::default() };
+        let list = json(&get(&account, &format!("character-window/get-characters?{}", account.query(None))).unwrap()).unwrap();
         // One: Tencent allows an account 10 calls a minute.
         let chars: Vec<Value> = list.as_array().unwrap().iter().take(1).cloned().collect();
         let mut left: std::collections::BTreeMap<String, u32> = Default::default();
         for c in &chars {
             let name = c["name"].as_str().unwrap();
             let q = account.query(Some(name));
-            let mut items =
-                json(&get(&account, &format!("character-window/get-items?{q}")).unwrap()).unwrap();
+            let mut items = json(&get(&account, &format!("character-window/get-items?{q}")).unwrap()).unwrap();
             let mut missed = 0;
             translate_items(items.get_mut("items"), &mut missed);
             eprintln!("{name} ({}): {missed} lines left", c["class"]);
             fn walk(v: &Value, left: &mut std::collections::BTreeMap<String, u32>) {
                 for item in v.as_array().into_iter().flatten() {
-                    if item["inventoryId"]
-                        .as_str()
-                        .is_some_and(|i| !WORN.contains(&i))
-                    {
+                    if item["inventoryId"].as_str().is_some_and(|i| !WORN.contains(&i)) {
                         continue;
                     }
                     if item["frameType"] == 4 {
@@ -1224,22 +890,11 @@ mod tests {
         for (line, n) in &left {
             eprintln!("left {n}× {line}");
         }
-        let Some(dir) = std::env::var_os("POB_DIR").map(PathBuf::from) else {
-            return;
-        };
+        let Some(dir) = std::env::var_os("POB_DIR").map(PathBuf::from) else { return };
         for c in &chars {
-            let req = Request {
-                account: account.clone(),
-                character: Some(c.clone()),
-                pob_dir: dir.display().to_string(),
-            };
+            let req = Request { account: account.clone(), character: Some(c.clone()), pob_dir: dir.display().to_string() };
             let out = export(&req).unwrap();
-            eprintln!(
-                "{}: code of {} bytes, {} lines untranslated",
-                c["name"],
-                out["code"].as_str().unwrap().len(),
-                out["untranslated"]
-            );
+            eprintln!("{}: code of {} bytes, {} lines untranslated", c["name"], out["code"].as_str().unwrap().len(), out["untranslated"]);
         }
     }
 
@@ -1249,39 +904,18 @@ mod tests {
     #[test]
     #[ignore = "uses a real Tencent account"]
     fn live_tencent_poe2() {
-        let Some(sessid) = std::env::var("POBT_TEST_TENCENT_SESSID")
-            .ok()
-            .filter(|s| !s.is_empty())
-        else {
+        let Some(sessid) = std::env::var("POBT_TEST_TENCENT_SESSID").ok().filter(|s| !s.is_empty()) else {
             eprintln!("POBT_TEST_TENCENT_SESSID not set: skipped");
             return;
         };
-        let account = Account {
-            realm: "tencent".into(),
-            sessid,
-            ..Default::default()
-        };
+        let account = Account { realm: "tencent".into(), sessid, ..Default::default() };
         let short = |s: &str| s.chars().take(400).collect::<String>();
-        if let Ok(list) =
-            get(&account, "character-window/get-characters?realm=poe2").and_then(|b| json(&b))
-        {
-            let realms: std::collections::BTreeSet<_> = list
-                .as_array()
-                .into_iter()
-                .flatten()
-                .map(|c| c["realm"].to_string())
-                .collect();
+        if let Ok(list) = get(&account, "character-window/get-characters?realm=poe2").and_then(|b| json(&b)) {
+            let realms: std::collections::BTreeSet<_> = list.as_array().into_iter().flatten().map(|c| c["realm"].to_string()).collect();
             eprintln!("get-characters?realm=poe2: realms {realms:?}");
         }
         let n = "%E9%98%BF%E5%B8%83%E5%92%8B%E5%8A%9E%237081";
-        for path in [
-            format!("character-window/get-characters?accountName={n}&realm=poe2"),
-            format!("account/view-profile/{n}/characters?realm=poe2"),
-            "api/character/poe2".into(),
-            "api/league?realm=poe2".into(),
-            "api/account/characters?realm=poe2".into(),
-            "poe2".into(),
-        ] {
+        for path in [format!("character-window/get-characters?accountName={n}&realm=poe2"), format!("account/view-profile/{n}/characters?realm=poe2"), "api/character/poe2".into(), "api/league?realm=poe2".into(), "api/account/characters?realm=poe2".into(), "poe2".into()] {
             let path = path.as_str();
             match get(&account, path) {
                 Ok(b) => eprintln!("{path}: {}", short(&b)),
@@ -1297,38 +931,16 @@ mod tests {
     #[test]
     #[ignore = "signs in to a real Path of Exile 2 account"]
     fn live_poe2_account() {
-        let req = Request {
-            account: Account {
-                realm: "poe2".into(),
-                ..Default::default()
-            },
-            character: None,
-            pob_dir: String::new(),
-        };
+        let req = Request { account: Account { realm: "poe2".into(), ..Default::default() }, character: None, pob_dir: String::new() };
         let got = characters(&req).unwrap();
         let account: Account = serde_json::from_value(got).unwrap();
         let list = account.characters.clone().unwrap();
-        eprintln!(
-            "{}: {} characters",
-            account.name,
-            list.as_array().unwrap().len()
-        );
-        let Some(dir) = std::env::var_os("POB2_DIR") else {
-            return;
-        };
+        eprintln!("{}: {} characters", account.name, list.as_array().unwrap().len());
+        let Some(dir) = std::env::var_os("POB2_DIR") else { return };
         let first = list[0].clone();
-        let req = Request {
-            account,
-            character: Some(first.clone()),
-            pob_dir: dir.to_string_lossy().into_owned(),
-        };
+        let req = Request { account, character: Some(first.clone()), pob_dir: dir.to_string_lossy().into_owned() };
         let out = export(&req).unwrap();
-        eprintln!(
-            "{} ({}): code of {} bytes",
-            first["name"],
-            first["class"],
-            out["code"].as_str().unwrap().len()
-        );
+        eprintln!("{} ({}): code of {} bytes", first["name"], first["class"], out["code"].as_str().unwrap().len());
     }
 
     /// A Path of Exile 2 character, as its API gives it, made a build by the
@@ -1353,23 +965,11 @@ mod tests {
             "jewels": [],
             "passives": { "hashes": [], "specialisations": {}, "skill_overrides": {}, "jewel_data": {}, "quest_stats": [] },
         });
-        let out = crate::host::export(
-            dir,
-            "TestWitch".into(),
-            char.to_string(),
-            String::new(),
-            String::new(),
-            |s| eprintln!("step: {s}"),
-        )
-        .unwrap();
+        let out = crate::host::export(dir, "TestWitch".into(), char.to_string(), String::new(), String::new(), |s| eprintln!("step: {s}")).unwrap();
         assert!(out.code.len() > 100, "{}", out.code);
         assert!(out.xml.contains("Silk Robe"), "{}", out.xml);
         assert!(out.xml.contains("+80 to maximum Life"), "{}", out.xml);
-        assert!(
-            out.xml.contains("Witch") && out.xml.contains("Fireball"),
-            "{}",
-            out.xml
-        );
+        assert!(out.xml.contains("Witch") && out.xml.contains("Fireball"), "{}", out.xml);
         eprintln!("build path: {}", out.build_path);
     }
 
@@ -1403,29 +1003,14 @@ mod tests {
         let mut missed = 0;
         translate_items(items.get_mut("items"), &mut missed);
         assert_eq!(missed, 0);
-        let out = crate::host::export(
-            dir,
-            "测试角色".into(),
-            char.to_string(),
-            items.to_string(),
-            passives.to_string(),
-            |s| eprintln!("step: {s}"),
-        )
-        .unwrap();
+        let out = crate::host::export(dir, "测试角色".into(), char.to_string(), items.to_string(), passives.to_string(), |s| eprintln!("step: {s}"))
+            .unwrap();
         assert!(out.code.len() > 100, "{}", out.code);
         assert!(out.xml.contains("Vaal Regalia"), "{}", out.xml);
         assert!(out.xml.contains("+80 to maximum Life"), "{}", out.xml);
-        assert!(
-            out.xml.contains("Fireball") && out.xml.contains("Added Fire Damage"),
-            "{}",
-            out.xml
-        );
+        assert!(out.xml.contains("Fireball") && out.xml.contains("Added Fire Damage"), "{}", out.xml);
         assert!(out.xml.contains("Inquisitor"), "{}", out.xml);
-        assert!(
-            out.xml.contains("劲风 束灵") && out.xml.contains("Two-Stone Ring"),
-            "{}",
-            out.xml
-        );
+        assert!(out.xml.contains("劲风 束灵") && out.xml.contains("Two-Stone Ring"), "{}", out.xml);
         eprintln!("build path: {}", out.build_path);
     }
 }

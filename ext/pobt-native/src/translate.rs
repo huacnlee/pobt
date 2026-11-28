@@ -3,6 +3,7 @@
 
 use std::{
     collections::HashMap,
+
     sync::{Arc, RwLock},
 };
 
@@ -44,23 +45,12 @@ fn misses_on() -> bool {
 
 /// Writes the misses so far, most drawn first, when `POBT_MISSES` is set.
 pub fn dump_misses() {
-    let Some(path) = std::env::var_os("POBT_MISSES") else {
-        return;
-    };
-    let Some(misses) = MISSES.lock().unwrap().clone() else {
-        return;
-    };
+    let Some(path) = std::env::var_os("POBT_MISSES") else { return };
+    let Some(misses) = MISSES.lock().unwrap().clone() else { return };
     let mut list: Vec<_> = misses.into_iter().collect();
     list.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
-    let text: String = list
-        .iter()
-        .map(|(s, n)| {
-            format!(
-                "{n}	{s}
-"
-            )
-        })
-        .collect();
+    let text: String = list.iter().map(|(s, n)| format!("{n}	{s}
+")).collect();
     let _ = std::fs::write(path, text);
 }
 
@@ -74,27 +64,20 @@ pub fn current() -> Option<Arc<Dictionary>> {
 /// Keeps the dictionary in `slot` as its files are, while the program runs: once a second, a dictionary whose files
 /// changed (`trs::stamp`) is read again and put in its place, and `reloaded` is called. Call it once per slot.
 pub fn watch(slot: &'static RwLock<Option<Arc<Dictionary>>>, reloaded: impl Fn() + Send + 'static) {
-    std::thread::spawn(move || {
-        loop {
-            std::thread::sleep(std::time::Duration::from_secs(1));
-            let Some(dict) = slot.read().unwrap().clone() else {
-                continue;
-            };
-            if crate::trs::stamp(&dict.language) == dict.stamp {
-                continue;
-            }
-            let fresh = Arc::new(Dictionary::load(&dict.language));
-            // not when another language took its place while it was read
-            let mut now = slot.write().unwrap();
-            if now.as_ref().is_some_and(|d| Arc::ptr_eq(d, &dict)) {
-                *now = Some(fresh);
-                drop(now);
-                log::info!(
-                    "dictionary {}: its files changed, read again",
-                    dict.language
-                );
-                reloaded();
-            }
+    std::thread::spawn(move || loop {
+        std::thread::sleep(std::time::Duration::from_secs(1));
+        let Some(dict) = slot.read().unwrap().clone() else { continue };
+        if crate::trs::stamp(&dict.language) == dict.stamp {
+            continue;
+        }
+        let fresh = Arc::new(Dictionary::load(&dict.language));
+        // not when another language took its place while it was read
+        let mut now = slot.write().unwrap();
+        if now.as_ref().is_some_and(|d| Arc::ptr_eq(d, &dict)) {
+            *now = Some(fresh);
+            drop(now);
+            log::info!("dictionary {}: its files changed, read again", dict.language);
+            reloaded();
         }
     });
 }
@@ -135,17 +118,9 @@ impl Dictionary {
     /// passive). Its rows whose one hole holds a name (a third column, "Allocates {0}") are `{name}` entries; those
     /// with numbers too are left to `supported`.
     pub fn load(language: &str) -> Self {
-        let mut dict = Dictionary {
-            language: language.to_string(),
-            stamp: crate::trs::stamp(language),
-            ..Default::default()
-        };
-        let game = crate::trs::files(&format!("{language}/tencent"))
-            .into_iter()
-            .filter(|(name, _)| name == "game.csv");
-        let files = crate::trs::files(language)
-            .into_iter()
-            .map(|(name, d)| (name, d, false));
+        let mut dict = Dictionary { language: language.to_string(), stamp: crate::trs::stamp(language), ..Default::default() };
+        let game =crate::trs::files(&format!("{language}/tencent")).into_iter().filter(|(name, _)| name == "game.csv");
+        let files = crate::trs::files(language).into_iter().map(|(name, d)| (name, d, false));
         for (name, data, game) in files.chain(game.map(|(name, d)| (name, d, true))) {
             let words = !game && name.starts_with("stats_words_");
             let mut reader = csv::ReaderBuilder::new()
@@ -156,9 +131,7 @@ impl Dictionary {
                 if record.len() < 2 {
                     continue;
                 }
-                let mut en = String::from_utf8_lossy(&record[0])
-                    .trim_start_matches('\u{feff}')
-                    .to_string();
+                let mut en = String::from_utf8_lossy(&record[0]).trim_start_matches('\u{feff}').to_string();
                 let mut zh = String::from_utf8_lossy(&record[1]).to_string();
                 if game && record.len() > 2 {
                     let hole = format!("{{{}}}", String::from_utf8_lossy(&record[2]));
@@ -169,18 +142,12 @@ impl Dictionary {
                 }
                 if words {
                     let second = usize::from(en.starts_with(' '));
-                    dict.words[second]
-                        .entry(en.trim().to_string())
-                        .or_insert_with(|| zh.trim().to_string());
+                    dict.words[second].entry(en.trim().to_string()).or_insert_with(|| zh.trim().to_string());
                 }
                 dict.insert(en, zh);
             }
         }
-        log::info!(
-            "dictionary {language}: {} entries, {} templates",
-            dict.exact.len(),
-            dict.templates.len()
-        );
+        log::info!("dictionary {language}: {} entries, {} templates", dict.exact.len(), dict.templates.len());
         dict
     }
 
@@ -206,23 +173,16 @@ impl Dictionary {
         }
         if let Some((before, after)) = en_t.split_once(NAME) {
             if !after.contains(NAME) {
-                self.named
-                    .push((before.to_string(), after.to_string(), zh.trim().to_string()));
+                self.named.push((before.to_string(), after.to_string(), zh.trim().to_string()));
             }
             return;
         }
         if let Some(key) = template_key(en_t) {
-            self.templates.entry(key).or_insert(Template {
-                text: zh.trim().to_string(),
-            });
+            self.templates.entry(key).or_insert(Template { text: zh.trim().to_string() });
         }
         // Exact too: a `#` may be the text's own ("# of Power Charges:"), not a number's.
-        self.exact
-            .entry(en_t.to_string())
-            .or_insert_with(|| zh.trim().to_string());
-        self.folded
-            .entry(en_t.to_lowercase())
-            .or_insert_with(|| zh.trim().to_string());
+        self.exact.entry(en_t.to_string()).or_insert_with(|| zh.trim().to_string());
+        self.folded.entry(en_t.to_lowercase()).or_insert_with(|| zh.trim().to_string());
     }
 
     fn lookup_template(&self, s: &str, signed: bool) -> Option<String> {
@@ -241,11 +201,7 @@ impl Dictionary {
                 i = j + sign + n;
                 continue;
             }
-            if signed
-                && (b[j] == b'+' || b[j] == b'-')
-                && j + 1 < b.len()
-                && b[j + 1].is_ascii_digit()
-            {
+            if signed && (b[j] == b'+' || b[j] == b'-') && j + 1 < b.len() && b[j + 1].is_ascii_digit() {
                 j += 1;
             }
             if j < b.len() && b[j].is_ascii_digit() {
@@ -253,11 +209,7 @@ impl Dictionary {
                     j += 1;
                 }
                 // "23,059": POB's thousands separators, a comma before exactly three digits.
-                while j + 3 < b.len()
-                    && b[j] == b','
-                    && b[j + 1..j + 4].iter().all(u8::is_ascii_digit)
-                    && !b.get(j + 4).is_some_and(u8::is_ascii_digit)
-                {
+                while j + 3 < b.len() && b[j] == b',' && b[j + 1..j + 4].iter().all(u8::is_ascii_digit) && !b.get(j + 4).is_some_and(u8::is_ascii_digit) {
                     j += 4;
                 }
                 if j + 1 < b.len() && b[j] == b'.' && b[j + 1].is_ascii_digit() {
@@ -287,12 +239,7 @@ impl Dictionary {
         let found = self.lookup(seg);
         let t = seg.trim();
         if found.is_none() && misses_on() && t.bytes().any(|c| c.is_ascii_alphabetic()) {
-            *MISSES
-                .lock()
-                .unwrap()
-                .get_or_insert_default()
-                .entry(t.to_string())
-                .or_default() += 1;
+            *MISSES.lock().unwrap().get_or_insert_default().entry(t.to_string()).or_default() += 1;
         }
         found
     }
@@ -322,11 +269,7 @@ impl Dictionary {
             .or_else(|| {
                 // "Label:" when only "Label" is known, or its template ("Flask 1:" by "Flask {0}").
                 let base = t.strip_suffix(':')?.trim_end();
-                let known = self
-                    .exact
-                    .get(base)
-                    .cloned()
-                    .or_else(|| self.lookup_template(base, false))?;
+                let known = self.exact.get(base).cloned().or_else(|| self.lookup_template(base, false))?;
                 Some(format!("{known}:"))
             })
             .or_else(|| {
@@ -356,21 +299,14 @@ impl Dictionary {
         if b.contains(' ') {
             return None;
         }
-        Some(format!(
-            "{} {}",
-            self.words[0].get(a)?,
-            self.words[1].get(b)?
-        ))
+        Some(format!("{} {}", self.words[0].get(a)?, self.words[1].get(b)?))
     }
 
     /// "Tornado Shot has no base cooldown or cooldown override": an entry's
     /// `{name}` filled with the name POB put there, translated when known.
     fn named(&self, t: &str) -> Option<String> {
         self.named.iter().find_map(|(before, after, zh)| {
-            let name = t
-                .strip_prefix(before.as_str())?
-                .strip_suffix(after.as_str())?
-                .trim();
+            let name = t.strip_prefix(before.as_str())?.strip_suffix(after.as_str())?.trim();
             if name.is_empty() {
                 return None;
             }
@@ -384,9 +320,7 @@ impl Dictionary {
     fn noted(&self, t: &str) -> Option<String> {
         let (text, note) = t.strip_suffix(')')?.rsplit_once(" (")?;
         let text = self.inner(text)?;
-        let note = self
-            .inner(&format!("({note})"))
-            .or_else(|| Some(format!("({})", self.inner(note)?)))?;
+        let note = self.inner(&format!("({note})")).or_else(|| Some(format!("({})", self.inner(note)?)))?;
         Some(format!("{text} {note}"))
     }
 
@@ -415,9 +349,7 @@ impl Dictionary {
         let digits = digits.strip_suffix(['m', 's']).unwrap_or(digits);
         if !value.starts_with(['+', '-'])
             || !digits.starts_with(|c: char| c.is_ascii_digit())
-            || !digits
-                .bytes()
-                .all(|c| c.is_ascii_digit() || b".,%".contains(&c))
+            || !digits.bytes().all(|c| c.is_ascii_digit() || b".,%".contains(&c))
         {
             return None;
         }
@@ -425,15 +357,11 @@ impl Dictionary {
             Some(i) if rest.ends_with(')') => (&rest[..i], &rest[i..]),
             _ => (rest, ""),
         };
-        let stat = self.exact.get(stat).cloned().or_else(|| {
-            Some(
-                self.exact
-                    .get(&format!("{stat}:"))?
-                    .trim_end_matches([':', '：'])
-                    .trim_end()
-                    .to_string(),
-            )
-        })?;
+        let stat = self
+            .exact
+            .get(stat)
+            .cloned()
+            .or_else(|| Some(self.exact.get(&format!("{stat}:"))?.trim_end_matches([':', '：']).trim_end().to_string()))?;
         Some(format!("{value} {stat}{tail}"))
     }
 
@@ -474,12 +402,8 @@ impl Dictionary {
     fn supported(&self, t: &str) -> Option<String> {
         const LINE: &str = "Socketed Gems are Supported by Level {0} {1} Support";
         let name = t.strip_suffix(" Support")?;
-        let (level, gem) = name
-            .strip_prefix("Socketed Gems are Supported by Level ")?
-            .split_once(' ')?;
-        if !(level.bytes().all(|c| c.is_ascii_digit())
-            || range_len(level.as_bytes()) == Some(level.len()))
-        {
+        let (level, gem) = name.strip_prefix("Socketed Gems are Supported by Level ")?.split_once(' ')?;
+        if !(level.bytes().all(|c| c.is_ascii_digit()) || range_len(level.as_bytes()) == Some(level.len())) {
             return None;
         }
         if let Some(known) = self.lookup_template(name, false) {
@@ -490,10 +414,7 @@ impl Dictionary {
             .get(gem)
             .or_else(|| self.exact.get(&format!("{gem} Support")))
             .or_else(|| self.folded.get(&gem.to_lowercase()))?;
-        let gem = ["（辅）", "(辅)", "（辅助）", "(辅助)", "辅助"]
-            .iter()
-            .fold(gem.trim(), |g, s| g.strip_suffix(s).unwrap_or(g))
-            .trim();
+        let gem = ["（辅）", "(辅)", "（辅助）", "(辅助)", "辅助"].iter().fold(gem.trim(), |g, s| g.strip_suffix(s).unwrap_or(g)).trim();
         Some(fill(self.exact.get(LINE)?, &[level, gem]))
     }
 
@@ -501,26 +422,16 @@ impl Dictionary {
     /// builds around names, by the dictionary's line for each shape here, the
     /// names translated when known.
     fn phrase(&self, t: &str) -> Option<String> {
-        const PHRASES: &[&str] = &[
-            "{0} ({1} variants)",
-            "Drops from {0} in {1}",
-            "Drops from {0}",
-            "Drops in {0}",
-        ];
+        const PHRASES: &[&str] = &["{0} ({1} variants)", "Drops from {0} in {1}", "Drops from {0}", "Drops in {0}"];
         'shapes: for shape in PHRASES {
             let shape_lits = shape.replace("{1}", "{0}");
             let lits: Vec<&str> = shape_lits.split("{0}").collect();
-            let Some(mut rest) = t
-                .strip_prefix(lits[0])
-                .and_then(|r| r.strip_suffix(lits[lits.len() - 1]))
-            else {
+            let Some(mut rest) = t.strip_prefix(lits[0]).and_then(|r| r.strip_suffix(lits[lits.len() - 1])) else {
                 continue;
             };
             let mut names = Vec::new();
             for lit in &lits[1..lits.len() - 1] {
-                let Some((name, after)) = rest.split_once(lit) else {
-                    continue 'shapes;
-                };
+                let Some((name, after)) = rest.split_once(lit) else { continue 'shapes };
                 names.push(name);
                 rest = after;
             }
@@ -528,17 +439,9 @@ impl Dictionary {
             if names.iter().any(|n| n.trim().is_empty()) {
                 continue;
             }
-            let Some(line) = self.exact.get(*shape) else {
-                continue;
-            };
-            let names: Vec<String> = names
-                .iter()
-                .map(|n| self.inner(n).unwrap_or_else(|| n.to_string()))
-                .collect();
-            return Some(fill(
-                line,
-                &names.iter().map(String::as_str).collect::<Vec<_>>(),
-            ));
+            let Some(line) = self.exact.get(*shape) else { continue };
+            let names: Vec<String> = names.iter().map(|n| self.inner(n).unwrap_or_else(|| n.to_string())).collect();
+            return Some(fill(line, &names.iter().map(String::as_str).collect::<Vec<_>>()));
         }
         None
     }
@@ -570,11 +473,7 @@ impl Dictionary {
             return None;
         }
         let t = self.lookup(&plain)?;
-        Some(if t.trim_start().starts_with('^') {
-            t
-        } else {
-            format!("{lead}{t}")
-        })
+        Some(if t.trim_start().starts_with('^') { t } else { format!("{lead}{t}") })
     }
 
     /// Translates `s`, keeping its colour escapes; `None` if nothing changed.
@@ -607,11 +506,7 @@ impl Dictionary {
                 if n > 0 {
                     out.push('\n');
                 }
-                match if note {
-                    self.segment(line)
-                } else {
-                    self.lookup(line)
-                } {
+                match if note { self.segment(line) } else { self.lookup(line) } {
                     Some(t) => {
                         changed = true;
                         out.push_str(&t);
@@ -646,10 +541,7 @@ fn range_len(b: &[u8]) -> Option<usize> {
         if b.get(i) == Some(&b'-') {
             i += 1;
         }
-        let digits = b[i.min(b.len())..]
-            .iter()
-            .take_while(|c| c.is_ascii_digit())
-            .count();
+        let digits = b[i.min(b.len())..].iter().take_while(|c| c.is_ascii_digit()).count();
         if digits == 0 {
             return None;
         }
@@ -707,10 +599,7 @@ pub struct Cache {
 
 impl Cache {
     pub fn new() -> Self {
-        Self {
-            dict: None,
-            map: HashMap::new(),
-        }
+        Self { dict: None, map: HashMap::new() }
     }
 
     /// The text to show for `s`: its translation, or `s` itself.
@@ -749,20 +638,9 @@ mod tests {
     #[test]
     fn labels_with_colours_and_hashes() {
         let d = Dictionary::load("zh-rCN");
-        assert_eq!(
-            d.translate("# of Power Charges (if not maximum):")
-                .as_deref(),
-            Some("【暴击球】数量 (如果不是最大值):")
-        );
-        assert_eq!(
-            d.translate("^7# of Gale Force:").as_deref(),
-            Some("^7【飓风之力】个数")
-        );
-        assert_eq!(
-            d.translate("Are you always on Full ^xE05030Life?")
-                .as_deref(),
-            Some("^xFFFFFF是否处于满^xE05030血^7状态?")
-        );
+        assert_eq!(d.translate("# of Power Charges (if not maximum):").as_deref(), Some("【暴击球】数量 (如果不是最大值):"));
+        assert_eq!(d.translate("^7# of Gale Force:").as_deref(), Some("^7【飓风之力】个数"));
+        assert_eq!(d.translate("Are you always on Full ^xE05030Life?").as_deref(), Some("^xFFFFFF是否处于满^xE05030血^7状态?"));
         assert_eq!(d.translate("Current build:").as_deref(), Some("当前 BD:"));
     }
 
@@ -770,27 +648,11 @@ mod tests {
     #[test]
     fn built_text() {
         let d = Dictionary::load("zh-rCN");
-        assert_eq!(
-            d.translate("Current build:  My Build").as_deref(),
-            Some("当前 BD:  My Build")
-        );
-        assert_eq!(
-            d.translate("^7Version: 2.68.1").as_deref(),
-            Some("^7版本: 2.68.1")
-        );
-        assert_eq!(
-            d.translate("[3.27] Default").as_deref(),
-            Some("[3.27] 默认")
-        );
-        assert_eq!(
-            d.translate("1 Mirage Archers using Tornado Shot")
-                .as_deref(),
-            Some("1 个幻影射手使用龙卷射击")
-        );
-        assert_eq!(
-            d.translate("Convert all trees to 3.30").as_deref(),
-            Some("全部转换为 3.30")
-        );
+        assert_eq!(d.translate("Current build:  My Build").as_deref(), Some("当前 BD:  My Build"));
+        assert_eq!(d.translate("^7Version: 2.68.1").as_deref(), Some("^7版本: 2.68.1"));
+        assert_eq!(d.translate("[3.27] Default").as_deref(), Some("[3.27] 默认"));
+        assert_eq!(d.translate("1 Mirage Archers using Tornado Shot").as_deref(), Some("1 个幻影射手使用龙卷射击"));
+        assert_eq!(d.translate("Convert all trees to 3.30").as_deref(), Some("全部转换为 3.30"));
         assert_eq!(d.translate("Level:").as_deref(), Some("等级:"));
     }
 
@@ -798,49 +660,20 @@ mod tests {
     #[test]
     fn items_lists_and_changes() {
         let d = Dictionary::load("zh-rCN");
-        assert_eq!(
-            d.translate("^xAF6025Hyrri's Truth, Jade Amulet").as_deref(),
-            Some("^xAF6025西里的真相, 翠玉护身符")
-        );
-        assert_eq!(
-            d.translate("My Rare, Imperial Bow").as_deref(),
-            Some("My Rare, 帝国之弓")
-        );
-        assert_eq!(
-            d.translate("Arctic Armour, Grace, Precision, Steelskin")
-                .as_deref(),
-            Some("极地装甲, 优雅, 精准, 钢铁之肤")
-        );
+        assert_eq!(d.translate("^xAF6025Hyrri's Truth, Jade Amulet").as_deref(), Some("^xAF6025西里的真相, 翠玉护身符"));
+        assert_eq!(d.translate("My Rare, Imperial Bow").as_deref(), Some("My Rare, 帝国之弓"));
+        assert_eq!(d.translate("Arctic Armour, Grace, Precision, Steelskin").as_deref(), Some("极地装甲, 优雅, 精准, 钢铁之肤"));
         assert_eq!(d.translate("Flask 1:").as_deref(), Some("药剂 1:"));
         assert_eq!(d.translate("Socket #1:").as_deref(), Some("插槽 #1:"));
-        assert_eq!(
-            d.translate("+0.01 Attack Rate (+0.5%)").as_deref(),
-            Some("+0.01 攻击速率 (+0.5%)")
-        );
-        assert_eq!(
-            d.translate("-4,733.7 Average Damage (-6.2%)").as_deref(),
-            Some("-4,733.7 平均伤害 (-6.2%)")
-        );
-        assert_eq!(
-            d.translate("+1% Phys. Damage Reduction").as_deref(),
-            Some("+1% 物理伤害减免")
-        );
-        assert_eq!(
-            d.translate("Double click an item, or copy one from the game"),
-            None
-        );
+        assert_eq!(d.translate("+0.01 Attack Rate (+0.5%)").as_deref(), Some("+0.01 攻击速率 (+0.5%)"));
+        assert_eq!(d.translate("-4,733.7 Average Damage (-6.2%)").as_deref(), Some("-4,733.7 平均伤害 (-6.2%)"));
+        assert_eq!(d.translate("+1% Phys. Damage Reduction").as_deref(), Some("+1% 物理伤害减免"));
+        assert_eq!(d.translate("Double click an item, or copy one from the game"), None);
         // A bullet of a list of tips, known without its "- ".
-        assert_eq!(
-            d.translate("- Ctrl + Click to enable/disable socket groups.")
-                .as_deref(),
-            Some("- Ctrl+单击以启用/禁用插槽组。")
-        );
+        assert_eq!(d.translate("- Ctrl + Click to enable/disable socket groups.").as_deref(), Some("- Ctrl+单击以启用/禁用插槽组。"));
         assert_eq!(d.translate("- Frenzy"), Some("- 狂怒".into()));
         // A disabled socket group's label.
-        assert_eq!(
-            d.translate("Tornado Shot, Frenzy (Disabled)").as_deref(),
-            Some("龙卷射击, 狂怒 ^9(禁用)")
-        );
+        assert_eq!(d.translate("Tornado Shot, Frenzy (Disabled)").as_deref(), Some("龙卷射击, 狂怒 ^9(禁用)"));
         assert_eq!(d.translate("-Frenzy"), None);
     }
 
@@ -851,14 +684,8 @@ mod tests {
         d.insert("{0} using {1}".into(), "{0}使用{1}".into());
         assert_eq!(d.translate(" (Guard)").as_deref(), Some(" (护卫)"));
         assert_eq!(d.translate("Life:  Guard").as_deref(), Some("生命:  护卫"));
-        assert_eq!(
-            d.translate("Life:  Someone").as_deref(),
-            Some("生命:  Someone")
-        );
-        assert_eq!(
-            d.translate("Life using Guard").as_deref(),
-            Some("生命使用护卫")
-        );
+        assert_eq!(d.translate("Life:  Someone").as_deref(), Some("生命:  Someone"));
+        assert_eq!(d.translate("Life using Guard").as_deref(), Some("生命使用护卫"));
         assert_eq!(d.translate("Life using Mana"), None);
         assert_eq!(d.translate("Mana:  Guard"), None);
     }
@@ -873,14 +700,8 @@ mod tests {
         let cache = std::fs::read_to_string(pob.join("Data/ModCache.lua")).unwrap();
         let lines: Vec<String> = cache
             .lines()
-            .filter_map(|l| {
-                l.strip_prefix("c[\"")?.split_once("\"]=").map(|(k, _)| {
-                    k.replace(
-                        "\n", "
-",
-                    )
-                })
-            })
+            .filter_map(|l| l.strip_prefix("c[\"")?.split_once("\"]=").map(|(k, _)| k.replace("\n", "
+")))
             .filter(|k| !k.trim().is_empty())
             .collect();
         let mut missed: HashMap<String, (u32, String)> = HashMap::new();
@@ -889,20 +710,12 @@ mod tests {
             if d.translate(l).is_some() {
                 hit += 1;
             } else {
-                let shape: String = l
-                    .chars()
-                    .map(|c| if c.is_ascii_digit() { '#' } else { c })
-                    .collect();
+                let shape: String = l.chars().map(|c| if c.is_ascii_digit() { '#' } else { c }).collect();
                 let e = missed.entry(shape).or_insert((0, l.clone()));
                 e.0 += 1;
             }
         }
-        println!(
-            "mods: {} of {} translated ({:.1}%)",
-            hit,
-            lines.len(),
-            hit as f64 * 100.0 / lines.len() as f64
-        );
+        println!("mods: {} of {} translated ({:.1}%)", hit, lines.len(), hit as f64 * 100.0 / lines.len() as f64);
 
         // The labels of POB's controls and options.
         let mut labels: Vec<String> = Vec::new();
@@ -918,10 +731,7 @@ mod tests {
         }
         labels.sort();
         labels.dedup();
-        let missed_labels: Vec<_> = labels
-            .iter()
-            .filter(|l| l.bytes().any(|c| c.is_ascii_alphabetic()) && d.translate(l).is_none())
-            .collect();
+        let missed_labels: Vec<_> = labels.iter().filter(|l| l.bytes().any(|c| c.is_ascii_alphabetic()) && d.translate(l).is_none()).collect();
         println!("labels: {} of {} missed", missed_labels.len(), labels.len());
         for l in missed_labels.iter().take(80) {
             println!("   {l}");
@@ -936,10 +746,7 @@ mod tests {
     fn dict() -> Dictionary {
         let mut d = Dictionary::default();
         d.insert("Life".into(), "生命".into());
-        d.insert(
-            "{0}% less Effect of your Curses".into(),
-            "你的诅咒效果总降 {0}%".into(),
-        );
+        d.insert("{0}% less Effect of your Curses".into(), "你的诅咒效果总降 {0}%".into());
         d.insert("+# to maximum Mana".into(), "# 最大魔力".into());
         d.insert("Required Level: {0}".into(), "需求的等级: {0}".into());
         d
@@ -950,24 +757,11 @@ mod tests {
         let d = dict();
         assert_eq!(d.translate("Life").as_deref(), Some("生命"));
         assert_eq!(d.translate("  Life ").as_deref(), Some("  生命 "));
-        assert_eq!(
-            d.translate("12% less Effect of your Curses").as_deref(),
-            Some("你的诅咒效果总降 12%")
-        );
-        assert_eq!(
-            d.translate("+30 to maximum Mana").as_deref(),
-            Some("30 最大魔力")
-        );
-        assert_eq!(
-            d.translate("Required Level: 64").as_deref(),
-            Some("需求的等级: 64")
-        );
+        assert_eq!(d.translate("12% less Effect of your Curses").as_deref(), Some("你的诅咒效果总降 12%"));
+        assert_eq!(d.translate("+30 to maximum Mana").as_deref(), Some("30 最大魔力"));
+        assert_eq!(d.translate("Required Level: 64").as_deref(), Some("需求的等级: 64"));
         assert_eq!(d.translate("Life:").as_deref(), Some("生命:"));
-        assert_eq!(
-            d.translate("^7Life^x33FF77 12% less Effect of your Curses")
-                .as_deref(),
-            Some("^7生命^x33FF77 你的诅咒效果总降 12%")
-        );
+        assert_eq!(d.translate("^7Life^x33FF77 12% less Effect of your Curses").as_deref(), Some("^7生命^x33FF77 你的诅咒效果总降 12%"));
         assert_eq!(d.translate("Mana"), None);
     }
 
@@ -976,30 +770,12 @@ mod tests {
     fn calcs_breakdowns() {
         let d = Dictionary::load("zh-rCN");
         let t = |s: &str| d.translate(s);
-        assert_eq!(
-            t("Tornado Shot has no base cooldown or cooldown override").as_deref(),
-            Some("龙卷射击没有基础冷却时间或冷却时间覆盖值")
-        );
-        assert_eq!(
-            t("0.50 ^8(base cooldown of Manaforged Arrows)").as_deref(),
-            Some("0.50 ^8(法铸箭矢（辅）的基础冷却时间)")
-        );
-        assert_eq!(
-            t("0.50 ^8(base cooldown of My Skill)").as_deref(),
-            Some("0.50 ^8(My Skill的基础冷却时间)")
-        );
-        assert_eq!(
-            t("= 0.4762 ^8(final cooldown of trigger)").as_deref(),
-            Some("= 0.4762 ^8(触发技能的最终冷却时间)")
-        );
-        assert_eq!(
-            t("0.495 ^8(adjusted for server tick rate)").as_deref(),
-            Some("0.495 ^8(按服务器 tick 率调整)")
-        );
-        assert_eq!(
-            t("^8(extra ICDR of 3% would reach next breakpoint)").as_deref(),
-            Some("^8(再提高 3% 冷却回复速度可达下一档)")
-        );
+        assert_eq!(t("Tornado Shot has no base cooldown or cooldown override").as_deref(), Some("龙卷射击没有基础冷却时间或冷却时间覆盖值"));
+        assert_eq!(t("0.50 ^8(base cooldown of Manaforged Arrows)").as_deref(), Some("0.50 ^8(法铸箭矢（辅）的基础冷却时间)"));
+        assert_eq!(t("0.50 ^8(base cooldown of My Skill)").as_deref(), Some("0.50 ^8(My Skill的基础冷却时间)"));
+        assert_eq!(t("= 0.4762 ^8(final cooldown of trigger)").as_deref(), Some("= 0.4762 ^8(触发技能的最终冷却时间)"));
+        assert_eq!(t("0.495 ^8(adjusted for server tick rate)").as_deref(), Some("0.495 ^8(按服务器 tick 率调整)"));
+        assert_eq!(t("^8(extra ICDR of 3% would reach next breakpoint)").as_deref(), Some("^8(再提高 3% 冷却回复速度可达下一档)"));
         assert_eq!(t("Trigger rate:").as_deref(), Some("触发速率:"));
         assert_eq!(t("Guard Absorb Rate").as_deref(), Some("护卫吸收比例"));
         assert_eq!(t("Freeze Immune").as_deref(), Some("免疫冰冻"));
@@ -1010,15 +786,9 @@ mod tests {
             Some("^8最小合计来源 + (最大合计来源 - 最小合计来源) * 平均点燃掷骰")
         );
         assert_eq!(t("Average Ignite DPS:").as_deref(), Some("平均点燃 DPS:"));
-        assert_eq!(
-            t("98.71% of Maximum Ignite DPS").as_deref(),
-            Some("最大点燃 DPS 的 98.71%")
-        );
+        assert_eq!(t("98.71% of Maximum Ignite DPS").as_deref(), Some("最大点燃 DPS 的 98.71%"));
         assert_eq!(t("DPS Range:").as_deref(), Some("DPS 范围:"));
-        assert_eq!(
-            t("0 to 616 ^8(Ignite DPS Range)").as_deref(),
-            Some("0 至 616 ^8(点燃 DPS 范围)")
-        );
+        assert_eq!(t("0 to 616 ^8(Ignite DPS Range)").as_deref(), Some("0 至 616 ^8(点燃 DPS 范围)"));
         // Numbers with POB's thousands separators.
         assert_eq!(t("^75,566 to 23,059").as_deref(), Some("^75,566 至 23,059"));
         assert_eq!(t("532 to 1,654").as_deref(), Some("532 至 1,654"));
@@ -1029,18 +799,9 @@ mod tests {
     #[test]
     fn named() {
         let mut d = dict();
-        d.insert(
-            "{name} has no base cooldown".into(),
-            "{name}没有基础冷却时间".into(),
-        );
-        assert_eq!(
-            d.translate("Life has no base cooldown").as_deref(),
-            Some("生命没有基础冷却时间")
-        );
-        assert_eq!(
-            d.translate("Foo Bar has no base cooldown").as_deref(),
-            Some("Foo Bar没有基础冷却时间")
-        );
+        d.insert("{name} has no base cooldown".into(), "{name}没有基础冷却时间".into());
+        assert_eq!(d.translate("Life has no base cooldown").as_deref(), Some("生命没有基础冷却时间"));
+        assert_eq!(d.translate("Foo Bar has no base cooldown").as_deref(), Some("Foo Bar没有基础冷却时间"));
         assert_eq!(d.translate(" has no base cooldown"), None);
     }
 
@@ -1048,10 +809,7 @@ mod tests {
     fn deltas_with_units() {
         let mut d = dict();
         d.insert("AoE Radius:".into(), "范围效果半径:".into());
-        assert_eq!(
-            d.translate("-0.5m AoE Radius").as_deref(),
-            Some("-0.5m 范围效果半径")
-        );
+        assert_eq!(d.translate("-0.5m AoE Radius").as_deref(), Some("-0.5m 范围效果半径"));
         assert_eq!(d.translate("-0.5x AoE Radius"), None);
     }
 
@@ -1061,71 +819,23 @@ mod tests {
     fn item_tooltips() {
         let d = Dictionary::load("zh-rCN");
         let t = |s: &str| d.translate(s);
-        assert_eq!(
-            t("Adds (1-2) to (3-4) Fire Damage to Spells and Attacks").as_deref(),
-            Some("攻击和法术附加 (1-2) - (3-4) 基础火焰伤害")
-        );
-        assert_eq!(
-            t("Adds 1 to 3 Fire Damage to Spells and Attacks").as_deref(),
-            Some("攻击和法术附加 1 - 3 基础火焰伤害")
-        );
-        assert_eq!(
-            t("(100-120)% increased Physical Damage").as_deref(),
-            Some("物理伤害提高 (100-120)%")
-        );
-        assert_eq!(
-            t("+(30-50) to maximum Life").as_deref(),
-            Some("+(30-50) 最大生命")
-        );
-        assert_eq!(
-            t("+(20-30)% to Fire Resistance").as_deref(),
-            Some("火焰抗性 +(20-30)%")
-        );
-        assert_eq!(
-            t("Reflects (71-90) Physical Damage to Melee Attackers").as_deref(),
-            Some("反射 (71-90) 物理伤害给近战攻击者")
-        );
-        assert_eq!(
-            t("(-10-10)% increased Attack Speed").as_deref(),
-            Some("攻击速度提高 (-10-10)%")
-        );
-        assert_eq!(
-            t("(0.4-0.5)% of Physical Attack Damage Leeched as Life").as_deref(),
-            Some("物理攻击伤害的 (0.4-0.5)% 会转化为生命偷取")
-        );
-        assert_eq!(
-            t("Socketed Gems are Supported by Level 12 Fortify Support").as_deref(),
-            Some("插入的宝石被 12 级的护体辅助")
-        );
-        assert_eq!(
-            t("Socketed Gems are Supported by Level (10-15) Blind Support").as_deref(),
-            Some("此物品上的技能石受到 (10-15) 级的 盲目 辅助")
-        );
-        assert_eq!(
-            t("Socketed Gems are Supported by Level 12 Nonsense Support"),
-            None
-        );
-        assert_eq!(
-            t("^xFFFF30Variant: Current (4 variants)").as_deref(),
-            Some("^xFFFF30变种: 当前 (共 4 个变种)")
-        );
-        assert_eq!(
-            t("^x8888FFSource: Drops from ^xAF6025Aul, the Crystal King^x8888FF").as_deref(),
-            Some("^x8888FF来源: 由 Aul, the Crystal King 掉落")
-        );
+        assert_eq!(t("Adds (1-2) to (3-4) Fire Damage to Spells and Attacks").as_deref(), Some("攻击和法术附加 (1-2) - (3-4) 基础火焰伤害"));
+        assert_eq!(t("Adds 1 to 3 Fire Damage to Spells and Attacks").as_deref(), Some("攻击和法术附加 1 - 3 基础火焰伤害"));
+        assert_eq!(t("(100-120)% increased Physical Damage").as_deref(), Some("物理伤害提高 (100-120)%"));
+        assert_eq!(t("+(30-50) to maximum Life").as_deref(), Some("+(30-50) 最大生命"));
+        assert_eq!(t("+(20-30)% to Fire Resistance").as_deref(), Some("火焰抗性 +(20-30)%"));
+        assert_eq!(t("Reflects (71-90) Physical Damage to Melee Attackers").as_deref(), Some("反射 (71-90) 物理伤害给近战攻击者"));
+        assert_eq!(t("(-10-10)% increased Attack Speed").as_deref(), Some("攻击速度提高 (-10-10)%"));
+        assert_eq!(t("(0.4-0.5)% of Physical Attack Damage Leeched as Life").as_deref(), Some("物理攻击伤害的 (0.4-0.5)% 会转化为生命偷取"));
+        assert_eq!(t("Socketed Gems are Supported by Level 12 Fortify Support").as_deref(), Some("插入的宝石被 12 级的护体辅助"));
+        assert_eq!(t("Socketed Gems are Supported by Level (10-15) Blind Support").as_deref(), Some("此物品上的技能石受到 (10-15) 级的 盲目 辅助"));
+        assert_eq!(t("Socketed Gems are Supported by Level 12 Nonsense Support"), None);
+        assert_eq!(t("^xFFFF30Variant: Current (4 variants)").as_deref(), Some("^xFFFF30变种: 当前 (共 4 个变种)"));
+        assert_eq!(t("^x8888FFSource: Drops from ^xAF6025Aul, the Crystal King^x8888FF").as_deref(), Some("^x8888FF来源: 由 Aul, the Crystal King 掉落"));
         assert_eq!(t("(replacing ").as_deref(), Some("(替换 "));
-        assert_eq!(
-            t("^x7F7F7FWeapon Range: ^x33FF771.1 ^x7F7F7Fmetres").as_deref(),
-            Some("^x7F7F7F武器范围: ^x33FF771.1 ^x7F7F7F米")
-        );
-        assert_eq!(
-            t("^x7F7F7FLimited to: ^71 Historic").as_deref(),
-            Some("^x7F7F7F仅限: ^71 史实")
-        );
-        assert_eq!(
-            t("My Quiver, Primal Arrow Quiver").as_deref(),
-            Some("My Quiver, 原始箭袋")
-        );
+        assert_eq!(t("^x7F7F7FWeapon Range: ^x33FF771.1 ^x7F7F7Fmetres").as_deref(), Some("^x7F7F7F武器范围: ^x33FF771.1 ^x7F7F7F米"));
+        assert_eq!(t("^x7F7F7FLimited to: ^71 Historic").as_deref(), Some("^x7F7F7F仅限: ^71 史实"));
+        assert_eq!(t("My Quiver, Primal Arrow Quiver").as_deref(), Some("My Quiver, 原始箭袋"));
         // A range only in brackets of its own, and only in a known line.
         assert_eq!(t("We met (1-2) people"), None);
         assert_eq!(t("Drops from"), None);
@@ -1136,10 +846,7 @@ mod tests {
     fn game_words_and_names() {
         let d = Dictionary::load("zh-rCN");
         let t = |s: &str| d.translate(s);
-        assert_eq!(
-            t("Blind you inflict is permanent").as_deref(),
-            Some("你施加的致盲为永久效果")
-        );
+        assert_eq!(t("Blind you inflict is permanent").as_deref(), Some("你施加的致盲为永久效果"));
         // a name in the game's line, translated
         assert_eq!(t("Allocates Longshot").as_deref(), Some("配置 远射"));
         // a mod of two lines, drawn a line at a time
@@ -1159,16 +866,11 @@ mod tests {
     fn watch_reads_again() {
         static SLOT: RwLock<Option<Arc<Dictionary>>> = RwLock::new(None);
         // as if its files were edited after it was read
-        let old = Arc::new(Dictionary {
-            language: "zh-rCN".into(),
-            stamp: 0,
-            ..Default::default()
-        });
+        let old = Arc::new(Dictionary { language: "zh-rCN".into(), stamp: 0, ..Default::default() });
         *SLOT.write().unwrap() = Some(old.clone());
         let (tx, rx) = std::sync::mpsc::channel();
         watch(&SLOT, move || tx.send(()).unwrap());
-        rx.recv_timeout(std::time::Duration::from_secs(30))
-            .expect("read again");
+        rx.recv_timeout(std::time::Duration::from_secs(30)).expect("read again");
         let now = SLOT.read().unwrap().clone().unwrap();
         assert!(!Arc::ptr_eq(&now, &old));
         assert_eq!(now.stamp, crate::trs::stamp("zh-rCN"));

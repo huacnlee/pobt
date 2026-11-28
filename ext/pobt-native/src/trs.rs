@@ -47,17 +47,11 @@ pub fn files(language: &str) -> Vec<(String, Vec<u8>)> {
 /// added or removed: their names, sizes and times.
 pub fn stamp(language: &str) -> u64 {
     use std::hash::{Hash, Hasher};
-    let Some(dir) = root().map(|r| r.join(language)) else {
-        return 0;
-    };
+    let Some(dir) = root().map(|r| r.join(language)) else { return 0 };
     let mut files: Vec<_> = [dir.clone(), dir.join("tencent")]
         .iter()
         .flat_map(|d| std::fs::read_dir(d).into_iter().flatten().flatten())
-        .filter(|e| {
-            e.path()
-                .extension()
-                .is_some_and(|x| x.eq_ignore_ascii_case("csv"))
-        })
+        .filter(|e| e.path().extension().is_some_and(|x| x.eq_ignore_ascii_case("csv")))
         .filter_map(|e| {
             let meta = e.metadata().ok()?;
             Some((e.path(), meta.len(), meta.modified().ok()))
@@ -87,9 +81,7 @@ fn language_name(value: &str) -> String {
 /// The languages there are translations of: those `languages.json` lists,
 /// then any other folder under its own name.
 pub fn languages() -> Vec<Language> {
-    let Some(root) = root() else {
-        return Vec::new();
-    };
+    let Some(root) = root() else { return Vec::new() };
     let listed: Vec<Language> = std::fs::read(root.join("languages.json"))
         .ok()
         .and_then(|b| serde_json::from_slice(&b).ok())
@@ -102,17 +94,12 @@ pub fn languages() -> Vec<Language> {
         .map(|e| e.file_name().to_string_lossy().into_owned())
         .collect();
     dirs.sort();
-    let mut list: Vec<Language> = listed
-        .into_iter()
-        .filter(|l| dirs.contains(&l.value))
-        .collect();
+    let mut list: Vec<Language> = listed.into_iter().filter(|l| dirs.contains(&l.value)).collect();
     for d in dirs {
         if !list.iter().any(|l| l.value == d) {
-            list.push(Language {
-                name: language_name(&d),
-                value: d,
-            });
+            list.push(Language { name: language_name(&d), value: d });
         }
     }
     list
 }
+

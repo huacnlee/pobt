@@ -24,11 +24,7 @@ const CDN: &str = "https://web.poecdn.com/image/";
 const CDN2: &str = "https://repoe-fork.github.io/poe2/";
 
 fn source(poe2: bool) -> &'static str {
-    if poe2 {
-        "https://repoe-fork.github.io/poe2/"
-    } else {
-        "https://repoe-fork.github.io/"
-    }
+    if poe2 { "https://repoe-fork.github.io/poe2/" } else { "https://repoe-fork.github.io/" }
 }
 
 fn cache_file(poe2: bool, name: &str) -> PathBuf {
@@ -51,9 +47,7 @@ fn list(poe2: bool, name: &str) -> Option<serde_json::Value> {
             .ok()
             .and_then(|r| {
                 let mut s = String::new();
-                std::io::Read::read_to_string(&mut r.into_reader(), &mut s)
-                    .ok()
-                    .map(|_| s)
+                std::io::Read::read_to_string(&mut r.into_reader(), &mut s).ok().map(|_| s)
             });
         if let Some(text) = got.filter(|t| serde_json::from_str::<serde_json::Value>(t).is_ok()) {
             let _ = std::fs::write(&file, text);
@@ -80,15 +74,8 @@ fn build(poe2: bool) -> Index {
     }
     if let Some(serde_json::Value::Object(uniques)) = list(poe2, "uniques.json") {
         for (_, u) in uniques {
-            let alternate = u
-                .get("is_alternate_art")
-                .and_then(|a| a.as_bool())
-                .unwrap_or(false);
-            if let (Some(name), Some(art), false) = (
-                u.get("name").and_then(|n| n.as_str()),
-                art_of(&u),
-                alternate,
-            ) {
+            let alternate = u.get("is_alternate_art").and_then(|a| a.as_bool()).unwrap_or(false);
+            if let (Some(name), Some(art), false) = (u.get("name").and_then(|n| n.as_str()), art_of(&u), alternate) {
                 index.uniques.entry(name.to_owned()).or_insert(art);
             }
         }
@@ -111,24 +98,14 @@ pub fn load(poe2: bool) -> bool {
 /// The picture of an item or a gem: `name` (a unique's or a gem's), `base` (the item's base type, "" for a gem),
 /// `unique` (a unique or relic, which has art of its own); "" when there is none.
 pub fn url(poe2: bool, name: &str, base: &str, unique: bool) -> String {
-    let Some(index) = INDEX.read().unwrap()[poe2 as usize].clone() else {
-        return String::new();
-    };
+    let Some(index) = INDEX.read().unwrap()[poe2 as usize].clone() else { return String::new() };
     let art = (unique.then(|| index.uniques.get(name)).flatten())
         .or_else(|| (!base.is_empty()).then(|| index.bases.get(base)).flatten())
         .or_else(|| {
             // a gem: by its name, a support's with "Support" after it as POB may leave out
-            base.is_empty()
-                .then(|| {
-                    index
-                        .bases
-                        .get(name)
-                        .or_else(|| index.bases.get(&format!("{name} Support")))
-                })
-                .flatten()
+            base.is_empty().then(|| index.bases.get(name).or_else(|| index.bases.get(&format!("{name} Support")))).flatten()
         });
-    art.map(|a| format!("{}{a}.png", if poe2 { CDN2 } else { CDN }))
-        .unwrap_or_default()
+    art.map(|a| format!("{}{a}.png", if poe2 { CDN2 } else { CDN })).unwrap_or_default()
 }
 
 /// The picture at `url` (one of [`url`]'s), downloaded once into the cache, as a file the screens can show. Some art
@@ -138,16 +115,9 @@ pub fn url(poe2: bool, name: &str, base: &str, unique: bool) -> String {
 pub fn picture(url: &str) -> Option<PathBuf> {
     // One download of a picture at a time: the screens ask for one from several places at once (a slot's row, the
     // list of items, a drop-down); the others wait for it.
-    static PENDING: std::sync::Mutex<
-        Option<HashMap<String, Arc<std::sync::OnceLock<Option<PathBuf>>>>>,
-    > = std::sync::Mutex::new(None);
-    let cell = PENDING
-        .lock()
-        .unwrap()
-        .get_or_insert_with(HashMap::new)
-        .entry(url.to_owned())
-        .or_default()
-        .clone();
+    static PENDING: std::sync::Mutex<Option<HashMap<String, Arc<std::sync::OnceLock<Option<PathBuf>>>>>> =
+        std::sync::Mutex::new(None);
+    let cell = PENDING.lock().unwrap().get_or_insert_with(HashMap::new).entry(url.to_owned()).or_default().clone();
     let got = cell.get_or_init(|| fetch(url)).clone();
     if got.is_none() {
         // Asked again later (offline, say), it is tried again.
@@ -158,20 +128,13 @@ pub fn picture(url: &str) -> Option<PathBuf> {
 
 fn fetch(url: &str) -> Option<PathBuf> {
     use sha2::{Digest, Sha256};
-    let key: String = Sha256::digest(format!("v3:{url}").as_bytes())
-        .iter()
-        .take(12)
-        .map(|b| format!("{b:02x}"))
-        .collect();
+    let key: String = Sha256::digest(format!("v3:{url}").as_bytes()).iter().take(12).map(|b| format!("{b:02x}")).collect();
     let dir = crate::images::cache_dir().join("art").join("pictures");
     let file = dir.join(format!("{key}.png"));
     if file.exists() {
         return Some(file);
     }
-    let resp = ureq::get(url)
-        .timeout(Duration::from_secs(30))
-        .call()
-        .ok()?;
+    let resp = ureq::get(url).timeout(Duration::from_secs(30)).call().ok()?;
     let mut bytes = Vec::new();
     std::io::Read::read_to_end(&mut resp.into_reader(), &mut bytes).ok()?;
     let img = image::load_from_memory(&bytes).ok()?;
@@ -220,71 +183,34 @@ mod tests {
             return;
         }
         assert!(load(false));
-        assert_eq!(
-            url(false, "Headhunter", "Leather Belt", true),
-            format!("{CDN}Art/2DItems/Belts/Headhunter.png")
-        );
-        assert_eq!(
-            url(false, "Doom Grip", "Leather Belt", false),
-            format!("{CDN}Art/2DItems/Belts/Belt3.png")
-        );
-        assert_eq!(
-            url(false, "Headhunter", "Leather Belt", false),
-            format!("{CDN}Art/2DItems/Belts/Belt3.png")
-        );
-        assert_eq!(
-            url(false, "Fireball", "", false),
-            format!("{CDN}Art/2DItems/Gems/Fireball.png")
-        );
-        assert_eq!(
-            url(false, "Added Fire Damage", "", false),
-            format!("{CDN}Art/2DItems/Gems/Support/AddedFireDamage.png")
-        );
+        assert_eq!(url(false, "Headhunter", "Leather Belt", true), format!("{CDN}Art/2DItems/Belts/Headhunter.png"));
+        assert_eq!(url(false, "Doom Grip", "Leather Belt", false), format!("{CDN}Art/2DItems/Belts/Belt3.png"));
+        assert_eq!(url(false, "Headhunter", "Leather Belt", false), format!("{CDN}Art/2DItems/Belts/Belt3.png"));
+        assert_eq!(url(false, "Fireball", "", false), format!("{CDN}Art/2DItems/Gems/Fireball.png"));
+        assert_eq!(url(false, "Added Fire Damage", "", false), format!("{CDN}Art/2DItems/Gems/Support/AddedFireDamage.png"));
         assert_eq!(url(false, "No Such Thing", "", false), "");
         assert!(load(true));
         let diamond = url(true, "Heart of the Well", "Diamond", false);
-        assert_eq!(
-            diamond,
-            format!("{CDN2}Art/2DItems/Jewels/DiamondJewel.png")
-        );
+        assert_eq!(diamond, format!("{CDN2}Art/2DItems/Jewels/DiamondJewel.png"));
         assert!(picture(&diamond).is_some(), "{diamond}");
         // An active gem's frames side by side: the gem is kept, square.
-        let file =
-            picture(&format!("{CDN}Art/2DItems/Gems/Despair.png")).expect("Despair's picture");
+        let file = picture(&format!("{CDN}Art/2DItems/Gems/Despair.png")).expect("Despair's picture");
         let img = image::open(file).unwrap();
         assert_eq!(img.width(), img.height());
         // A support gem's single picture stays whole (its width divides by 3 too).
         let support = url(false, "Enlighten Support", "", false);
         let mut bytes = Vec::new();
-        std::io::Read::read_to_end(
-            &mut ureq::get(&support).call().unwrap().into_reader(),
-            &mut bytes,
-        )
-        .unwrap();
+        std::io::Read::read_to_end(&mut ureq::get(&support).call().unwrap().into_reader(), &mut bytes).unwrap();
         let raw = image::load_from_memory(&bytes).unwrap();
         let img = image::open(picture(&support).expect("a support's picture")).unwrap();
-        assert_eq!(
-            (img.width(), img.height()),
-            (raw.width(), raw.height()),
-            "{support}"
-        );
+        assert_eq!((img.width(), img.height()), (raw.width(), raw.height()), "{support}");
         // A flask's: one flask, its liquid behind its glass.
         let flask = url(false, "Ruby Flask", "Ruby Flask", false);
         let img = image::open(picture(&flask).expect("a flask's picture")).unwrap();
-        assert!(
-            img.height() > img.width(),
-            "{}x{}",
-            img.width(),
-            img.height()
-        );
+        assert!(img.height() > img.width(), "{}x{}", img.width(), img.height());
         // Asked for from several places at once, the first time: every one gets it.
         let ring = url(false, "Paua Ring", "Paua Ring", false);
-        let threads: Vec<_> = (0..6)
-            .map(|_| {
-                let r = ring.clone();
-                std::thread::spawn(move || picture(&r).is_some())
-            })
-            .collect();
+        let threads: Vec<_> = (0..6).map(|_| { let r = ring.clone(); std::thread::spawn(move || picture(&r).is_some()) }).collect();
         assert!(threads.into_iter().all(|t| t.join().unwrap()));
     }
 }

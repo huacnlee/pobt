@@ -3,9 +3,9 @@
 //! `PobCanvas` component draws its frames and sends it the mouse and keys.
 //! The rest of the UI is `App.tsx`, over the `Pob` module.
 
+mod art;
 pub mod account;
 pub mod ai;
-mod art;
 pub mod dds;
 pub mod frame;
 pub mod host;
@@ -35,8 +35,8 @@ use nsh_core::{
     canvas::CanvasTextBaseline,
     desktop::WindowAttributes,
     element::desktop::current_window,
-    element::input,
     geometry::ScaledPixels,
+    element::input,
     keymap::{Modifiers, When},
     prelude::*,
 };
@@ -57,8 +57,7 @@ fn native(registry: &mut Registry) {
 }
 
 /// The dictionary of POBT's own build screens (`tr_load`), apart from the one the Lua Path of Building draws with.
-static TR_DICT: std::sync::RwLock<Option<Arc<translate::Dictionary>>> =
-    std::sync::RwLock::new(None);
+static TR_DICT: std::sync::RwLock<Option<Arc<translate::Dictionary>>> = std::sync::RwLock::new(None);
 
 /// How many times `TR_DICT` was read again as its files changed (`translate::watch`), for `tr_reloaded`.
 static TR_RELOADS: std::sync::LazyLock<tokio::sync::watch::Sender<u64>> =
@@ -108,11 +107,7 @@ fn manifest_version(xml: &str) -> Option<&str> {
 }
 
 fn game_of(name: &str) -> Game {
-    if name == "poe2" {
-        Game::Poe2
-    } else {
-        Game::Poe1
-    }
+    if name == "poe2" { Game::Poe2 } else { Game::Poe1 }
 }
 
 /// Path of Building: its installs, the translations, and starting it.
@@ -149,10 +144,7 @@ impl Pob {
     pub fn art_urls(game: String, json: String) -> String {
         let poe2 = game == "poe2";
         let list: Vec<(String, String, bool)> = serde_json::from_str(&json).unwrap_or_default();
-        let out: Vec<String> = list
-            .iter()
-            .map(|(n, b, u)| art::url(poe2, n, b, *u))
-            .collect();
+        let out: Vec<String> = list.iter().map(|(n, b, u)| art::url(poe2, n, b, *u)).collect();
         serde_json::to_string(&out).unwrap_or_else(|_| "[]".into())
     }
 
@@ -161,11 +153,7 @@ impl Pob {
     pub async fn art_picture(url: String) -> String {
         let (tx, rx) = tokio::sync::oneshot::channel();
         std::thread::spawn(move || {
-            let _ = tx.send(
-                art::picture(&url)
-                    .map(|p| crate::images::uri_of(&p).to_string())
-                    .unwrap_or_default(),
-            );
+            let _ = tx.send(art::picture(&url).map(|p| crate::images::uri_of(&p).to_string()).unwrap_or_default());
         });
         rx.await.unwrap_or_default()
     }
@@ -182,8 +170,7 @@ impl Pob {
     pub async fn tr_load(language: String) -> bool {
         let (tx, rx) = tokio::sync::oneshot::channel();
         std::thread::spawn(move || {
-            let dict =
-                (!language.is_empty()).then(|| Arc::new(translate::Dictionary::load(&language)));
+            let dict = (!language.is_empty()).then(|| Arc::new(translate::Dictionary::load(&language)));
             let _ = tx.send(dict);
         });
         let dict = rx.await.ok().flatten();
@@ -210,10 +197,7 @@ impl Pob {
         let texts: Vec<String> = serde_json::from_str(&json).unwrap_or_default();
         let dict = TR_DICT.read().unwrap().clone();
         let out: Vec<String> = match dict {
-            Some(d) => texts
-                .into_iter()
-                .map(|t| d.translate(&t).unwrap_or(t))
-                .collect(),
+            Some(d) => texts.into_iter().map(|t| d.translate(&t).unwrap_or(t)).collect(),
             None => texts,
         };
         serde_json::to_string(&out).unwrap_or_default()
@@ -227,11 +211,7 @@ impl Pob {
         let dict = TR_DICT.read().unwrap().clone();
         let out: Vec<String> = names
             .iter()
-            .map(|n| {
-                names::game_name(&game, &language, n, |s| {
-                    dict.as_ref().and_then(|d| d.translate(s))
-                })
-            })
+            .map(|n| names::game_name(&game, &language, n, |s| dict.as_ref().and_then(|d| d.translate(s))))
             .collect();
         serde_json::to_string(&out).unwrap_or_default()
     }
@@ -240,11 +220,7 @@ impl Pob {
     /// screens; "" once it starts loading (`service_status`), or why not.
     pub fn service_start(game: String) -> String {
         let s = settings::Settings::load();
-        let dir = if game == "poe2" {
-            s.poe2_dir
-        } else {
-            s.poe1_dir
-        };
+        let dir = if game == "poe2" { s.poe2_dir } else { s.poe1_dir };
         match dir {
             Some(d) => host::service::start(d),
             None => "Path of Building is not installed".into(),
@@ -301,11 +277,7 @@ impl Pob {
     /// Asks for a folder; its path, or "" when cancelled.
     pub async fn pick_dir() -> String {
         match pick_paths(nsh_core::file_dialog::OpenDialog::folders()).await {
-            Ok(Some(paths)) => paths
-                .into_iter()
-                .next()
-                .map(|p| p.display().to_string())
-                .unwrap_or_default(),
+            Ok(Some(paths)) => paths.into_iter().next().map(|p| p.display().to_string()).unwrap_or_default(),
             _ => String::new(),
         }
     }
@@ -369,8 +341,7 @@ impl Pob {
     /// The version of the Path of Building in `dir`, from its manifest.xml
     /// (`<Version number="2.63.0" />`); empty if it has none.
     pub fn pob_version(dir: String) -> String {
-        let xml = std::fs::read_to_string(std::path::Path::new(&dir).join("manifest.xml"))
-            .unwrap_or_default();
+        let xml = std::fs::read_to_string(std::path::Path::new(&dir).join("manifest.xml")).unwrap_or_default();
         manifest_version(&xml).unwrap_or_default().to_string()
     }
 
@@ -393,9 +364,7 @@ impl Pob {
     /// message }` (`phase`: "downloading", "unpacking", "done", "failed"); "" for
     /// none. Once done, the game's folder is saved in the settings.
     pub fn install_progress() -> String {
-        let Some(p) = install::progress() else {
-            return String::new();
-        };
+        let Some(p) = install::progress() else { return String::new() };
         if p.phase == "done" {
             let mut s = Settings::load();
             let dir = Some(PathBuf::from(&p.message));
@@ -478,14 +447,11 @@ impl Pob {
     /// signed in to in the browser first, when it must be. False while one
     /// runs; `account_progress` says how it goes.
     pub fn account_start(kind: String, json: String) -> bool {
-        let Ok(request) = serde_json::from_str::<account::Request>(&json) else {
-            return false;
-        };
+        let Ok(request) = serde_json::from_str::<account::Request>(&json) else { return false };
         if kind == "export" {
             // A POB of its own, beside the one running if one is, on POB's LuaJIT, which a process keeps: the same
             // POB's only.
-            let busy =
-                lua::loaded_from().is_some_and(|d| d != std::path::Path::new(&request.pob_dir));
+            let busy = lua::loaded_from().is_some_and(|d| d != std::path::Path::new(&request.pob_dir));
             if busy {
                 return account::fail(&kind, "restart");
             }
@@ -498,9 +464,7 @@ impl Pob {
     /// children? }]`, `path` from `root`. "" before an export.
     pub fn builds() -> String {
         match account::builds() {
-            Some((root, tree)) => {
-                serde_json::json!({ "root": root.display().to_string(), "tree": tree }).to_string()
-            }
+            Some((root, tree)) => serde_json::json!({ "root": root.display().to_string(), "tree": tree }).to_string(),
             None => String::new(),
         }
     }
@@ -518,9 +482,7 @@ impl Pob {
     /// The account job running or last run, as JSON `{ kind, state, step,
     /// error, result }` (`state`: "running", "done", "failed"); "" for none.
     pub fn account_progress() -> String {
-        account::progress()
-            .map(|p| serde_json::to_string(&p).unwrap_or_default())
-            .unwrap_or_default()
+        account::progress().map(|p| serde_json::to_string(&p).unwrap_or_default()).unwrap_or_default()
     }
 
     /// The AI agents installed to analyse builds, as JSON `[{ id, name, path
@@ -539,15 +501,9 @@ impl Pob {
 
     /// Asks for a build's file; its path, or "" when cancelled.
     pub async fn pick_build() -> String {
-        let dialog = nsh_core::file_dialog::OpenDialog::files().filter(
-            nsh_core::file_dialog::FileFilter::new("Path of Building", ["xml"]),
-        );
+        let dialog = nsh_core::file_dialog::OpenDialog::files().filter(nsh_core::file_dialog::FileFilter::new("Path of Building", ["xml"]));
         match pick_paths(dialog).await {
-            Ok(Some(paths)) => paths
-                .into_iter()
-                .next()
-                .map(|p| p.display().to_string())
-                .unwrap_or_default(),
+            Ok(Some(paths)) => paths.into_iter().next().map(|p| p.display().to_string()).unwrap_or_default(),
             _ => String::new(),
         }
     }
@@ -565,9 +521,7 @@ impl Pob {
     /// The analysis running or last run, as JSON `{ state, agent, build,
     /// step, activity, error, report, raw }`; "" for none.
     pub fn ai_progress() -> String {
-        ai::progress()
-            .map(|p| serde_json::to_string(&p).unwrap_or_default())
-            .unwrap_or_default()
+        ai::progress().map(|p| serde_json::to_string(&p).unwrap_or_default()).unwrap_or_default()
     }
 
     /// Stops the analysis running.
@@ -579,17 +533,11 @@ impl Pob {
     /// with letters), as a JSON array: what the translation check offers to translate.
     pub fn tr_missing(json: String) -> String {
         let texts: Vec<String> = serde_json::from_str(&json).unwrap_or_default();
-        let Some(dict) = TR_DICT.read().unwrap().clone() else {
-            return "[]".into();
-        };
+        let Some(dict) = TR_DICT.read().unwrap().clone() else { return "[]".into() };
         let mut seen = std::collections::HashSet::new();
         let out: Vec<&String> = texts
             .iter()
-            .filter(|t| {
-                t.bytes().any(|c| c.is_ascii_alphabetic())
-                    && dict.translate(t).is_none()
-                    && seen.insert(t.as_str())
-            })
+            .filter(|t| t.bytes().any(|c| c.is_ascii_alphabetic()) && dict.translate(t).is_none() && seen.insert(t.as_str()))
             .collect();
         serde_json::to_string(&out).unwrap_or_default()
     }
@@ -601,9 +549,7 @@ impl Pob {
 
     /// The translation running or last run, as `ai_progress` gives an analysis; its report `{rows, file, kept}`.
     pub fn tr_fill_progress() -> String {
-        trfill::progress()
-            .map(|p| serde_json::to_string(&p).unwrap_or_default())
-            .unwrap_or_default()
+        trfill::progress().map(|p| serde_json::to_string(&p).unwrap_or_default()).unwrap_or_default()
     }
 
     /// Stops the translation running.
@@ -624,9 +570,7 @@ impl Pob {
     pub async fn tr_submit(json: String) -> String {
         let (tx, rx) = tokio::sync::oneshot::channel();
         std::thread::spawn(move || {
-            let out = serde_json::from_str::<trfill::Offer>(&json)
-                .map_err(|e| e.to_string())
-                .and_then(|o| trfill::submit(&o));
+            let out = serde_json::from_str::<trfill::Offer>(&json).map_err(|e| e.to_string()).and_then(|o| trfill::submit(&o));
             let _ = tx.send(out);
         });
         let out = rx.await.unwrap_or_else(|_| Err("gh: stopped".into()));
@@ -643,9 +587,7 @@ impl Pob {
         if path.extension().and_then(|e| e.to_str()) != Some("xml") {
             return String::new();
         }
-        ai::saved(&path)
-            .map(|p| serde_json::to_string(&p).unwrap_or_default())
-            .unwrap_or_default()
+        ai::saved(&path).map(|p| serde_json::to_string(&p).unwrap_or_default()).unwrap_or_default()
     }
 
     /// Keeps a report (`json`, as `ai_progress` gives one) beside the build file `path`: for a build analysed before
@@ -653,9 +595,7 @@ impl Pob {
     pub fn ai_save(path: String, json: String) -> bool {
         let path = PathBuf::from(path);
         match serde_json::from_str::<ai::Progress>(&json) {
-            Ok(p) if path.extension().and_then(|e| e.to_str()) == Some("xml") => {
-                ai::save(&path, &p).is_ok()
-            }
+            Ok(p) if path.extension().and_then(|e| e.to_str()) == Some("xml") => ai::save(&path, &p).is_ok(),
             _ => false,
         }
     }
@@ -701,12 +641,7 @@ pub fn PobCanvas() -> impl IntoElement {
 // ========
 
 fn rgba(c: [f32; 4]) -> Rgba {
-    Rgba {
-        r: c[0].clamp(0.0, 1.0),
-        g: c[1].clamp(0.0, 1.0),
-        b: c[2].clamp(0.0, 1.0),
-        a: c[3].clamp(0.0, 1.0),
-    }
+    Rgba { r: c[0].clamp(0.0, 1.0), g: c[1].clamp(0.0, 1.0), b: c[2].clamp(0.0, 1.0), a: c[3].clamp(0.0, 1.0) }
 }
 
 fn rect(x: f32, y: f32, w: f32, h: f32) -> Bounds<Points> {
@@ -715,14 +650,8 @@ fn rect(x: f32, y: f32, w: f32, h: f32) -> Bounds<Points> {
 
 fn src_rect(s: [f32; 4]) -> Bounds<ScaledPixels> {
     Bounds {
-        origin: Point {
-            x: ScaledPixels(s[0]),
-            y: ScaledPixels(s[1]),
-        },
-        size: Size {
-            width: ScaledPixels(s[2]),
-            height: ScaledPixels(s[3]),
-        },
+        origin: Point { x: ScaledPixels(s[0]), y: ScaledPixels(s[1]) },
+        size: Size { width: ScaledPixels(s[2]), height: ScaledPixels(s[3]) },
     }
 }
 
@@ -751,12 +680,7 @@ fn paint(frame: &Frame) -> Painter {
                 alpha = 1.0;
             }
             let [x, y, w, h] = item.viewport;
-            p = p
-                .save()
-                .begin_path()
-                .rect(rect(x, y, w, h))
-                .clip()
-                .translate(x, y);
+            p = p.save().begin_path().rect(rect(x, y, w, h)).clip().translate(x, y);
             viewport = Some(item.viewport);
         }
         let mut set_alpha = |p: Painter, a: f32| {
@@ -783,27 +707,11 @@ fn paint(frame: &Frame) -> Painter {
                     .close_path()
                     .fill()
             }
-            Cmd::Image {
-                uri,
-                src,
-                dst,
-                alpha: a,
-            } => {
+            Cmd::Image { uri, src, dst, alpha: a } => {
                 let p = set_alpha(p, *a);
-                p.draw_image_part(
-                    uri,
-                    Some(src_rect(*src)),
-                    rect(dst[0], dst[1], dst[2], dst[3]),
-                )
+                p.draw_image_part(uri, Some(src_rect(*src)), rect(dst[0], dst[1], dst[2], dst[3]))
             }
-            Cmd::ImageAffine {
-                uri,
-                src,
-                dst,
-                m,
-                clip,
-                alpha: a,
-            } => {
+            Cmd::ImageAffine { uri, src, dst, m, clip, alpha: a } => {
                 let p = set_alpha(p, *a);
                 p.save()
                     .begin_path()
@@ -814,28 +722,16 @@ fn paint(frame: &Frame) -> Painter {
                     .close_path()
                     .clip()
                     .transform(*m)
-                    .draw_image_part(
-                        uri,
-                        Some(src_rect(*src)),
-                        rect(dst[0], dst[1], dst[2], dst[3]),
-                    )
+                    .draw_image_part(uri, Some(src_rect(*src)), rect(dst[0], dst[1], dst[2], dst[3]))
                     .restore()
             }
-            Cmd::Text {
-                x,
-                y,
-                baseline,
-                font: f,
-                text,
-                color,
-            } => {
+            Cmd::Text { x, y, baseline, font: f, text, color } => {
                 let mut p = set_alpha(p, 1.0);
                 if font != Some(f.as_ref()) {
                     p = p.font(f);
                     font = Some(f.as_ref());
                 }
-                p.fill_color(rgba(*color))
-                    .fill_text(text, snap(*x), snap(*y + *baseline))
+                p.fill_color(rgba(*color)).fill_text(text, snap(*x), snap(*y + *baseline))
             }
         };
     }
@@ -869,11 +765,7 @@ fn key_name(key: &str) -> Option<String> {
         "ArrowRight" => "RIGHT",
         "NumLock" => "NUMLOCK",
         "ScrollLock" => "SCROLLLOCK",
-        k if k.len() >= 2
-            && k.len() <= 3
-            && k.starts_with('F')
-            && k[1..].parse::<u8>().is_ok_and(|n| (1..=15).contains(&n)) =>
-        {
+        k if k.len() >= 2 && k.len() <= 3 && k.starts_with('F') && k[1..].parse::<u8>().is_ok_and(|n| (1..=15).contains(&n)) => {
             return Some(k.to_string());
         }
         k => {
@@ -949,11 +841,7 @@ fn pob_view(shared: Arc<Shared>) -> impl IntoElement {
         let (x, y) = (e.location.x.0, e.location.y.0);
         let (t, lx, ly) = last_click.get();
         let double = e.timestamp - t < 450.0 && (x - lx).abs() < 5.0 && (y - ly).abs() < 5.0;
-        last_click.set(if double {
-            (f64::MIN, 0.0, 0.0)
-        } else {
-            (e.timestamp, x, y)
-        });
+        last_click.set(if double { (f64::MIN, 0.0, 0.0) } else { (e.timestamp, x, y) });
         *s.cursor.lock().unwrap() = (x, y);
         sync_modifiers(&s, &e.modifiers);
         s.set_key("LEFTBUTTON", true);
@@ -1013,8 +901,7 @@ fn pob_view(shared: Arc<Shared>) -> impl IntoElement {
         s.poke.store(true, Ordering::SeqCst);
     };
     let s = shared.clone();
-    let on_key_down =
-        move |e: &KeyEvent| key_down(&s, e, frame.with_untracked(|f| f.text_input.is_none()));
+    let on_key_down = move |e: &KeyEvent| key_down(&s, e, frame.with_untracked(|f| f.text_input.is_none()));
     let s = shared.clone();
     let on_key_up = move |e: &KeyEvent| key_up(&s, e);
 
@@ -1031,12 +918,7 @@ fn pob_view(shared: Arc<Shared>) -> impl IntoElement {
         // input, and not while an input method composes (it keeps its keys).
         for &(keystroke, key, ctrl, shift) in SINK_KEYS {
             let s = s.clone();
-            let options = KeyOptions {
-                when: When::Always,
-                repeat: true,
-                for_focus: true,
-                ..Default::default()
-            };
+            let options = KeyOptions { when: When::Always, repeat: true, for_focus: true, ..Default::default() };
             on_key_with(keystroke, options, move |_| {
                 s.set_key("CTRL", ctrl);
                 s.set_key("SHIFT", shift);
@@ -1069,8 +951,7 @@ fn pob_view(shared: Arc<Shared>) -> impl IntoElement {
                 }
             }
         };
-        let (take_now, pending_now, composing_now) =
-            (take.clone(), pending.clone(), is_composing.clone());
+        let (take_now, pending_now, composing_now) = (take.clone(), pending.clone(), is_composing.clone());
         input()
             .element_ref(&sink_ref)
             .absolute()
@@ -1259,20 +1140,9 @@ fn key_up(s: &Shared, e: &KeyEvent) {
 
 /// What `now` has that `before` had not, between their common start and end.
 fn inserted<'a>(before: &str, now: &'a str) -> &'a str {
-    let start = before
-        .char_indices()
-        .zip(now.chars())
-        .take_while(|((_, a), b)| a == b)
-        .last()
-        .map_or(0, |((i, a), _)| i + a.len_utf8());
+    let start = before.char_indices().zip(now.chars()).take_while(|((_, a), b)| a == b).last().map_or(0, |((i, a), _)| i + a.len_utf8());
     let (b, n) = (&before[start..], &now[start..]);
-    let end = b
-        .chars()
-        .rev()
-        .zip(n.chars().rev())
-        .take_while(|(a, b)| a == b)
-        .map(|(c, _)| c.len_utf8())
-        .sum::<usize>();
+    let end = b.chars().rev().zip(n.chars().rev()).take_while(|(a, b)| a == b).map(|(c, _)| c.len_utf8()).sum::<usize>();
     &n[..n.len() - end.min(n.len())]
 }
 
@@ -1292,18 +1162,9 @@ mod tests {
 
     #[test]
     fn manifest_versions() {
-        assert_eq!(
-            manifest_version("<PoBVersion>\n\t<Version number=\"2.63.0\" />"),
-            Some("2.63.0")
-        );
-        assert_eq!(
-            manifest_version("<Version branch=\"master\" number=\"2.68.1\" platform=\"win32\"/>"),
-            Some("2.68.1")
-        );
-        assert_eq!(
-            manifest_version("<Version branch=\"master\"/><Source number=\"1\"/>"),
-            None
-        );
+        assert_eq!(manifest_version("<PoBVersion>\n\t<Version number=\"2.63.0\" />"), Some("2.63.0"));
+        assert_eq!(manifest_version("<Version branch=\"master\" number=\"2.68.1\" platform=\"win32\"/>"), Some("2.68.1"));
+        assert_eq!(manifest_version("<Version branch=\"master\"/><Source number=\"1\"/>"), None);
         assert_eq!(manifest_version(""), None);
     }
 }

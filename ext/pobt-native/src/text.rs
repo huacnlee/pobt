@@ -40,18 +40,9 @@ impl FontKind {
     pub fn css(self, size: f32) -> String {
         let fonts = fonts();
         match self {
-            FontKind::Fixed => format!(
-                "{size:.2}px \"{}\", \"{}\"",
-                fonts.mono_family, fonts.cjk_family
-            ),
-            FontKind::Var => format!(
-                "{size:.2}px \"{}\", \"{}\"",
-                fonts.latin_family, fonts.cjk_family
-            ),
-            FontKind::VarBold => format!(
-                "bold {size:.2}px \"{}\", \"{}\"",
-                fonts.latin_family, fonts.cjk_family
-            ),
+            FontKind::Fixed => format!("{size:.2}px \"{}\", \"{}\"", fonts.mono_family, fonts.cjk_family),
+            FontKind::Var => format!("{size:.2}px \"{}\", \"{}\"", fonts.latin_family, fonts.cjk_family),
+            FontKind::VarBold => format!("bold {size:.2}px \"{}\", \"{}\"", fonts.latin_family, fonts.cjk_family),
         }
     }
 }
@@ -72,11 +63,7 @@ impl LoadedFont {
         let font = FontArc::new(ab_glyph::FontVec::try_from_vec_and_index(data, index).ok()?);
         let upm = font.units_per_em().unwrap_or(1000.0);
         let ascent = font.ascent_unscaled() / upm;
-        Some(Self {
-            font,
-            unit: 1.0 / upm,
-            ascent,
-        })
+        Some(Self { font, unit: 1.0 / upm, ascent })
     }
 
     fn advance(&self, id: GlyphId) -> f32 {
@@ -101,21 +88,13 @@ static FONTS: OnceLock<Fonts> = OnceLock::new();
 
 #[cfg(windows)]
 fn fonts_dirs() -> Vec<PathBuf> {
-    let windir = std::env::var_os("WINDIR")
-        .map(PathBuf::from)
-        .unwrap_or_else(|| "C:\\Windows".into());
+    let windir = std::env::var_os("WINDIR").map(PathBuf::from).unwrap_or_else(|| "C:\\Windows".into());
     vec![windir.join("Fonts")]
 }
 
 #[cfg(target_os = "macos")]
 fn fonts_dirs() -> Vec<PathBuf> {
-    [
-        "/System/Library/Fonts",
-        "/System/Library/Fonts/Supplemental",
-        "/Library/Fonts",
-    ]
-    .map(PathBuf::from)
-    .to_vec()
+    ["/System/Library/Fonts", "/System/Library/Fonts/Supplemental", "/Library/Fonts"].map(PathBuf::from).to_vec()
 }
 
 #[cfg(not(any(windows, target_os = "macos")))]
@@ -136,9 +115,7 @@ pub fn fonts() -> &'static Fonts {
     FONTS.get_or_init(|| {
         let dirs = fonts_dirs();
         let pick = |names: &[(&str, u32)]| {
-            names
-                .iter()
-                .find_map(|(n, i)| dirs.iter().find_map(|d| LoadedFont::load(&d.join(n), *i)))
+            names.iter().find_map(|(n, i)| dirs.iter().find_map(|d| LoadedFont::load(&d.join(n), *i)))
         };
         #[cfg(windows)]
         // msyh.ttc's second face is Microsoft YaHei UI, YaHei with a UI's tighter lines.
@@ -262,10 +239,7 @@ pub fn escape_color(s: &[u8]) -> Color {
     if s[1].is_ascii_digit() {
         return ESCAPE_COLORS[(s[1] - b'0') as usize];
     }
-    let hex = |i: usize| {
-        u8::from_str_radix(std::str::from_utf8(&s[i..i + 2]).unwrap_or("0"), 16).unwrap_or(0) as f32
-            / 255.0
-    };
+    let hex = |i: usize| u8::from_str_radix(std::str::from_utf8(&s[i..i + 2]).unwrap_or("0"), 16).unwrap_or(0) as f32 / 255.0;
     [hex(2), hex(4), hex(6), 1.0]
 }
 
@@ -313,9 +287,7 @@ pub fn line_width(kind: FontKind, height: f32, line: &str) -> f32 {
 
 /// `DrawStringWidth`: the widest line.
 pub fn string_width(kind: FontKind, height: f32, s: &str) -> f32 {
-    s.split('\n')
-        .map(|l| line_width(kind, height, l))
-        .fold(0.0, f32::max)
+    s.split('\n').map(|l| line_width(kind, height, l)).fold(0.0, f32::max)
 }
 
 /// `DrawStringCursorIndex`: the byte index (0-based) under (`cx`, `cy`).
@@ -406,10 +378,7 @@ fn layout_line(kind: FontKind, height: f32, line: &str) -> Arc<LineLayout> {
     let (mut x, mut run_x) = (0.0f32, 0.0f32);
     let mut run = String::new();
     let mut i = 0;
-    let flush = |run: &mut String,
-                 run_x: f32,
-                 color: Option<Color>,
-                 runs: &mut Vec<(f32, Arc<str>, Option<Color>)>| {
+    let flush = |run: &mut String, run_x: f32, color: Option<Color>, runs: &mut Vec<(f32, Arc<str>, Option<Color>)>| {
         if !run.trim().is_empty() {
             runs.push((run_x, Arc::from(run.replace('\t', "    ").as_str()), color));
         }
@@ -430,11 +399,7 @@ fn layout_line(kind: FontKind, height: f32, line: &str) -> Arc<LineLayout> {
         i += ch.len_utf8();
     }
     flush(&mut run, run_x, color, &mut runs);
-    let layout = Arc::new(LineLayout {
-        width: line_width(kind, height, line),
-        runs,
-        end: color,
-    });
+    let layout = Arc::new(LineLayout { width: line_width(kind, height, line), runs, end: color });
     CACHE.with(|c| {
         let mut c = c.borrow_mut();
         if c.len() > 50_000 {
@@ -471,12 +436,7 @@ pub fn layout(
             }
             .round();
             for (offset, text, c) in &l.runs {
-                runs.push(TextRun {
-                    x: start + offset,
-                    y: line_y,
-                    text: text.clone(),
-                    color: c.unwrap_or(color),
-                });
+                runs.push(TextRun { x: start + offset, y: line_y, text: text.clone(), color: c.unwrap_or(color) });
             }
             if let Some(end) = l.end {
                 color = end;

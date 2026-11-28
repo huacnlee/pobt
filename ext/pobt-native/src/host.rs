@@ -109,11 +109,7 @@ impl Shared {
 }
 
 fn normalize_key(name: &str) -> String {
-    if name.chars().count() > 1 {
-        name.to_ascii_uppercase()
-    } else {
-        name.to_ascii_lowercase()
-    }
+    if name.chars().count() > 1 { name.to_ascii_uppercase() } else { name.to_ascii_lowercase() }
 }
 
 const PRELUDE: &str = include_str!("prelude.lua");
@@ -219,14 +215,10 @@ fn run_once(pob_dir: &Path, shared: &Arc<Shared>, rx: mpsc::Receiver<Input>) -> 
         return false;
     };
     enter(l, pob_dir, shared);
-    let boot = l
-        .load(PRELUDE.as_bytes(), "pobt/prelude.lua")
-        .and_then(|_| l.pcall(0, 0));
+    let boot = l.load(PRELUDE.as_bytes(), "pobt/prelude.lua").and_then(|_| l.pcall(0, 0));
     let boot = boot.and_then(|_| match demo() {
         // The demo of edit boxes in place of POB, in a development run.
-        true => l
-            .load(DEMO.as_bytes(), "pobt/demo.lua")
-            .and_then(|_| l.pcall(0, 0)),
+        true => l.load(DEMO.as_bytes(), "pobt/demo.lua").and_then(|_| l.pcall(0, 0)),
         false => launch(l, pob_dir),
     });
     if let Err(e) = boot {
@@ -283,11 +275,7 @@ fn run_once(pob_dir: &Path, shared: &Arc<Shared>, rx: mpsc::Receiver<Input>) -> 
         // when idle, waking early for input.
         let busy = with_host(|h| !h.subs.is_empty()).unwrap_or(false)
             || shared.last_input.lock().unwrap().elapsed() < Duration::from_secs(3);
-        let target = if busy {
-            Duration::from_millis(16)
-        } else {
-            Duration::from_millis(100)
-        };
+        let target = if busy { Duration::from_millis(16) } else { Duration::from_millis(100) };
         let deadline = begin + target;
         while Instant::now() < deadline {
             if shared.poke.swap(false, Ordering::SeqCst) {
@@ -387,25 +375,11 @@ pub fn export(
         .map_err(|_| "Path of Building stopped".to_string())?
 }
 
-fn export_in(
-    l: Lua,
-    pob_dir: &Path,
-    shared: &Arc<Shared>,
-    args: &[String; 4],
-    step: &dyn Fn(&str),
-) -> Result<Exported, String> {
+fn export_in(l: Lua, pob_dir: &Path, shared: &Arc<Shared>, args: &[String; 4], step: &dyn Fn(&str)) -> Result<Exported, String> {
     let [name, char, items, passives] = args;
-    let failed = |what: &str| {
-        shared
-            .error
-            .lock()
-            .unwrap()
-            .take()
-            .map(|e| format!("{what}: {e}"))
-    };
+    let failed = |what: &str| shared.error.lock().unwrap().take().map(|e| format!("{what}: {e}"));
     step("loading");
-    l.load(PRELUDE.as_bytes(), "pobt/prelude.lua")
-        .and_then(|_| l.pcall(0, 0))?;
+    l.load(PRELUDE.as_bytes(), "pobt/prelude.lua").and_then(|_| l.pcall(0, 0))?;
     launch(l, pob_dir)?;
     l.get_global("__pobt_hookLaunch");
     let _ = l.pcall(0, 0);
@@ -446,11 +420,7 @@ fn export_in(
     if code.is_empty() {
         return Err("Path of Building made no build code".into());
     }
-    Ok(Exported {
-        code,
-        xml: text(1),
-        build_path: text(2),
-    })
+    Ok(Exported { code, xml: text(1), build_path: text(2) })
 }
 
 /// A few of POB's edit boxes on their own, to try typing in them by hand
@@ -466,18 +436,9 @@ fn demo() -> bool {
 /// Passes `input` to POB's callbacks.
 fn dispatch(l: Lua, shared: &Shared, input: &Input) {
     let (name, args): (&str, Vec<Value>) = match input {
-        Input::KeyDown(k, dbl) => (
-            "OnKeyDown",
-            vec![Value::Str(k.clone().into_bytes()), Value::Bool(*dbl)],
-        ),
-        Input::KeyUp(k) => (
-            "OnKeyUp",
-            vec![Value::Str(k.clone().into_bytes()), Value::Bool(false)],
-        ),
-        Input::Char(c) => (
-            "OnChar",
-            vec![Value::Str(c.clone().into_bytes()), Value::Bool(false)],
-        ),
+        Input::KeyDown(k, dbl) => ("OnKeyDown", vec![Value::Str(k.clone().into_bytes()), Value::Bool(*dbl)]),
+        Input::KeyUp(k) => ("OnKeyUp", vec![Value::Str(k.clone().into_bytes()), Value::Bool(false)]),
+        Input::Char(c) => ("OnChar", vec![Value::Str(c.clone().into_bytes()), Value::Bool(false)]),
     };
     if let Err(e) = callback(l, name, &args) {
         report(shared, &format!("Error in {name}"), e);
@@ -685,11 +646,7 @@ native!(sub_func, |l| {
     let name = l.string(lua::upvalue_index(1)).unwrap_or_default();
     let args = l.values_from(1);
     let (rtx, rrx) = mpsc::channel();
-    let sent = SUB.with(|s| {
-        s.borrow()
-            .as_ref()
-            .map(|tx| tx.send(SubMsg::Func(name, args, rtx)).is_ok())
-    });
+    let sent = SUB.with(|s| s.borrow().as_ref().map(|tx| tx.send(SubMsg::Func(name, args, rtx)).is_ok()));
     if sent != Some(true) {
         return 0;
     }
@@ -770,23 +727,12 @@ fn register(l: Lua) {
 
 fn emit(h: &mut Host, cmd: Cmd) {
     h.seq += 1;
-    h.items.push((
-        h.layer,
-        h.seq,
-        Item {
-            viewport: h.viewport,
-            cmd,
-        },
-    ));
+    h.items.push((h.layer, h.seq, Item { viewport: h.viewport, cmd }));
 }
 
 native!(n_set_draw_layer, |l| {
     with_host(|h| {
-        let sub = if l.kind(2) == LUA_TNUMBER {
-            l.int(2) as i32
-        } else {
-            0
-        };
+        let sub = if l.kind(2) == LUA_TNUMBER { l.int(2) as i32 } else { 0 };
         if l.kind(1) == LUA_TNUMBER {
             h.layer = (l.int(1) as i32, sub);
         } else {
@@ -804,12 +750,7 @@ native!(n_get_draw_layer, |l| {
 native!(n_set_viewport, |l| {
     with_host(|h| {
         if l.top() >= 4 && l.num(4) != 0.0 {
-            h.viewport = [
-                l.num(1) as f32,
-                l.num(2) as f32,
-                l.num(3) as f32,
-                l.num(4) as f32,
-            ];
+            h.viewport = [l.num(1) as f32, l.num(2) as f32, l.num(3) as f32, l.num(4) as f32];
         } else {
             h.viewport = [0.0, 0.0, h.screen.0, h.screen.1];
         }
@@ -825,11 +766,7 @@ native!(n_set_draw_color, |l| {
         }
         text::escape_color(b)
     } else {
-        let a = if l.kind(4) == LUA_TNUMBER {
-            l.num(4) as f32
-        } else {
-            1.0
-        };
+        let a = if l.kind(4) == LUA_TNUMBER { l.num(4) as f32 } else { 1.0 };
         [l.num(1) as f32, l.num(2) as f32, l.num(3) as f32, a]
     };
     with_host(|h| h.color = color);
@@ -845,11 +782,7 @@ native!(n_get_draw_color, |l| {
 });
 
 native!(n_set_clear_color, |l| {
-    let a = if l.kind(4) == LUA_TNUMBER {
-        l.num(4) as f32
-    } else {
-        1.0
-    };
+    let a = if l.kind(4) == LUA_TNUMBER { l.num(4) as f32 } else { 1.0 };
     let c = [l.num(1) as f32, l.num(2) as f32, l.num(3) as f32, a];
     with_host(|h| h.clear = c);
     0
@@ -889,9 +822,7 @@ fn draw_image(h: &mut Host, id: u32, layer: u32, dst: [f32; 4], uv: [f32; 4], co
     if color[3] <= 0.0 {
         return;
     }
-    let Some((uri, w, hh)) = images::uri(id, layer, [color[0], color[1], color[2]]) else {
-        return;
-    };
+    let Some((uri, w, hh)) = images::uri(id, layer, [color[0], color[1], color[2]]) else { return };
     let (w, hh) = (w as f32, hh as f32);
     if w == 0.0 || hh == 0.0 || dst[2] == 0.0 || dst[3] == 0.0 {
         return;
@@ -900,21 +831,8 @@ fn draw_image(h: &mut Host, id: u32, layer: u32, dst: [f32; 4], uv: [f32; 4], co
     let eps = 1e-4;
     let inside = |a: f32, b: f32| a.min(b) >= -eps && a.max(b) <= 1.0 + eps;
     if u1 <= u2 && v1 <= v2 && inside(u1, u2) && inside(v1, v2) {
-        let src = [
-            u1.max(0.0) * w,
-            v1.max(0.0) * hh,
-            (u2 - u1).min(1.0) * w,
-            (v2 - v1).min(1.0) * hh,
-        ];
-        emit(
-            h,
-            Cmd::Image {
-                uri,
-                src,
-                dst,
-                alpha: color[3],
-            },
-        );
+        let src = [u1.max(0.0) * w, v1.max(0.0) * hh, (u2 - u1).min(1.0) * w, (v2 - v1).min(1.0) * hh];
+        emit(h, Cmd::Image { uri, src, dst, alpha: color[3] });
         return;
     }
     if u1 < u2 && v1 < v2 {
@@ -936,42 +854,15 @@ fn draw_image(h: &mut Host, id: u32, layer: u32, dst: [f32; 4], uv: [f32; 4], co
                 if d <= c {
                     continue;
                 }
-                let src = [
-                    (c - tu as f32) * w,
-                    (a - tv as f32) * hh,
-                    (d - c) * w,
-                    (b - a) * hh,
-                ];
-                let rect = [
-                    dst[0] + (c - u1) * sx,
-                    dst[1] + (a - v1) * sy,
-                    (d - c) * sx,
-                    (b - a) * sy,
-                ];
-                emit(
-                    h,
-                    Cmd::Image {
-                        uri: uri.clone(),
-                        src,
-                        dst: rect,
-                        alpha: color[3],
-                    },
-                );
+                let src = [(c - tu as f32) * w, (a - tv as f32) * hh, (d - c) * w, (b - a) * hh];
+                let rect = [dst[0] + (c - u1) * sx, dst[1] + (a - v1) * sy, (d - c) * sx, (b - a) * sy];
+                emit(h, Cmd::Image { uri: uri.clone(), src, dst: rect, alpha: color[3] });
             }
         }
         return;
     }
     // Mirrored: map the image's pixels onto the rectangle.
-    let p = [
-        dst[0],
-        dst[1],
-        dst[0] + dst[2],
-        dst[1],
-        dst[0] + dst[2],
-        dst[1] + dst[3],
-        dst[0],
-        dst[1] + dst[3],
-    ];
+    let p = [dst[0], dst[1], dst[0] + dst[2], dst[1], dst[0] + dst[2], dst[1] + dst[3], dst[0], dst[1] + dst[3]];
     let t = [u1, v1, u2, v1, u2, v2, u1, v2];
     quad_image(h, uri, w, hh, p, t, color[3]);
 }
@@ -1000,14 +891,8 @@ fn quad_image(h: &mut Host, uri: Arc<str>, w: f32, hh: f32, p: [f32; 8], t: [f32
     let m = [a, b, c, d, e, f];
     let us = [t[0], t[2], t[4], t[6]];
     let vs = [t[1], t[3], t[5], t[7]];
-    let (u0, u1) = (
-        us.iter().copied().fold(f32::MAX, f32::min),
-        us.iter().copied().fold(f32::MIN, f32::max),
-    );
-    let (v0, v1) = (
-        vs.iter().copied().fold(f32::MAX, f32::min),
-        vs.iter().copied().fold(f32::MIN, f32::max),
-    );
+    let (u0, u1) = (us.iter().copied().fold(f32::MAX, f32::min), us.iter().copied().fold(f32::MIN, f32::max));
+    let (v0, v1) = (vs.iter().copied().fold(f32::MAX, f32::min), vs.iter().copied().fold(f32::MIN, f32::max));
     if u1 <= u0 || v1 <= v0 {
         return;
     }
@@ -1028,24 +913,9 @@ fn quad_image(h: &mut Host, uri: Arc<str>, w: f32, hh: f32, p: [f32; 8], t: [f32
             if b1 <= b0 {
                 continue;
             }
-            let src = [
-                (b0 - ku as f32) * w,
-                (a0 - kv as f32) * hh,
-                (b1 - b0) * w,
-                (a1 - a0) * hh,
-            ];
+            let src = [(b0 - ku as f32) * w, (a0 - kv as f32) * hh, (b1 - b0) * w, (a1 - a0) * hh];
             let dst = [b0 * w, a0 * hh, (b1 - b0) * w, (a1 - a0) * hh];
-            emit(
-                h,
-                Cmd::ImageAffine {
-                    uri: uri.clone(),
-                    src,
-                    dst,
-                    m,
-                    clip: p,
-                    alpha,
-                },
-            );
+            emit(h, Cmd::ImageAffine { uri: uri.clone(), src, dst, m, clip: p, alpha });
         }
     }
 }
@@ -1056,10 +926,7 @@ native!(n_draw_image_quad, |l| {
     let pts = arg_f32s(l, 2, 8);
     let p: [f32; 8] = pts.try_into().unwrap();
     let (t, stack) = match n {
-        17 | 18 => (
-            arg_f32s(l, 10, 8).try_into().unwrap(),
-            if n == 18 { l.int(18) } else { 1 },
-        ),
+        17 | 18 => (arg_f32s(l, 10, 8).try_into().unwrap(), if n == 18 { l.int(18) } else { 1 }),
         10 => ([0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0], l.int(10)),
         _ => ([0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0], 1),
     };
@@ -1119,13 +986,7 @@ native!(n_draw_string, |l| {
 /// the English label ends (the name's box is drawn there). The label
 /// translated, the value as it is, and where the value goes from `x`: when
 /// the translation is the shorter, so the value stays where POB put it.
-fn label_and_value<'a>(
-    h: &mut Host,
-    kind: FontKind,
-    height: f32,
-    align: Align,
-    s: &'a str,
-) -> Option<(Arc<str>, &'a str, f32)> {
+fn label_and_value<'a>(h: &mut Host, kind: FontKind, height: f32, align: Align, s: &'a str) -> Option<(Arc<str>, &'a str, f32)> {
     if !matches!(align, Align::Left) || h.raw_text || !h.shared.translate.load(Ordering::Relaxed) {
         return None;
     }
@@ -1149,16 +1010,7 @@ fn label_and_value<'a>(
 
 /// Draws `s` (its colour escapes, its lines) at `x`, `y`, as `DrawString` does.
 fn draw_text(h: &mut Host, kind: FontKind, height: f32, s: &str, x: f32, y: f32, align: Align) {
-    let (runs, _) = text::layout(
-        kind,
-        height,
-        s,
-        x,
-        y,
-        align,
-        h.viewport[2].max(h.screen.0),
-        h.color,
-    );
+    let (runs, _) = text::layout(kind, height, s, x, y, align, h.viewport[2].max(h.screen.0), h.color);
     if runs.is_empty() {
         return;
     }
@@ -1169,17 +1021,7 @@ fn draw_text(h: &mut Host, kind: FontKind, height: f32, s: &str, x: f32, y: f32,
         if r.color[3] <= 0.0 {
             continue;
         }
-        emit(
-            h,
-            Cmd::Text {
-                x: r.x,
-                y: r.y,
-                baseline,
-                font: font.clone(),
-                text: r.text,
-                color: r.color,
-            },
-        );
+        emit(h, Cmd::Text { x: r.x, y: r.y, baseline, font: font.clone(), text: r.text, color: r.color });
     }
 }
 
@@ -1235,12 +1077,7 @@ native!(n_translate, |l| {
 
 // The focused edit box, in the current viewport: where input methods put their text.
 native!(n_set_text_input, |l| {
-    let r = [
-        l.num(1) as f32,
-        l.num(2) as f32,
-        l.num(3) as f32,
-        l.num(4) as f32,
-    ];
+    let r = [l.num(1) as f32, l.num(2) as f32, l.num(3) as f32, l.num(4) as f32];
     with_host(|h| h.text_input = Some([h.viewport[0] + r[0], h.viewport[1] + r[1], r[2], r[3]]));
     0
 });
@@ -1261,11 +1098,7 @@ native!(n_get_cursor_pos, |l| {
 
 native!(n_is_key_down, |l| {
     let name = l.string(1).unwrap_or_default();
-    let down = shared()
-        .keys
-        .lock()
-        .unwrap()
-        .contains(&normalize_key(&name));
+    let down = shared().keys.lock().unwrap().contains(&normalize_key(&name));
     l.push_bool(down);
     1
 });
@@ -1371,11 +1204,7 @@ native!(n_make_dir, |l| {
 
 native!(n_remove_dir, |l| {
     let p = l.string(1).unwrap_or_default();
-    let r = if l.bool(2) {
-        std::fs::remove_dir_all(&p)
-    } else {
-        std::fs::remove_dir(&p)
-    };
+    let r = if l.bool(2) { std::fs::remove_dir_all(&p) } else { std::fs::remove_dir(&p) };
     match r {
         Ok(()) => {
             l.push_bool(true);
@@ -1407,12 +1236,7 @@ pub fn open_url(url: &str) -> std::io::Result<()> {
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;
-        std::process::Command::new("cmd")
-            .arg("/C")
-            .arg("start")
-            .arg("")
-            .raw_arg(format!("\"{url}\""))
-            .spawn()?;
+        std::process::Command::new("cmd").arg("/C").arg("start").arg("").raw_arg(format!("\"{url}\"")).spawn()?;
     }
     #[cfg(target_os = "macos")]
     {
@@ -1430,11 +1254,7 @@ native!(n_spawn_process, |l| {
     let args = l.string(2).unwrap_or_default();
     // POB's runtime update: its `Update.exe` would replace the DLLs this process has loaded, then open POB's own
     // program. POBT applies it itself, in a new POBT (`install::apply_runtime_update`).
-    if Path::new(&cmd)
-        .file_stem()
-        .is_some_and(|s| s.eq_ignore_ascii_case("Update"))
-        && args.contains("UpdateApply.lua")
-    {
+    if Path::new(&cmd).file_stem().is_some_and(|s| s.eq_ignore_ascii_case("Update")) && args.contains("UpdateApply.lua") {
         shared().runtime_update.store(true, Ordering::SeqCst);
         return 0;
     }
@@ -1551,9 +1371,7 @@ native!(n_art_arc, |l| {
 fn wildcard(pattern: &[u8], name: &[u8]) -> bool {
     match (pattern.first(), name.first()) {
         (None, None) => true,
-        (Some(b'*'), _) => {
-            wildcard(&pattern[1..], name) || (!name.is_empty() && wildcard(pattern, &name[1..]))
-        }
+        (Some(b'*'), _) => wildcard(&pattern[1..], name) || (!name.is_empty() && wildcard(pattern, &name[1..])),
         (Some(b'?'), Some(_)) => wildcard(&pattern[1..], &name[1..]),
         (Some(p), Some(n)) if p.eq_ignore_ascii_case(n) => wildcard(&pattern[1..], &name[1..]),
         _ => false,
@@ -1608,11 +1426,7 @@ native!(n_launch_subscript, |l| {
     let script = l.bytes(1).unwrap_or_default().to_vec();
     let funcs = l.string(2).unwrap_or_default();
     let subs = l.string(3).unwrap_or_default();
-    let args = if l.top() >= 4 {
-        l.values_from(4)
-    } else {
-        Vec::new()
-    };
+    let args = if l.top() >= 4 { l.values_from(4) } else { Vec::new() };
     match launch_subscript(script, funcs, subs, args) {
         Some(id) => l.push_light(id as usize as *mut _),
         None => l.push_nil(),
@@ -1653,11 +1467,8 @@ mod tests {
         crate::lua::init(std::path::Path::new(&dir)).unwrap();
         let l = crate::lua::Lua::new().unwrap();
         let loaded = l.load(super::PRELUDE.as_bytes(), "prelude.lua");
-        let broken = l.load(
-            b"local s = \"a
-b\"",
-            "broken.lua",
-        );
+        let broken = l.load(b"local s = \"a
+b\"", "broken.lua");
         l.close();
         loaded.unwrap();
         assert!(broken.is_err(), "a string cut by a newline must not load");
@@ -1676,18 +1487,13 @@ b\"",
         let shared = Shared::new();
         let thread = super::start(dir, shared.clone()).unwrap();
         let begin = std::time::Instant::now();
-        while !shared.loaded.load(std::sync::atomic::Ordering::SeqCst)
-            && begin.elapsed().as_secs() < 120
-        {
+        while !shared.loaded.load(std::sync::atomic::Ordering::SeqCst) && begin.elapsed().as_secs() < 120 {
             std::thread::sleep(std::time::Duration::from_millis(100));
         }
         // Its update check (a sub script, over lcurl) runs as it starts.
         std::thread::sleep(std::time::Duration::from_secs(8));
         assert_eq!(shared.error.lock().unwrap().clone(), None);
-        assert!(
-            shared.loaded.load(std::sync::atomic::Ordering::SeqCst),
-            "POB did not load in 2 minutes"
-        );
+        assert!(shared.loaded.load(std::sync::atomic::Ordering::SeqCst), "POB did not load in 2 minutes");
         let frame = shared.frame.lock().unwrap().clone();
         let texts: Vec<_> = frame
             .items
@@ -1739,12 +1545,8 @@ b\"",
             let shared = Shared::new();
             let l = Lua::new().unwrap();
             super::enter(l, &dir, &shared);
-            let boot = l
-                .load(super::PRELUDE.as_bytes(), "pobt/prelude.lua")
-                .and_then(|_| l.pcall(0, 0));
-            let boot = boot
-                .and_then(|_| l.load(super::DEMO.as_bytes(), "pobt/demo.lua"))
-                .and_then(|_| l.pcall(0, 0));
+            let boot = l.load(super::PRELUDE.as_bytes(), "pobt/prelude.lua").and_then(|_| l.pcall(0, 0));
+            let boot = boot.and_then(|_| l.load(super::DEMO.as_bytes(), "pobt/demo.lua")).and_then(|_| l.pcall(0, 0));
             let demo = Demo { l, shared };
             boot.unwrap();
             super::callback(l, "OnInit", &[]).unwrap();
@@ -1792,10 +1594,7 @@ b\"",
         /// The results of the Lua chunk `code`.
         fn eval(&self, code: &str) -> Vec<Value> {
             let base = self.l.top();
-            self.l
-                .load(code.as_bytes(), "test")
-                .and_then(|_| self.l.pcall(0, crate::lua::LUA_MULTRET))
-                .unwrap();
+            self.l.load(code.as_bytes(), "test").and_then(|_| self.l.pcall(0, crate::lua::LUA_MULTRET)).unwrap();
             let out = self.l.values_from(base + 1);
             self.l.set_top(base);
             out
@@ -1817,10 +1616,7 @@ b\"",
 
         /// The box `name`'s text, and its caret (a byte index from 1, as POB keeps it).
         fn edit(&self, name: &str) -> (String, usize) {
-            (
-                self.string(&format!("demo.controls.{name}.buf")),
-                self.number(&format!("demo.controls.{name}.caret")) as usize,
-            )
+            (self.string(&format!("demo.controls.{name}.buf")), self.number(&format!("demo.controls.{name}.caret")) as usize)
         }
 
         /// The text the last frame drew.
@@ -1943,11 +1739,7 @@ b\"",
         assert!(d.drew("备注"), "a label: {:?}", d.texts());
         d.type_text("Search");
         assert_eq!(d.edit("plain").0, "Search");
-        assert!(
-            d.texts().iter().any(|t| t == "Search"),
-            "typed text drawn as typed: {:?}",
-            d.texts()
-        );
+        assert!(d.texts().iter().any(|t| t == "Search"), "typed text drawn as typed: {:?}", d.texts());
         assert_eq!(d.string("__sg.Translate('Fireball')"), "火球");
     }
 
@@ -1965,10 +1757,7 @@ b\"",
         assert_eq!(d.string("demo.gemId"), "Fireball");
         d.press("RETURN");
         assert_eq!(d.edit("gem").0, "Fireball");
-        assert_eq!(
-            d.string("demo.controls.gem.gems['Default:Fireball'].name"),
-            "Fireball"
-        );
+        assert_eq!(d.string("demo.controls.gem.gems['Default:Fireball'].name"), "Fireball");
         assert!(d.drew("火球"), "{:?}", d.texts());
         // Unfocused, the box itself shows the gem translated (it draws through its parent proxy).
         d.focus("multi");
@@ -1989,10 +1778,7 @@ b\"",
         let Some(d) = Demo::start() else { return };
         *d.shared.cursor.lock().unwrap() = (300.0, 270.0);
         d.press("LEFTBUTTON");
-        assert_eq!(
-            d.number("demo.selControl == demo.controls.gem and 1 or 0"),
-            1.0
-        );
+        assert_eq!(d.number("demo.selControl == demo.controls.gem and 1 or 0"), 1.0);
         let rect = d.text_input().unwrap();
         assert_eq!((rect[1], rect[3]), (260.0, 20.0));
         // Over the open gem list for a few frames.
@@ -2003,10 +1789,7 @@ b\"",
         *d.shared.cursor.lock().unwrap() = (300.0, 160.0);
         d.press("LEFTBUTTON");
         d.frame();
-        assert_eq!(
-            d.number("demo.selControl == demo.controls.multi and 1 or 0"),
-            1.0
-        );
+        assert_eq!(d.number("demo.selControl == demo.controls.multi and 1 or 0"), 1.0);
         assert!(d.edit("gem").0.is_empty());
     }
 

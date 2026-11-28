@@ -50,10 +50,7 @@ fn dxgi(f: u32) -> Option<Format> {
 /// All layers of mip 0.
 pub fn decode_layers(path: &Path) -> Option<Vec<RgbaImage>> {
     let raw = std::fs::read(path).ok()?;
-    let data = if path
-        .extension()
-        .is_some_and(|e| e.eq_ignore_ascii_case("zst"))
-    {
+    let data = if path.extension().is_some_and(|e| e.eq_ignore_ascii_case("zst")) {
         zstd::stream::decode_all(raw.as_slice()).ok()?
     } else {
         raw
@@ -84,20 +81,14 @@ pub fn decode_layers(path: &Path) -> Option<Vec<RgbaImage>> {
         }
     } else {
         let rmask = u32_at(&data, 92);
-        if rmask == 0x00ff0000 {
-            Format::Bgra8
-        } else {
-            Format::Rgba8
-        }
+        if rmask == 0x00ff0000 { Format::Bgra8 } else { Format::Rgba8 }
     };
 
     let level_size = |w: usize, h: usize| match format.block_bytes() {
         Some(bb) => w.div_ceil(4).max(1) * h.div_ceil(4).max(1) * bb,
         None => w * h * 4,
     };
-    let layer_size: usize = (0..mips)
-        .map(|m| level_size((width >> m).max(1), (height >> m).max(1)))
-        .sum();
+    let layer_size: usize = (0..mips).map(|m| level_size((width >> m).max(1), (height >> m).max(1))).sum();
 
     let mut out = Vec::with_capacity(layers);
     for layer in 0..layers {
@@ -107,11 +98,7 @@ pub fn decode_layers(path: &Path) -> Option<Vec<RgbaImage>> {
         let ok = match format {
             Format::Rgba8 | Format::Bgra8 => {
                 for (i, px) in bytes.chunks_exact(4).enumerate() {
-                    let (r, b) = if matches!(format, Format::Bgra8) {
-                        (px[2], px[0])
-                    } else {
-                        (px[0], px[2])
-                    };
+                    let (r, b) = if matches!(format, Format::Bgra8) { (px[2], px[0]) } else { (px[0], px[2]) };
                     pixels[i] = u32::from_le_bytes([b, px[1], r, px[3]]);
                 }
                 Ok(())

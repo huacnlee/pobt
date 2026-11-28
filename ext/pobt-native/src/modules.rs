@@ -10,8 +10,7 @@ const MODULES: &str = include_str!("modules.lua");
 
 /// Puts the stand-ins in `package.preload` of `l`.
 pub fn open(l: Lua) {
-    l.load(MODULES.as_bytes(), "pobt/modules.lua")
-        .expect("modules.lua");
+    l.load(MODULES.as_bytes(), "pobt/modules.lua").expect("modules.lua");
     l.new_table();
     l.register(-1, "Http", n_http);
     l.register(-1, "ZipRead", n_zip_read);
@@ -71,9 +70,7 @@ fn http(
     }
     // Path of Building's own update checks and downloads are GitHub's: through the mirror when it is on.
     let url = &crate::settings::github_url(url);
-    let mut req = builder
-        .build()
-        .request(if body.is_some() { "POST" } else { "GET" }, url);
+    let mut req = builder.build().request(if body.is_some() { "POST" } else { "GET" }, url);
     for line in headers.lines() {
         if let Some((name, value)) = line.split_once(':') {
             req = req.set(name.trim(), value.trim());
@@ -88,12 +85,7 @@ fn http(
         Err(e) => return Err(e.to_string()),
     };
     let status = res.status();
-    let mut head = format!(
-        "{} {} {}\r\n",
-        res.http_version(),
-        status,
-        res.status_text()
-    );
+    let mut head = format!("{} {} {}\r\n", res.http_version(), status, res.status_text());
     for name in res.headers_names() {
         for value in res.all(&name) {
             head.push_str(&format!("{name}: {value}\r\n"));
@@ -106,9 +98,7 @@ fn http(
         .flatten()
         .map(|loc| absolute(res.get_url(), loc));
     let mut out = Vec::new();
-    res.into_reader()
-        .read_to_end(&mut out)
-        .map_err(|e| e.to_string())?;
+    res.into_reader().read_to_end(&mut out).map_err(|e| e.to_string())?;
     Ok((status, head, out, redirect))
 }
 
@@ -119,26 +109,18 @@ fn absolute(base: &str, loc: String) -> String {
     }
     // scheme://host, before the path.
     let host_start = base.find("://").map_or(0, |i| i + 3);
-    let origin = &base[..base[host_start..]
-        .find('/')
-        .map_or(base.len(), |i| host_start + i)];
+    let origin = &base[..base[host_start..].find('/').map_or(base.len(), |i| host_start + i)];
     if loc.starts_with('/') {
         format!("{origin}{loc}")
     } else {
-        let dir = base
-            .rsplit_once('/')
-            .filter(|(d, _)| d.len() >= origin.len())
-            .map_or(origin, |(d, _)| d);
+        let dir = base.rsplit_once('/').filter(|(d, _)| d.len() >= origin.len()).map_or(origin, |(d, _)| d);
         format!("{dir}/{loc}")
     }
 }
 
 // One file of a zip archive for `lzip`: (archive, name) -> contents or nil.
 native!(n_zip_read, |l| {
-    let (archive, name) = (
-        l.string(1).unwrap_or_default(),
-        l.string(2).unwrap_or_default(),
-    );
+    let (archive, name) = (l.string(1).unwrap_or_default(), l.string(2).unwrap_or_default());
     let read = || -> Option<Vec<u8>> {
         let mut zip = zip::ZipArchive::new(std::fs::File::open(&archive).ok()?).ok()?;
         let mut file = zip.by_name(&name).ok()?;
@@ -185,21 +167,7 @@ mod tests {
                 u.next(s, 8, 1), u.next(s, 1, -1), #u.match("ab 火焰", "%w*$"), u.find(s, "b", 1, true),
                 (u.gsub(u.reverse("1234567"), "(%d%d%d)", "%1,"))"#,
         );
-        assert_eq!(
-            out,
-            [
-                "4",
-                "火焰",
-                "b焰火a",
-                "5",
-                "2",
-                "nil",
-                "nil",
-                "6",
-                "4",
-                "765,432,1"
-            ]
-        );
+        assert_eq!(out, ["4", "火焰", "b焰火a", "5", "2", "nil", "nil", "6", "4", "765,432,1"]);
     }
 
     #[test]
@@ -233,18 +201,9 @@ mod tests {
 
     #[test]
     fn redirects_are_absolute() {
-        assert_eq!(
-            absolute("https://a.com/x/y?q", "/z".into()),
-            "https://a.com/z"
-        );
-        assert_eq!(
-            absolute("https://a.com/x/y", "z".into()),
-            "https://a.com/x/z"
-        );
+        assert_eq!(absolute("https://a.com/x/y?q", "/z".into()), "https://a.com/z");
+        assert_eq!(absolute("https://a.com/x/y", "z".into()), "https://a.com/x/z");
         assert_eq!(absolute("https://a.com", "z".into()), "https://a.com/z");
-        assert_eq!(
-            absolute("https://a.com/x", "https://b.com/".into()),
-            "https://b.com/"
-        );
+        assert_eq!(absolute("https://a.com/x", "https://b.com/".into()), "https://b.com/");
     }
 }
