@@ -23,6 +23,9 @@ pub struct Dictionary {
     /// The words of rares' names (`stats_words_*.csv`), for `rare`: the first
     /// ones, and the second ones, which the files write after a space.
     words: [HashMap<String, String>; 2],
+    /// Its language, and its files' `trs::stamp` as they were read, for `watch`.
+    language: String,
+    stamp: u64,
 }
 
 const NAME: &str = "{name}";
@@ -56,6 +59,27 @@ pub static DICT: RwLock<Option<Arc<Dictionary>>> = RwLock::new(None);
 
 pub fn current() -> Option<Arc<Dictionary>> {
     DICT.read().ok()?.clone()
+}
+
+/// Keeps the dictionary in `slot` as its files are, while the program runs: once a second, a dictionary whose files
+/// changed (`trs::stamp`) is read again and put in its place, and `reloaded` is called. Call it once per slot.
+pub fn watch(slot: &'static RwLock<Option<Arc<Dictionary>>>, reloaded: impl Fn() + Send + 'static) {
+    std::thread::spawn(move || loop {
+        std::thread::sleep(std::time::Duration::from_secs(1));
+        let Some(dict) = slot.read().unwrap().clone() else { continue };
+        if crate::trs::stamp(&dict.language) == dict.stamp {
+            continue;
+        }
+        let fresh = Arc::new(Dictionary::load(&dict.language));
+        // not when another language took its place while it was read
+        let mut now = slot.write().unwrap();
+        if now.as_ref().is_some_and(|d| Arc::ptr_eq(d, &dict)) {
+            *now = Some(fresh);
+            drop(now);
+            log::info!("dictionary {}: its files changed, read again", dict.language);
+            reloaded();
+        }
+    });
 }
 
 const HOLE: char = '\u{1}';
@@ -94,8 +118,8 @@ impl Dictionary {
     /// passive). Its rows whose one hole holds a name (a third column, "Allocates {0}") are `{name}` entries; those
     /// with numbers too are left to `supported`.
     pub fn load(language: &str) -> Self {
-        let mut dict = Dictionary::default();
-        let game = crate::trs::files(&format!("{language}/tencent")).into_iter().filter(|(name, _)| name == "game.csv");
+        let mut dict = Dictionary { language: language.to_string(), stamp: crate::trs::stamp(language), ..Default::default() };
+        let game =crate::trs::files(&format!("{language}/tencent")).into_iter().filter(|(name, _)| name == "game.csv");
         let files = crate::trs::files(language).into_iter().map(|(name, d)| (name, d, false));
         for (name, data, game) in files.chain(game.map(|(name, d)| (name, d, true))) {
             let words = !game && name.starts_with("stats_words_");
@@ -124,6 +148,15 @@ impl Dictionary {
             }
         }
         log::info!("dictionary {language}: {} entries, {} templates", dict.exact.len(), dict.templates.len());
+        dict
+    }
+
+    /// A dictionary of only `rows` (English, translation), as a CSV of them would be read.
+    pub fn of(rows: &[(String, String)]) -> Self {
+        let mut dict = Dictionary::default();
+        for (en, zh) in rows {
+            dict.insert(en.clone(), zh.clone());
+        }
         dict
     }
 
@@ -826,5 +859,21 @@ mod tests {
         assert_eq!(t("Hollow Sphere").as_deref(), Some("魔域 天体"));
         assert_eq!(t("Glisten Apocalypse"), None);
         assert_eq!(t("Foulborn The Gull").as_deref(), Some("秽生鸥喙"));
+    }
+
+    /// A dictionary whose files changed since it was read is read again in its place, and says so.
+    #[test]
+    fn watch_reads_again() {
+        static SLOT: RwLock<Option<Arc<Dictionary>>> = RwLock::new(None);
+        // as if its files were edited after it was read
+        let old = Arc::new(Dictionary { language: "zh-rCN".into(), stamp: 0, ..Default::default() });
+        *SLOT.write().unwrap() = Some(old.clone());
+        let (tx, rx) = std::sync::mpsc::channel();
+        watch(&SLOT, move || tx.send(()).unwrap());
+        rx.recv_timeout(std::time::Duration::from_secs(30)).expect("read again");
+        let now = SLOT.read().unwrap().clone().unwrap();
+        assert!(!Arc::ptr_eq(&now, &old));
+        assert_eq!(now.stamp, crate::trs::stamp("zh-rCN"));
+        assert_eq!(now.translate("Leather Belt").as_deref(), Some("皮革腰带"));
     }
 }

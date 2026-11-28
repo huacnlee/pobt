@@ -21,6 +21,7 @@ pub mod reverse;
 pub mod settings;
 pub mod text;
 pub mod translate;
+pub mod trfill;
 pub mod trs;
 mod wegame;
 
@@ -55,6 +56,24 @@ fn native(registry: &mut Registry) {
 
 /// The dictionary of POBT's own build screens (`tr_load`), apart from the one the Lua Path of Building draws with.
 static TR_DICT: std::sync::RwLock<Option<Arc<translate::Dictionary>>> = std::sync::RwLock::new(None);
+
+/// How many times `TR_DICT` was read again as its files changed (`translate::watch`), for `tr_reloaded`.
+static TR_RELOADS: std::sync::LazyLock<tokio::sync::watch::Sender<u64>> =
+    std::sync::LazyLock::new(|| tokio::sync::watch::Sender::new(0));
+
+/// Watches the files of both dictionaries, once: an edited CSV shows without starting POBT again.
+fn watch_dictionaries() {
+    static ONCE: std::sync::Once = std::sync::Once::new();
+    ONCE.call_once(|| {
+        translate::watch(&translate::DICT, || {
+            // POB's frames drawn again: their `translate::Cache` follows the new dictionary
+            if let Some(s) = session() {
+                s.poke.store(true, Ordering::SeqCst);
+            }
+        });
+        translate::watch(&TR_DICT, || TR_RELOADS.send_modify(|n| *n += 1));
+    });
+}
 
 /// The running POB, and its thread.
 static SESSION: Mutex<Option<(Arc<Shared>, std::thread::JoinHandle<()>)>> = Mutex::new(None);
@@ -155,7 +174,19 @@ impl Pob {
         let dict = rx.await.ok().flatten();
         let on = dict.is_some();
         *TR_DICT.write().unwrap() = dict;
+        watch_dictionaries();
         on
+    }
+
+    /// How many times the dictionary `tr_load` loaded was read again because its files changed, once that is more
+    /// than `after` (both numbers as text): for the screens to translate their text again.
+    pub async fn tr_reloaded(after: String) -> String {
+        let after: u64 = after.parse().unwrap_or(0);
+        let mut rx = TR_RELOADS.subscribe();
+        match rx.wait_for(|n| *n > after).await {
+            Ok(n) => n.to_string(),
+            Err(_) => after.to_string(),
+        }
     }
 
     /// The English texts of a JSON array translated by the dictionary `tr_load` loaded (each as it was when there is
@@ -496,6 +527,57 @@ impl Pob {
         ai::cancel();
     }
 
+    /// Of a JSON array of English texts, those the dictionary `tr_load` loaded has no translation for (each once,
+    /// with letters), as a JSON array: what the translation check offers to translate.
+    pub fn tr_missing(json: String) -> String {
+        let texts: Vec<String> = serde_json::from_str(&json).unwrap_or_default();
+        let Some(dict) = TR_DICT.read().unwrap().clone() else { return "[]".into() };
+        let mut seen = std::collections::HashSet::new();
+        let out: Vec<&String> = texts
+            .iter()
+            .filter(|t| t.bytes().any(|c| c.is_ascii_alphabetic()) && dict.translate(t).is_none() && seen.insert(t.as_str()))
+            .collect();
+        serde_json::to_string(&out).unwrap_or_default()
+    }
+
+    /// Starts translating what the translation check found (JSON `trfill::Request`); false while one runs.
+    pub fn tr_fill_start(json: String) -> bool {
+        serde_json::from_str::<trfill::Request>(&json).is_ok_and(trfill::start)
+    }
+
+    /// The translation running or last run, as `ai_progress` gives an analysis; its report `{rows, file, kept}`.
+    pub fn tr_fill_progress() -> String {
+        trfill::progress().map(|p| serde_json::to_string(&p).unwrap_or_default()).unwrap_or_default()
+    }
+
+    /// Stops the translation running.
+    pub fn tr_fill_cancel() {
+        trfill::cancel();
+    }
+
+    /// Whether GitHub's `gh` is there and signed in, to offer the rows to POBT.
+    pub async fn tr_gh_ready() -> bool {
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        std::thread::spawn(move || {
+            let _ = tx.send(trfill::gh_ready());
+        });
+        rx.await.unwrap_or(false)
+    }
+
+    /// Offers rows (JSON `trfill::Offer`) to POBT as a pull request with `gh`: JSON `{url}`, or `{error}`.
+    pub async fn tr_submit(json: String) -> String {
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        std::thread::spawn(move || {
+            let out = serde_json::from_str::<trfill::Offer>(&json).map_err(|e| e.to_string()).and_then(|o| trfill::submit(&o));
+            let _ = tx.send(out);
+        });
+        let out = rx.await.unwrap_or_else(|_| Err("gh: stopped".into()));
+        match out {
+            Ok(url) => serde_json::json!({ "url": url }).to_string(),
+            Err(error) => serde_json::json!({ "error": error }).to_string(),
+        }
+    }
+
     /// The report kept beside the build file `path` (`<name>.ai.json` for `<name>.xml`), as `ai_progress` gives one;
     /// "" for none.
     pub fn ai_saved(path: String) -> String {
@@ -540,6 +622,7 @@ fn load_dictionary(language: Option<String>) {
         let dict = translate::Dictionary::load(&language);
         *translate::DICT.write().unwrap() = Some(Arc::new(dict));
     });
+    watch_dictionaries();
 }
 
 /// The running Path of Building: start it with `Pob.start` first.

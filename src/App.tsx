@@ -10,7 +10,7 @@ import { BODY, BrassButton as Button, C, DISPLAY, ENGRAVED, Gate, GoldCheckbox, 
 import { BuildEditor, editorBack, editorBackLabel } from "./editor/BuildEditor";
 import { Icon } from "nsh-icon";
 import { ChevronDown, ChevronLeft, ChevronRight } from "nsh-icon-lucide";
-import { t as editorT, useLanguage } from "./editor/i18n";
+import { t as editorT, language as editorLanguage, useLanguage } from "./editor/i18n";
 import { MarketStatus, MarketView } from "./market/Shell";
 import { Toaster, toast } from "./ui";
 import {
@@ -31,6 +31,8 @@ import {
 } from "./accounts";
 import { AGENT_SITES, aiErrorText, analysisStrings, reportText, whenText, type Agent, type AiProgress, type BuildEntry, type BuildRoot } from "./analysis";
 import { AnalysisFailed, AnalysisReport, AnalysisRunning, PANEL, SmallButton, watchAnalysis } from "./AnalysisView";
+import { trCheckStrings } from "./trcheck";
+import { TranslationCheck } from "./TranslationCheck";
 // The icon at the size the launcher shows it (icon.png is the app's, 1024 square).
 import icon from "../assets/ui/icon-64.png";
 type Game = "Poe1" | "Poe2";
@@ -550,6 +552,8 @@ function TitleBar(props: {
   backLabel?: string;
   onCharacters?: () => void;
   onAnalysis?: () => void;
+  /** The build editor's, in a language other than English: the translation check of the open build. */
+  onTranslate?: () => void;
   onMarket?: () => void;
   onEditor?: () => void;
   /** What shows at its end in place of the version (the market's state). */
@@ -660,6 +664,7 @@ function TitleBar(props: {
           >
             <CardMenuItem label={accountStrings(currentLanguage()).open} onSelect={() => open()()} />
             <If when={props.onAnalysis}>{(analyse) => <CardMenuItem label={analysisStrings(currentLanguage()).open} onSelect={() => analyse()()} />}</If>
+            <If when={props.onTranslate}>{(check) => <CardMenuItem label={trCheckStrings(currentLanguage()).open} onSelect={() => check()()} />}</If>
             <If when={props.onMarket}>{(market) => <CardMenuItem label={marketLabel()} onSelect={() => market()()} />}</If>
             <If when={props.onEditor}>
               {(editor) => (
@@ -1732,6 +1737,8 @@ export function App() {
   // window), or, with "classic" checked, the classic Lua Path of Building. The editor's Tools menu goes back to it.
   // POBT_EDITOR=1 opens the editor at once (development: POBT_BUILD names a build file to open).
   const editor = signal(!!Pob.devEnv("POBT_EDITOR"));
+  // The translation check, over the build editor (not its title bar).
+  const translating = signal(false);
   if (editor()) useLanguageOnce();
   const openEditor = () => {
     useLanguageOnce();
@@ -1747,8 +1754,15 @@ export function App() {
         else={
           <If when={editor()} else={<Launcher onStart={start} onCharacters={openCharacters} onAnalysis={openAnalysis} onMarket={openMarket} onEditor={openEditor} />}>
             <View style={{ flex: 1 }}>
-              <TitleBar t={t} solid onBack={() => editorBack() || editor.set(false)} backLabel={editorBackLabel()} onCharacters={openCharacters} onAnalysis={openAnalysis} onMarket={openMarket} onLegacy={() => editor.set(false)} legacyText={launcherLabel()} />
-              <BuildEditor file={(Pob.devEnv("POBT_BUILD") || undefined)} game={(JSON.parse(Pob.settings()) as Settings).game === "Poe2" ? "poe2" : "poe1"} onBack={() => editor.set(false)} />
+              <TitleBar t={t} solid onBack={() => editorBack() || editor.set(false)} backLabel={editorBackLabel()} onCharacters={openCharacters} onAnalysis={openAnalysis} onMarket={openMarket} onLegacy={() => editor.set(false)} legacyText={launcherLabel()} onTranslate={editorLanguage() ? () => translating.set(true) : undefined} />
+              <View style={{ flex: 1 }}>
+                <BuildEditor file={(Pob.devEnv("POBT_BUILD") || undefined)} game={(JSON.parse(Pob.settings()) as Settings).game === "Poe2" ? "poe2" : "poe1"} onBack={() => editor.set(false)} />
+                <If when={translating()}>
+                  <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
+                    <TranslationCheck onBack={() => translating.set(false)} />
+                  </View>
+                </If>
+              </View>
             </View>
           </If>
         }
