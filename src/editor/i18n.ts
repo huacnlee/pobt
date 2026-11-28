@@ -19,6 +19,21 @@ export async function useLanguage(lang: string | null) {
   cache.clear();
   language.set(lang);
   loaded.update((n) => n + 1);
+  void followEdits();
+}
+
+let following = false;
+
+/** Translates the screens again each time the dictionary's files are edited (Pob.trReloaded): no restart. */
+async function followEdits() {
+  if (following) return;
+  following = true;
+  let seen = "0";
+  for (;;) {
+    seen = await Pob.trReloaded(seen);
+    cache.clear();
+    loaded.update((n) => n + 1);
+  }
 }
 
 function lookup(text: string): string {

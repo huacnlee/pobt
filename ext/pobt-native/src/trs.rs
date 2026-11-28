@@ -43,6 +43,26 @@ pub fn files(language: &str) -> Vec<(String, Vec<u8>)> {
     out
 }
 
+/// The CSV files of `language` and of its `tencent` folder as one number, which changes when one of them is edited,
+/// added or removed: their names, sizes and times.
+pub fn stamp(language: &str) -> u64 {
+    use std::hash::{Hash, Hasher};
+    let Some(dir) = root().map(|r| r.join(language)) else { return 0 };
+    let mut files: Vec<_> = [dir.clone(), dir.join("tencent")]
+        .iter()
+        .flat_map(|d| std::fs::read_dir(d).into_iter().flatten().flatten())
+        .filter(|e| e.path().extension().is_some_and(|x| x.eq_ignore_ascii_case("csv")))
+        .filter_map(|e| {
+            let meta = e.metadata().ok()?;
+            Some((e.path(), meta.len(), meta.modified().ok()))
+        })
+        .collect();
+    files.sort();
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    files.hash(&mut hasher);
+    hasher.finish()
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct Language {
     pub name: String,
