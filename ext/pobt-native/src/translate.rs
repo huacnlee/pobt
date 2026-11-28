@@ -20,6 +20,9 @@ pub struct Dictionary {
     /// Entries with a `{name}` hole, for a name POB puts in ("{name} has no
     /// base cooldown"): the English before and after it, and the translation.
     named: Vec<(String, String, String)>,
+    /// The words of rares' names (`stats_words_*.csv`), for `rare`: the first
+    /// ones, and the second ones, which the files write after a space.
+    words: [HashMap<String, String>; 2],
 }
 
 const NAME: &str = "{name}";
@@ -86,10 +89,16 @@ fn template_key(en: &str) -> Option<String> {
 }
 
 impl Dictionary {
-    /// The dictionary of `language`: the CSV files of `trs/<language>`.
+    /// The dictionary of `language`: the CSV files of `trs/<language>`, then, for what they have not, the game's own
+    /// words of `trs/<language>/tencent/game.csv` (`scripts/tencent-game.mjs`: every mod, base, unique, gem and
+    /// passive). Its rows whose one hole holds a name (a third column, "Allocates {0}") are `{name}` entries; those
+    /// with numbers too are left to `supported`.
     pub fn load(language: &str) -> Self {
         let mut dict = Dictionary::default();
-        for (_, data) in crate::trs::files(language) {
+        let game = crate::trs::files(&format!("{language}/tencent")).into_iter().filter(|(name, _)| name == "game.csv");
+        let files = crate::trs::files(language).into_iter().map(|(name, d)| (name, d, false));
+        for (name, data, game) in files.chain(game.map(|(name, d)| (name, d, true))) {
+            let words = !game && name.starts_with("stats_words_");
             let mut reader = csv::ReaderBuilder::new()
                 .has_headers(false)
                 .flexible(true)
@@ -98,8 +107,19 @@ impl Dictionary {
                 if record.len() < 2 {
                     continue;
                 }
-                let en = String::from_utf8_lossy(&record[0]).trim_start_matches('\u{feff}').to_string();
-                let zh = String::from_utf8_lossy(&record[1]).to_string();
+                let mut en = String::from_utf8_lossy(&record[0]).trim_start_matches('\u{feff}').to_string();
+                let mut zh = String::from_utf8_lossy(&record[1]).to_string();
+                if game && record.len() > 2 {
+                    let hole = format!("{{{}}}", String::from_utf8_lossy(&record[2]));
+                    if en.matches('{').count() != 1 || !en.contains(&hole) {
+                        continue;
+                    }
+                    (en, zh) = (en.replace(&hole, NAME), zh.replace(&hole, NAME));
+                }
+                if words {
+                    let second = usize::from(en.starts_with(' '));
+                    dict.words[second].entry(en.trim().to_string()).or_insert_with(|| zh.trim().to_string());
+                }
                 dict.insert(en, zh);
             }
         }
@@ -111,6 +131,12 @@ impl Dictionary {
         let en_t = en.trim();
         if en_t.is_empty() || zh.trim().is_empty() || en_t.starts_with("##") {
             return;
+        }
+        // A mod of two lines is drawn a line at a time: each line by its own, when the translation has as many.
+        if en_t.contains('\n') && en_t.lines().count() == zh.trim().lines().count() {
+            for (e, z) in en_t.lines().zip(zh.trim().lines()) {
+                self.insert(e.to_string(), z.to_string());
+            }
         }
         if let Some((before, after)) = en_t.split_once(NAME) {
             if !after.contains(NAME) {
@@ -219,6 +245,8 @@ impl Dictionary {
                 Some(known.trim_end_matches([':', '：']).trim_end().to_string())
             })
             .or_else(|| self.folded.get(&t.to_lowercase()).cloned())
+            // a support gem as POB names it, which the game's words name with "Support"
+            .or_else(|| self.exact.get(&format!("{t} Support")).cloned())
             .or_else(|| self.named(t))
             .or_else(|| self.supported(t))
             .or_else(|| self.phrase(t))
@@ -229,6 +257,16 @@ impl Dictionary {
             .or_else(|| self.noted(t))
             .or_else(|| Some(format!("- {}", self.inner(t.strip_prefix("- ")?)?)))
             .or_else(|| self.delta(t))
+            .or_else(|| self.rare(t))
+    }
+
+    /// "Apocalypse Glisten": a rare's name, two words of the game's list, as the game writes it ("天启 色泽").
+    fn rare(&self, t: &str) -> Option<String> {
+        let (a, b) = t.split_once(' ')?;
+        if b.contains(' ') {
+            return None;
+        }
+        Some(format!("{} {}", self.words[0].get(a)?, self.words[1].get(b)?))
     }
 
     /// "Tornado Shot has no base cooldown or cooldown override": an entry's
@@ -768,5 +806,25 @@ mod tests {
         // A range only in brackets of its own, and only in a known line.
         assert_eq!(t("We met (1-2) people"), None);
         assert_eq!(t("Drops from"), None);
+    }
+
+    /// What PoeCharm's files have not, by the game's own words (`tencent/game.csv`), and the names POB writes.
+    #[test]
+    fn game_words_and_names() {
+        let d = Dictionary::load("zh-rCN");
+        let t = |s: &str| d.translate(s);
+        assert_eq!(t("Blind you inflict is permanent").as_deref(), Some("你施加的致盲为永久效果"));
+        // a name in the game's line, translated
+        assert_eq!(t("Allocates Longshot").as_deref(), Some("配置 远射"));
+        // a mod of two lines, drawn a line at a time
+        assert!(t("Gain a random Shrine Buff for 15 seconds when you Blind a").is_some());
+        assert!(t("non-Blinded Rare or Unique Enemy").is_some());
+        // a support gem as POB names it
+        assert_eq!(t("Invert the Rules").as_deref(), Some("逆转规则（辅）"));
+        // a rare's name, its words in their places ("Hollow" first is not " Hollow" second)
+        assert_eq!(t("Apocalypse Glisten").as_deref(), Some("天启 色泽"));
+        assert_eq!(t("Hollow Sphere").as_deref(), Some("魔域 天体"));
+        assert_eq!(t("Glisten Apocalypse"), None);
+        assert_eq!(t("Foulborn The Gull").as_deref(), Some("秽生鸥喙"));
     }
 }
