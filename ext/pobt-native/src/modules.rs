@@ -68,6 +68,8 @@ fn http(
     if let Some(proxy) = proxy {
         builder = builder.proxy(ureq::Proxy::new(&proxy).map_err(|e| e.to_string())?);
     }
+    // Path of Building's own update checks and downloads are GitHub's: through the mirror when it is on.
+    let url = &crate::settings::github_url(url);
     let mut req = builder.build().request(if body.is_some() { "POST" } else { "GET" }, url);
     for line in headers.lines() {
         if let Some((name, value)) = line.split_once(':') {

@@ -44,6 +44,8 @@ interface Settings {
   language: string | null;
   /** Start the classic Path of Building instead of POBT's build editor. */
   legacy?: boolean;
+  /** Download from GitHub through the gh-proxy.org mirror. */
+  github_proxy?: boolean;
 }
 
 const REPO = "https://github.com/huacnlee/pobt";
@@ -226,6 +228,7 @@ const UI: Record<string, Strings> = {
 /** The go-pob build editor's name in the Tools menu, in the launcher's language. */
 const editorLabel = () => (void useLanguageOnce(), editorT("goPob"));
 const legacyLabel = () => (void useLanguageOnce(), editorT("legacy"));
+const githubProxyLabel = () => (void useLanguageOnce(), editorT("githubProxy"));
 const launcherLabel = () => (void useLanguageOnce(), editorT("launcher"));
 const marketLabel = () => (void useLanguageOnce(), marketT("nav.tool"));
 let languageSet: string | null | undefined;
@@ -831,6 +834,14 @@ function Launcher(props: { onStart: () => void; onCharacters: () => void; onAnal
               Pob.saveSettings(JSON.stringify(settings()));
             }}
             label={legacyLabel()}
+          />
+          <GoldCheckbox
+            checked={!!settings().github_proxy}
+            onChange={(on) => {
+              update({ github_proxy: on });
+              Pob.saveSettings(JSON.stringify(settings()));
+            }}
+            label={githubProxyLabel()}
           />
           <PrimaryButton label={t().start} onPress={start} />
         </View>

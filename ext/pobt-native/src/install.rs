@@ -140,7 +140,7 @@ fn install(game: Game) -> Result<PathBuf, String> {
     let parent = dir.parent().ok_or("no parent folder")?;
     fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     let archive = parent.join(format!("{}.zip.part", dir.file_name().unwrap().to_string_lossy()));
-    download(release_url(game), &archive)?;
+    download(&crate::settings::github_url(release_url(game)), &archive)?;
 
     set(|p| {
         p.phase = "unpacking".into();
