@@ -39,7 +39,7 @@ pub fn agents() -> Vec<Agent> {
 }
 
 /// `name`'s program on the PATH: on Windows a `.exe`, or the `.cmd` npm makes.
-fn find_program(name: &str) -> Option<PathBuf> {
+pub(crate) fn find_program(name: &str) -> Option<PathBuf> {
     let exts: &[&str] = if cfg!(windows) { &[".exe", ".cmd", ".bat"] } else { &[""] };
     let mut dirs: Vec<PathBuf> = std::env::var_os("PATH").map(|p| std::env::split_paths(&p).collect()).unwrap_or_default();
     // Where Claude Code's own installer puts it, which a program started from the desktop may not have on its PATH.
@@ -138,70 +138,112 @@ pub struct Progress {
     pub save_to: String,
 }
 
-static JOB: Mutex<Option<Progress>> = Mutex::new(None);
-/// The agent's process while it runs, to stop it.
-static CHILD: Mutex<Option<Arc<Mutex<Child>>>> = Mutex::new(None);
-static CANCEL: AtomicBool = AtomicBool::new(false);
-
-pub fn progress() -> Option<Progress> {
-    JOB.lock().unwrap().clone()
+/// A job of an agent's, one at a time: how far it is, the agent's process while it runs (to stop it), and whether it
+/// was stopped. The analysis has one, the translation (`trfill`) another.
+pub struct Job {
+    progress: Mutex<Option<Progress>>,
+    child: Mutex<Option<Arc<Mutex<Child>>>>,
+    cancel: AtomicBool,
 }
 
-fn update(f: impl FnOnce(&mut Progress)) {
-    if let Some(p) = JOB.lock().unwrap().as_mut() {
-        f(p);
+impl Job {
+    pub const fn new() -> Self {
+        Self { progress: Mutex::new(None), child: Mutex::new(None), cancel: AtomicBool::new(false) }
     }
+
+    pub fn progress(&self) -> Option<Progress> {
+        self.progress.lock().unwrap().clone()
+    }
+
+    pub fn update(&self, f: impl FnOnce(&mut Progress)) {
+        if let Some(p) = self.progress.lock().unwrap().as_mut() {
+            f(p);
+        }
+    }
+
+    pub fn cancelled(&self) -> bool {
+        self.cancel.load(Ordering::SeqCst)
+    }
+
+    /// Starts `work` in the background from `first` (as "running"); false while one runs. Its result is the report
+    /// (JSON) and the agent's text; `then` sees the job once it has ended.
+    pub fn start(
+        &'static self,
+        first: Progress,
+        work: impl FnOnce() -> Result<(Value, String), String> + Send + 'static,
+        then: impl FnOnce(&Progress) + Send + 'static,
+    ) -> bool {
+        {
+            let mut job = self.progress.lock().unwrap();
+            if job.as_ref().is_some_and(|p| p.state == "running") {
+                return false;
+            }
+            *job = Some(Progress { state: "running".into(), ..first });
+        }
+        self.cancel.store(false, Ordering::SeqCst);
+        std::thread::spawn(move || {
+            let out = work();
+            if let Err(e) = &out {
+                log::warn!("ai: {e}");
+            }
+            let cancelled = self.cancelled();
+            let finished = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
+            self.update(|p| {
+                p.finished = finished;
+                match out {
+                    _ if cancelled => p.state = "cancelled".into(),
+                    Ok((report, raw)) => {
+                        p.state = "done".into();
+                        p.report = report;
+                        p.raw = raw;
+                    }
+                    Err(e) => {
+                        p.state = "failed".into();
+                        p.error = e;
+                    }
+                }
+            });
+            if let Some(p) = self.progress() {
+                then(&p);
+            }
+        });
+        true
+    }
+
+    /// Stops the job running, if one.
+    pub fn cancel(&self) {
+        self.cancel.store(true, Ordering::SeqCst);
+        if let Some(child) = self.child.lock().unwrap().as_ref() {
+            kill(&mut child.lock().unwrap());
+        }
+    }
+}
+
+static ANALYSIS: Job = Job::new();
+
+pub fn progress() -> Option<Progress> {
+    ANALYSIS.progress()
 }
 
 /// Starts an analysis in the background; false while one runs.
 pub fn start(request: Request) -> bool {
-    {
-        let mut job = JOB.lock().unwrap();
-        if job.as_ref().is_some_and(|p| p.state == "running") {
-            return false;
-        }
-        *job = Some(Progress {
-            state: "running".into(),
-            agent: request.agent.clone(),
-            build: request.name.clone(),
-            step: "reading".into(),
-            language: request.language.clone(),
-            question: request.question.clone(),
-            save_to: request.save_to.clone(),
-            ..Default::default()
-        });
-    }
-    CANCEL.store(false, Ordering::SeqCst);
-    std::thread::spawn(move || {
-        let out = analyse(&request);
-        if let Err(e) = &out {
-            log::warn!("ai {}: {e}", request.agent);
-        }
-        let cancelled = CANCEL.load(Ordering::SeqCst);
-        let finished = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
-        update(|p| {
-            p.finished = finished;
-            match out {
-                _ if cancelled => p.state = "cancelled".into(),
-                Ok((report, raw)) => {
-                    p.state = "done".into();
-                    p.report = report;
-                    p.raw = raw;
-                }
-                Err(e) => {
-                    p.state = "failed".into();
-                    p.error = e;
-                }
-            }
-        });
+    let first = Progress {
+        agent: request.agent.clone(),
+        build: request.name.clone(),
+        step: "reading".into(),
+        language: request.language.clone(),
+        question: request.question.clone(),
+        save_to: request.save_to.clone(),
+        ..Default::default()
+    };
+    ANALYSIS.start(first, move || analyse(&request), |p| {
         // Kept beside its build, to be shown when the build is opened again
-        if let Some(p) = progress().filter(|p| p.state == "done" && !p.save_to.is_empty()) {
-            if let Err(e) = save(Path::new(&p.save_to), &p) {
+        if p.state == "done" && !p.save_to.is_empty() {
+            if let Err(e) = save(Path::new(&p.save_to), p) {
                 log::warn!("ai: keeping the report beside {}: {e}", p.save_to);
             }
         }
-    });
-    true
+    })
 }
 
 /// Where the report of the build in `build` (`<name>.xml`) is kept: `<name>.ai.json` beside it.
@@ -225,10 +267,7 @@ pub fn save(build: &Path, report: &Progress) -> Result<(), String> {
 
 /// Stops the analysis running, if one.
 pub fn cancel() {
-    CANCEL.store(true, Ordering::SeqCst);
-    if let Some(child) = CHILD.lock().unwrap().as_ref() {
-        kill(&mut child.lock().unwrap());
-    }
+    ANALYSIS.cancel();
 }
 
 /// The agent's process and what it started: npm's `.cmd` runs node under `cmd`, which killing alone leaves going.
@@ -242,17 +281,17 @@ fn kill(child: &mut Child) {
 }
 
 #[cfg(windows)]
-const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+pub(crate) const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
 fn analyse(req: &Request) -> Result<(Value, String), String> {
     let (name, xml) = read_build(req)?;
     if !name.is_empty() {
-        update(|p| p.build = name.clone());
+        ANALYSIS.update(|p| p.build = name.clone());
     }
     let digest = digest(&xml)?;
     let prompt = prompt(&digest, &req.language, &req.question);
-    let text = run_agent(&req.agent, &prompt)?;
-    update(|p| p.step = "parsing".into());
+    let text = run_agent(&ANALYSIS, &req.agent, &prompt, None)?;
+    ANALYSIS.update(|p| p.step = "parsing".into());
     Ok(match report(&text) {
         Some(report) => (report, text),
         None => (Value::Null, text),
@@ -498,44 +537,49 @@ Two to four metrics, and one to four of each list, per dimension. Base every jud
     )
 }
 
-/// The agent's answer, `prompt` on its stdin; its last message.
-fn run_agent(agent: &str, prompt: &str) -> Result<String, String> {
+/// The agent's answer, `prompt` on its stdin; its last message. With no `folder` it has no tools and starts somewhere
+/// of its own; with one, it starts there and may read it, and only read.
+pub fn run_agent(job: &'static Job, agent: &str, prompt: &str, folder: Option<&Path>) -> Result<String, String> {
     let program = find_program(agent).ok_or("noAgent")?;
     // Somewhere of its own: the agents read the folder they start in.
     let work = std::env::temp_dir().join("pobt-ai");
     let _ = std::fs::create_dir_all(&work);
+    let tools = if folder.is_some() { "Read,Grep,Glob" } else { "" };
     let last = work.join(format!("last-{}.txt", std::process::id()));
     let _ = std::fs::remove_file(&last);
     let mut cmd = Command::new(&program);
     match agent {
         // Each streams its events as JSON lines, read as they come (`event`): what it does, and its answer.
         "claude" => {
-            cmd.args(["-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages", "--no-session-persistence", "--tools", ""]);
+            cmd.args(["-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages", "--no-session-persistence", "--tools", tools]);
+            if folder.is_some() {
+                cmd.args(["--allowedTools", tools]);
+            }
         }
         "codex" => {
             cmd.args(["exec", "--skip-git-repo-check", "--sandbox", "read-only", "--ephemeral", "--color", "never", "--json", "-o"]).arg(&last).arg("-");
         }
         _ => return Err("noAgent".into()),
     }
-    cmd.current_dir(&work).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
+    cmd.current_dir(folder.unwrap_or(&work)).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;
         cmd.creation_flags(CREATE_NO_WINDOW);
     }
-    update(|p| p.step = "starting".into());
+    job.update(|p| p.step = "starting".into());
     let mut child = cmd.spawn().map_err(|e| format!("agentFailed: {}: {e}", program.display()))?;
     let mut stdin = child.stdin.take().ok_or("agentFailed: no stdin")?;
     let stdout = child.stdout.take().ok_or("agentFailed: no stdout")?;
     let stderr = child.stderr.take().ok_or("agentFailed: no stderr")?;
     let child = Arc::new(Mutex::new(child));
-    *CHILD.lock().unwrap() = Some(child.clone());
+    *job.child.lock().unwrap() = Some(child.clone());
     let prompt = prompt.to_string();
     std::thread::spawn(move || {
         let _ = stdin.write_all(prompt.as_bytes());
     });
-    update(|p| p.step = "waiting".into());
-    let out = std::thread::spawn(move || read_stream(stdout));
+    job.update(|p| p.step = "waiting".into());
+    let out = std::thread::spawn(move || read_stream(job, stdout));
     let err = std::thread::spawn(move || read_lines(stderr));
     let began = std::time::Instant::now();
     let mut timed_out = false;
@@ -549,10 +593,10 @@ fn run_agent(agent: &str, prompt: &str) -> Result<String, String> {
         }
         std::thread::sleep(Duration::from_millis(100));
     };
-    *CHILD.lock().unwrap() = None;
+    *job.child.lock().unwrap() = None;
     let out = out.join().unwrap_or_default();
     let err = err.join().unwrap_or_default();
-    if CANCEL.load(Ordering::SeqCst) {
+    if job.cancelled() {
         return Err("cancelled".into());
     }
     if timed_out {
@@ -592,13 +636,13 @@ struct Stream {
 }
 
 /// Reads the agent's JSON lines as they come, saying what it does (`step`, `activity`, `received`).
-fn read_stream(r: impl Read) -> Stream {
+fn read_stream(job: &Job, r: impl Read) -> Stream {
     use std::io::BufRead;
     let mut s = Stream::default();
     for line in std::io::BufReader::new(r).lines().map_while(Result::ok) {
         if let Some(e) = event(&mut s, &line) {
             let received = s.answer.chars().count().max(s.pieces.chars().count());
-            update(|p| {
+            job.update(|p| {
                 if !e.step.is_empty() {
                     p.step = e.step.into();
                 }
