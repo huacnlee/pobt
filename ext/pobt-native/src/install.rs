@@ -40,7 +40,9 @@ fn folder(game: Game) -> &'static str {
 /// next update check: one found there is moved too.
 pub fn rescue_beside_program() {
     let (Some(program), Some(data)) = (
-        std::env::current_exe().ok().and_then(|e| e.parent().map(Path::to_path_buf)),
+        std::env::current_exe()
+            .ok()
+            .and_then(|e| e.parent().map(Path::to_path_buf)),
         install_root(),
     ) else {
         return;
@@ -63,9 +65,14 @@ fn rescue(program: &Path, data: &Path, game: Game) -> io::Result<Option<PathBuf>
         .map(|e| e.path())
         .filter(|p| crate::settings::is_pob_dir(p, game))
         .collect();
-    let aside = |p: &PathBuf| p.file_name().is_some_and(|n| n.to_string_lossy().starts_with(".nsh-updater-old-"));
+    let aside = |p: &PathBuf| {
+        p.file_name()
+            .is_some_and(|n| n.to_string_lossy().starts_with(".nsh-updater-old-"))
+    };
     found.sort_by_key(aside);
-    let Some(from) = found.into_iter().next() else { return Ok(None) };
+    let Some(from) = found.into_iter().next() else {
+        return Ok(None);
+    };
     fs::create_dir_all(data)?;
     fs::rename(&from, &to)?;
     log::info!("moved {} to {}", from.display(), to.display());
@@ -114,10 +121,16 @@ pub fn progress() -> Option<Progress> {
 pub fn start(game: Game) -> bool {
     {
         let mut p = PROGRESS.lock().unwrap();
-        if p.as_ref().is_some_and(|p| p.phase == "downloading" || p.phase == "unpacking") {
+        if p.as_ref()
+            .is_some_and(|p| p.phase == "downloading" || p.phase == "unpacking")
+        {
             return false;
         }
-        *p = Some(Progress { game: format!("{game:?}"), phase: "downloading".into(), ..Default::default() });
+        *p = Some(Progress {
+            game: format!("{game:?}"),
+            phase: "downloading".into(),
+            ..Default::default()
+        });
     }
     std::thread::spawn(move || match install(game) {
         Ok(dir) => set(|p| {
@@ -139,8 +152,11 @@ fn install(game: Game) -> Result<PathBuf, String> {
     let dir = install_dir(game).ok_or("no local data folder")?;
     let parent = dir.parent().ok_or("no parent folder")?;
     fs::create_dir_all(parent).map_err(|e| e.to_string())?;
-    let archive = parent.join(format!("{}.zip.part", dir.file_name().unwrap().to_string_lossy()));
-    download(release_url(game), &archive)?;
+    let archive = parent.join(format!(
+        "{}.zip.part",
+        dir.file_name().unwrap().to_string_lossy()
+    ));
+    download(&crate::settings::github_url(release_url(game)), &archive)?;
 
     set(|p| {
         p.phase = "unpacking".into();
@@ -148,7 +164,10 @@ fn install(game: Game) -> Result<PathBuf, String> {
         p.total = 0;
     });
     // Unpack beside it, then put it in place: a failed unpack leaves no half install.
-    let staging = parent.join(format!("{}.new", dir.file_name().unwrap().to_string_lossy()));
+    let staging = parent.join(format!(
+        "{}.new",
+        dir.file_name().unwrap().to_string_lossy()
+    ));
     let _ = fs::remove_dir_all(&staging);
     unpack(&archive, &staging)?;
     if dir.exists() {
@@ -161,18 +180,24 @@ fn install(game: Game) -> Result<PathBuf, String> {
 
 fn download(url: &str, to: &Path) -> Result<(), String> {
     let response = ureq::get(url).call().map_err(|e| format!("{url}: {e}"))?;
-    let total = response.header("content-length").and_then(|s| s.parse().ok()).unwrap_or(0);
+    let total = response
+        .header("content-length")
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(0);
     set(|p| p.total = total);
     let mut reader = response.into_reader();
     let mut file = File::create(to).map_err(|e| format!("{}: {e}", to.display()))?;
     let mut buf = vec![0u8; 1 << 16];
     let mut done = 0u64;
     loop {
-        let n = reader.read(&mut buf).map_err(|e| format!("downloading: {e}"))?;
+        let n = reader
+            .read(&mut buf)
+            .map_err(|e| format!("downloading: {e}"))?;
         if n == 0 {
             break;
         }
-        file.write_all(&buf[..n]).map_err(|e| format!("{}: {e}", to.display()))?;
+        file.write_all(&buf[..n])
+            .map_err(|e| format!("{}: {e}", to.display()))?;
         done += n as u64;
         set(|p| p.done = done);
     }
@@ -189,7 +214,9 @@ fn unpack(archive: &Path, to: &Path) -> Result<(), String> {
     set(|p| p.total = count);
     for i in 0..zip.len() {
         let mut entry = zip.by_index(i).map_err(|e| e.to_string())?;
-        let Some(name) = entry.enclosed_name() else { continue };
+        let Some(name) = entry.enclosed_name() else {
+            continue;
+        };
         let path = to.join(name);
         if entry.is_dir() {
             fs::create_dir_all(&path).map_err(|e| format!("{}: {e}", path.display()))?;
@@ -215,20 +242,33 @@ pub fn pending_runtime_update(pob_dir: &Path) -> Option<PathBuf> {
 /// DLLs are loaded: its `move` and `delete` lines; not its `start`, which would
 /// open POB's own program.
 pub fn apply_runtime_update(pob_dir: &Path) -> Result<(), String> {
-    let Some(ops) = pending_runtime_update(pob_dir) else { return Ok(()) };
+    let Some(ops) = pending_runtime_update(pob_dir) else {
+        return Ok(());
+    };
     let text = fs::read_to_string(&ops).map_err(|e| format!("{}: {e}", ops.display()))?;
     let _ = fs::remove_file(&ops);
     let at = |s: &str| {
         let p = Path::new(s);
-        if p.is_absolute() { p.to_path_buf() } else { pob_dir.join(p) }
+        if p.is_absolute() {
+            p.to_path_buf()
+        } else {
+            pob_dir.join(p)
+        }
     };
-    let quoted = |s: &str| s.split('"').filter(|s| !s.trim().is_empty()).map(str::to_string).collect::<Vec<_>>();
+    let quoted = |s: &str| {
+        s.split('"')
+            .filter(|s| !s.trim().is_empty())
+            .map(str::to_string)
+            .collect::<Vec<_>>()
+    };
     for line in text.lines() {
         let (op, args) = line.split_once(' ').unwrap_or((line, ""));
         match op {
             "move" => {
                 let parts = quoted(args);
-                let [src, dst] = parts.as_slice() else { continue };
+                let [src, dst] = parts.as_slice() else {
+                    continue;
+                };
                 let (src, dst) = (at(src), at(&dst.replace("{space}", " ")));
                 log::info!("updating {}", dst.display());
                 if let Some(parent) = dst.parent() {
@@ -272,14 +312,26 @@ mod tests {
         let root = temp("rescue");
         let (program, data) = (root.join("POBT"), root.join("data"));
         pob(&program.join("Path of Building Community"), Game::Poe1);
-        pob(&program.join(".nsh-updater-old-42-PathOfBuildingCommunity-PoE2"), Game::Poe2);
+        pob(
+            &program.join(".nsh-updater-old-42-PathOfBuildingCommunity-PoE2"),
+            Game::Poe2,
+        );
         fs::create_dir_all(program.join("nsh")).unwrap();
 
-        assert_eq!(rescue(&program, &data, Game::Poe1).unwrap(), Some(data.join("Path of Building Community")));
-        assert!(crate::settings::is_pob_dir(&data.join("Path of Building Community"), Game::Poe1));
+        assert_eq!(
+            rescue(&program, &data, Game::Poe1).unwrap(),
+            Some(data.join("Path of Building Community"))
+        );
+        assert!(crate::settings::is_pob_dir(
+            &data.join("Path of Building Community"),
+            Game::Poe1
+        ));
         assert!(!program.join("Path of Building Community").exists());
         // One an update moved aside, before it is removed.
-        assert_eq!(rescue(&program, &data, Game::Poe2).unwrap(), Some(data.join("Path of Building Community (PoE2)")));
+        assert_eq!(
+            rescue(&program, &data, Game::Poe2).unwrap(),
+            Some(data.join("Path of Building Community (PoE2)"))
+        );
         assert!(program.join("nsh").exists());
         // Nothing more to move, and one already in the data folder stays.
         pob(&program.join("PathOfBuildingCommunity"), Game::Poe1);

@@ -24,11 +24,17 @@ const FIRST: &[&str] = &[
 /// increased Damage with Bows") or words in Chinese, as any other mod.
 const LEADS: &[(&str, &str)] = &[
     ("增加的小天赋获得", "Added Small Passive Skills grant: "),
-    ("增加的小天赋还获得", "Added Small Passive Skills also grant: "),
+    (
+        "增加的小天赋还获得",
+        "Added Small Passive Skills also grant: ",
+    ),
 ];
 
 fn rank(name: &str) -> usize {
-    FIRST.iter().position(|f| name.starts_with(f)).unwrap_or(FIRST.len())
+    FIRST
+        .iter()
+        .position(|f| name.starts_with(f))
+        .unwrap_or(FIRST.len())
 }
 
 #[derive(Default)]
@@ -87,7 +93,9 @@ fn unmark(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
     let mut rest = s;
     while let Some(open) = rest.find('[') {
-        let Some(close) = rest[open..].find(']').map(|c| open + c) else { break };
+        let Some(close) = rest[open..].find(']').map(|c| open + c) else {
+            break;
+        };
         out.push_str(&rest[..open]);
         let inner = &rest[open + 1..close];
         out.push_str(inner.rsplit_once('|').map_or(inner, |(_, shown)| shown));
@@ -150,7 +158,12 @@ fn template_key(zh: &str) -> Option<(String, Vec<Hole>)> {
         if c.is_ascii_digit() {
             let digits = rest.bytes().take_while(u8::is_ascii_digit).count();
             let decimals = match rest.as_bytes()[digits..] {
-                [b'.', d, ..] if d.is_ascii_digit() => 1 + rest[digits + 1..].bytes().take_while(u8::is_ascii_digit).count(),
+                [b'.', d, ..] if d.is_ascii_digit() => {
+                    1 + rest[digits + 1..]
+                        .bytes()
+                        .take_while(u8::is_ascii_digit)
+                        .count()
+                }
                 _ => 0,
             };
             key.push(HOLE);
@@ -233,16 +246,30 @@ impl Reverse {
     }
 
     fn read(&mut self, data: &[u8]) {
-        let mut reader = csv::ReaderBuilder::new().has_headers(false).flexible(true).from_reader(data);
+        let mut reader = csv::ReaderBuilder::new()
+            .has_headers(false)
+            .flexible(true)
+            .from_reader(data);
         for record in reader.byte_records().flatten() {
             if record.len() < 2 {
                 continue;
             }
             // a mod of several lines with "\n" between them, however git checked the file out
-            let en = String::from_utf8_lossy(&record[0]).trim_start_matches('\u{feff}').trim().replace("\r\n", "\n");
+            let en = String::from_utf8_lossy(&record[0])
+                .trim_start_matches('\u{feff}')
+                .trim()
+                .replace("\r\n", "\n");
             let zh = String::from_utf8_lossy(&record[1]).trim().to_string();
             // A third column: the holes that hold a name (`scripts/tencent-game.mjs`).
-            let names: Vec<usize> = record.get(2).map(|n| String::from_utf8_lossy(n).split_whitespace().filter_map(|n| n.parse().ok()).collect()).unwrap_or_default();
+            let names: Vec<usize> = record
+                .get(2)
+                .map(|n| {
+                    String::from_utf8_lossy(n)
+                        .split_whitespace()
+                        .filter_map(|n| n.parse().ok())
+                        .collect()
+                })
+                .unwrap_or_default();
             if names.is_empty() {
                 self.insert(en, &zh);
             } else if let Some(named) = Named::new(&normalize(&zh), en, &names) {
@@ -252,19 +279,32 @@ impl Reverse {
     }
 
     fn insert(&mut self, en: String, zh: &str) {
-        if en.is_empty() || zh.is_empty() || en.starts_with("##") || en.contains("{name}") || en == zh {
+        if en.is_empty()
+            || zh.is_empty()
+            || en.starts_with("##")
+            || en.contains("{name}")
+            || en == zh
+        {
             return;
         }
         let zh = normalize(zh);
         // "Socketed Gems are Supported by Level {0} Pierce": the support's name as the game writes it, which its
         // own entry may not ("穿透(辅)", "投射物穿透").
         // Tencent's: "镶嵌的宝石被 # 级 齐射(辅) 辅助".
-        let gem = en.strip_prefix("Socketed Gems are Supported by Level {0} ").or_else(|| en.strip_prefix("Socketed Gems are Supported by Level # "));
+        let gem = en
+            .strip_prefix("Socketed Gems are Supported by Level {0} ")
+            .or_else(|| en.strip_prefix("Socketed Gems are Supported by Level # "));
         if let Some(gem) = gem {
-            let name = zh.split_once('级').and_then(|(_, rest)| rest.strip_suffix("辅助"));
-            let name = name.map(|n| n.strip_prefix('的').unwrap_or(n)).map(|n| n.strip_suffix("(辅)").unwrap_or(n));
+            let name = zh
+                .split_once('级')
+                .and_then(|(_, rest)| rest.strip_suffix("辅助"));
+            let name = name
+                .map(|n| n.strip_prefix('的').unwrap_or(n))
+                .map(|n| n.strip_suffix("(辅)").unwrap_or(n));
             if let Some(name) = name.filter(|n| !n.is_empty()) {
-                self.gems.entry(name.to_string()).or_insert_with(|| gem.to_string());
+                self.gems
+                    .entry(name.to_string())
+                    .or_insert_with(|| gem.to_string());
             }
         }
         if let Some((key, order)) = template_key(&zh) {
@@ -285,7 +325,10 @@ impl Reverse {
         if let Some(en) = self.exact.get(&t) {
             return Some(en.clone());
         }
-        self.template(&t, true).or_else(|| self.template(&t, false)).or_else(|| self.lead(zh)).or_else(|| self.named(&t))
+        self.template(&t, true)
+            .or_else(|| self.template(&t, false))
+            .or_else(|| self.lead(zh))
+            .or_else(|| self.named(&t))
     }
 
     /// `t` (normalized) as one of the mods with a name in them, the name in English.
@@ -295,13 +338,18 @@ impl Reverse {
             let mut out = m.en.clone();
             for (i, &(n, name)) in m.holes.iter().enumerate() {
                 let next = &m.parts[i + 1];
-                let end = if next.is_empty() { rest.len() } else { rest.find(next.as_str())? };
+                let end = if next.is_empty() {
+                    rest.len()
+                } else {
+                    rest.find(next.as_str())?
+                };
                 let value = &rest[..end];
                 let value = if name {
                     self.gem(value)?
                 } else {
                     let digits = value.strip_prefix(['+', '-']).unwrap_or(value);
-                    if digits.is_empty() || !digits.chars().all(|c| c.is_ascii_digit() || c == '.') {
+                    if digits.is_empty() || !digits.chars().all(|c| c.is_ascii_digit() || c == '.')
+                    {
                         return None;
                     }
                     value.to_string()
@@ -318,12 +366,21 @@ impl Reverse {
         let zh = zh.trim();
         let (rest, en) = LEADS.iter().find_map(|(lead, en)| {
             let rest = zh.strip_prefix(lead)?;
-            Some((rest.strip_prefix('：').or_else(|| rest.strip_prefix(':'))?.trim(), en))
+            Some((
+                rest.strip_prefix('：')
+                    .or_else(|| rest.strip_prefix(':'))?
+                    .trim(),
+                en,
+            ))
         })?;
         if rest.is_empty() {
             return None;
         }
-        let rest = if rest.chars().any(|c| c as u32 >= 0x2e80) { self.english(rest)? } else { rest.to_string() };
+        let rest = if rest.chars().any(|c| c as u32 >= 0x2e80) {
+            self.english(rest)?
+        } else {
+            rest.to_string()
+        };
         Some(format!("{en}{rest}"))
     }
 
@@ -350,7 +407,11 @@ impl Reverse {
             let mut j = i;
             // "10-20": a range, not 10 and -20.
             let after_number = j > 0 && b[j - 1].is_ascii_digit();
-            if signed && !after_number && (b[j] == b'+' || b[j] == b'-') && b.get(j + 1).is_some_and(u8::is_ascii_digit) {
+            if signed
+                && !after_number
+                && (b[j] == b'+' || b[j] == b'-')
+                && b.get(j + 1).is_some_and(u8::is_ascii_digit)
+            {
                 j += 1;
             }
             if b[j].is_ascii_digit() {
@@ -382,10 +443,26 @@ impl Reverse {
         let (en, order) = same
             .iter()
             .filter(|(_, o)| o.len() == nums.len())
-            .find(|(_, o)| o.iter().zip(&nums).all(|(h, n)| !matches!(h, Hole::Written(w) if w != n.trim_start_matches('+'))))
-            .or_else(|| same.iter().filter(|(_, o)| o.len() == nums.len()).min_by_key(|(_, o)| written(o)))?;
+            .find(|(_, o)| {
+                o.iter()
+                    .zip(&nums)
+                    .all(|(h, n)| !matches!(h, Hole::Written(w) if w != n.trim_start_matches('+')))
+            })
+            .or_else(|| {
+                same.iter()
+                    .filter(|(_, o)| o.len() == nums.len())
+                    .min_by_key(|(_, o)| written(o))
+            })?;
         // The numbers by the index the English gives them.
-        let indexes = || order.iter().filter_map(|h| if let Hole::Number(n) = h { Some(*n) } else { None });
+        let indexes = || {
+            order.iter().filter_map(|h| {
+                if let Hole::Number(n) = h {
+                    Some(*n)
+                } else {
+                    None
+                }
+            })
+        };
         let mut by_index = vec![None; indexes().max().map_or(0, |m| m + 1)];
         for (hole, h) in order.iter().enumerate() {
             // A number the Chinese writes out is not in the English.
@@ -404,7 +481,10 @@ mod tests {
     fn rev() -> Reverse {
         let mut r = Reverse::default();
         r.insert("{0} to maximum Life".into(), "{0} 最大生命");
-        r.insert("Adds {0} to {1} Fire Damage".into(), "附加 {0} - {1} 基础火焰伤害");
+        r.insert(
+            "Adds {0} to {1} Fire Damage".into(),
+            "附加 {0} - {1} 基础火焰伤害",
+        );
         r.insert("{0}% increased maximum Life".into(), "生命上限提高 {0}%");
         r.insert("Added Fire Damage".into(), "附加火焰伤害(辅)");
         r.insert("Swap {1} and {0}".into(), "{1} 换 {0}");
@@ -414,18 +494,37 @@ mod tests {
     #[test]
     fn exact_and_templates() {
         let r = rev();
-        assert_eq!(r.english("+42 最大生命").as_deref(), Some("+42 to maximum Life"));
-        assert_eq!(r.english("+42最大生命").as_deref(), Some("+42 to maximum Life"));
-        assert_eq!(r.english("附加 10 - 20 基础火焰伤害").as_deref(), Some("Adds 10 to 20 Fire Damage"));
-        assert_eq!(r.english("生命上限提高 12.5%").as_deref(), Some("12.5% increased maximum Life"));
-        assert_eq!(r.english("附加火焰伤害（辅）").as_deref(), Some("Added Fire Damage"));
+        assert_eq!(
+            r.english("+42 最大生命").as_deref(),
+            Some("+42 to maximum Life")
+        );
+        assert_eq!(
+            r.english("+42最大生命").as_deref(),
+            Some("+42 to maximum Life")
+        );
+        assert_eq!(
+            r.english("附加 10 - 20 基础火焰伤害").as_deref(),
+            Some("Adds 10 to 20 Fire Damage")
+        );
+        assert_eq!(
+            r.english("生命上限提高 12.5%").as_deref(),
+            Some("12.5% increased maximum Life")
+        );
+        assert_eq!(
+            r.english("附加火焰伤害（辅）").as_deref(),
+            Some("Added Fire Damage")
+        );
         assert_eq!(r.english("2 换 1").as_deref(), Some("Swap 2 and 1"));
         assert_eq!(r.english("未知词缀 5"), None);
         assert_eq!(
-            r.english("增加的小天赋获得：12% increased Damage with Bows").as_deref(),
+            r.english("增加的小天赋获得：12% increased Damage with Bows")
+                .as_deref(),
             Some("Added Small Passive Skills grant: 12% increased Damage with Bows")
         );
-        assert_eq!(r.english("增加的小天赋还获得：生命上限提高 4%").as_deref(), Some("Added Small Passive Skills also grant: 4% increased maximum Life"));
+        assert_eq!(
+            r.english("增加的小天赋还获得：生命上限提高 4%").as_deref(),
+            Some("Added Small Passive Skills also grant: 4% increased maximum Life")
+        );
         assert_eq!(r.english("增加的小天赋获得：未知词缀 5"), None);
     }
 
@@ -436,33 +535,72 @@ mod tests {
         assert!(r.exact.len() > 10000, "{} entries", r.exact.len());
         assert_eq!(r.english("瓦尔法衣").as_deref(), Some("Vaal Regalia"));
         assert_eq!(r.english("猎首").as_deref(), Some("Headhunter"));
-        assert_eq!(r.english("+80 最大生命").as_deref(), Some("+80 to maximum Life"));
-        assert_eq!(r.english("所有元素抗性 +-11%").as_deref(), Some("-11% to all Elemental Resistances"));
-        assert_eq!(r.english("范围内的天赋技能无需连接到你的天赋树即可配置").as_deref(), Some("Passive Skills in Radius can be Allocated without being connected to your tree"));
-        assert_eq!(r.english("只影响 巨大 环形范围内的天赋").as_deref(), Some("Only affects Passives in Massive Ring"));
+        assert_eq!(
+            r.english("+80 最大生命").as_deref(),
+            Some("+80 to maximum Life")
+        );
+        assert_eq!(
+            r.english("所有元素抗性 +-11%").as_deref(),
+            Some("-11% to all Elemental Resistances")
+        );
+        assert_eq!(
+            r.english("范围内的天赋技能无需连接到你的天赋树即可配置")
+                .as_deref(),
+            Some("Passive Skills in Radius can be Allocated without being connected to your tree")
+        );
+        assert_eq!(
+            r.english("只影响 巨大 环形范围内的天赋").as_deref(),
+            Some("Only affects Passives in Massive Ring")
+        );
         // a skill's name with nothing before it, which Path of Building looks up
-        assert_eq!(r.english("赋予 21 级 精准").as_deref(), Some("Grants Level 21 Precision"));
-        assert_eq!(r.english("镶嵌的宝石被 20 级 齐射(辅) 辅助").as_deref(), Some("Socketed Gems are Supported by Level 20 Volley Support"));
+        assert_eq!(
+            r.english("赋予 21 级 精准").as_deref(),
+            Some("Grants Level 21 Precision")
+        );
+        assert_eq!(
+            r.english("镶嵌的宝石被 20 级 齐射(辅) 辅助").as_deref(),
+            Some("Socketed Gems are Supported by Level 20 Volley Support")
+        );
         // a mod of two lines, which Tencent breaks elsewhere than the English
         assert_eq!(
-            r.english("敌人每受到一种元素异常状态影响，\n击中和异常状态造成的元素伤害提高 30%").as_deref(),
-            Some("30% increased Elemental Damage with Hits and Ailments for\neach type of Elemental Ailment on Enemy")
+            r.english("敌人每受到一种元素异常状态影响，\n击中和异常状态造成的元素伤害提高 30%")
+                .as_deref(),
+            Some(
+                "30% increased Elemental Damage with Hits and Ailments for\neach type of Elemental Ailment on Enemy"
+            )
         );
         // the game's own mods (`tencent/game.csv`), which the trade site does not list
-        assert_eq!(r.english("插槽内的技能石被等级 20 的弹幕辅助").as_deref(), Some("Socketed Gems are Supported by Level 20 Barrage"));
-        assert_eq!(r.english("获得 20 级的狙击技能").as_deref(), Some("Grants Level 20 Snipe Skill"));
+        assert_eq!(
+            r.english("插槽内的技能石被等级 20 的弹幕辅助").as_deref(),
+            Some("Socketed Gems are Supported by Level 20 Barrage")
+        );
+        assert_eq!(
+            r.english("获得 20 级的狙击技能").as_deref(),
+            Some("Grants Level 20 Snipe Skill")
+        );
         // a name in it
-        assert_eq!(r.english("所有 冰霜新星 宝石等级 +2").as_deref(), Some("+2 to Level of all Ice Nova Gems"));
-        assert_eq!(r.english("配置 圣战").as_deref(), Some("Allocates Crusader"));
+        assert_eq!(
+            r.english("所有 冰霜新星 宝石等级 +2").as_deref(),
+            Some("+2 to Level of all Ice Nova Gems")
+        );
+        assert_eq!(
+            r.english("配置 圣战").as_deref(),
+            Some("Allocates Crusader")
+        );
         // a range without spaces, not a negative number
-        assert_eq!(r.english("攻击你时附加17-23点火焰伤害").as_deref(), Some("Adds 17 to 23 Fire Damage to Attacks against you"));
+        assert_eq!(
+            r.english("攻击你时附加17-23点火焰伤害").as_deref(),
+            Some("Adds 17 to 23 Fire Damage to Attacks against you")
+        );
         // two mods that differ by a number the Chinese writes out
         assert_eq!(
-            r.english("能量护盾上限至少 1000 时每秒再生 17 生命").as_deref(),
+            r.english("能量护盾上限至少 1000 时每秒再生 17 生命")
+                .as_deref(),
             Some("Regenerate 17 Life per second if you have at least 1000 Maximum Energy Shield")
         );
         assert_eq!(
-            r.english("能量护盾上限至少 500 时每秒再生 17 生命").as_deref(),
+            r.english("能量护盾上限至少 500 时每秒再生 17 生命")
+                .as_deref(),
             Some("Regenerate 17 Life per second if you have at least 500 Maximum Energy Shield")
         );
     }

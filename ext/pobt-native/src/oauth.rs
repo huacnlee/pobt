@@ -27,11 +27,17 @@ const API: &str = "https://api.pathofexile.com";
 const WAIT: Duration = Duration::from_secs(300);
 
 fn now() -> u64 {
-    SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0)
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0)
 }
 
 fn agent() -> String {
-    format!("POBT/{} (+https://github.com/huacnlee/pobt)", env!("CARGO_PKG_VERSION"))
+    format!(
+        "POBT/{} (+https://github.com/huacnlee/pobt)",
+        env!("CARGO_PKG_VERSION")
+    )
 }
 
 /// `n` random bytes, base64url: the verifier and the state of a sign-in.
@@ -60,7 +66,10 @@ fn decode(s: &str) -> String {
     while i < b.len() {
         match b[i] {
             b'+' => out.push(b' '),
-            b'%' => match s.get(i + 1..i + 3).and_then(|h| u8::from_str_radix(h, 16).ok()) {
+            b'%' => match s
+                .get(i + 1..i + 3)
+                .and_then(|h| u8::from_str_radix(h, 16).ok())
+            {
                 Some(v) => {
                     out.push(v);
                     i += 2;
@@ -77,9 +86,15 @@ fn decode(s: &str) -> String {
 /// The page the browser shows once back here.
 fn page(ok: bool) -> String {
     let (title, text) = if ok {
-        ("Signed in", "POBT has your Path of Exile 2 characters: you can close this page.")
+        (
+            "Signed in",
+            "POBT has your Path of Exile 2 characters: you can close this page.",
+        )
     } else {
-        ("Not signed in", "The site did not let POBT in. Go back to POBT and try again.")
+        (
+            "Not signed in",
+            "The site did not let POBT in. Go back to POBT and try again.",
+        )
     };
     format!(
         "<!doctype html><meta charset=utf-8><title>POBT</title><body style=\"background:#0b0b0d;color:#e8dcc0;font:16px system-ui;\
@@ -90,7 +105,9 @@ fn page(ok: bool) -> String {
 /// The first request with a code or an error that the browser makes to
 /// `listener`, answered; its query.
 fn wait_for_code(listener: &TcpListener) -> Result<String, String> {
-    listener.set_nonblocking(true).map_err(|e| format!("network: {e}"))?;
+    listener
+        .set_nonblocking(true)
+        .map_err(|e| format!("network: {e}"))?;
     let until = Instant::now() + WAIT;
     while Instant::now() < until {
         let stream = match listener.accept() {
@@ -115,19 +132,37 @@ fn answer(mut stream: TcpStream) -> Option<String> {
     let mut line = String::new();
     BufReader::new(&stream).read_line(&mut line).ok()?;
     let target = line.split_whitespace().nth(1).unwrap_or("");
-    let query = target.split_once('?').map(|(_, q)| q.to_string()).unwrap_or_default();
+    let query = target
+        .split_once('?')
+        .map(|(_, q)| q.to_string())
+        .unwrap_or_default();
     let found = param(&query, "code").is_some() || param(&query, "error").is_some();
-    let (status, body) = if found { ("200 OK", page(param(&query, "code").is_some())) } else { ("404 Not Found", String::new()) };
-    let _ = write!(stream, "HTTP/1.1 {status}\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", body.len());
+    let (status, body) = if found {
+        ("200 OK", page(param(&query, "code").is_some()))
+    } else {
+        ("404 Not Found", String::new())
+    };
+    let _ = write!(
+        stream,
+        "HTTP/1.1 {status}\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+        body.len()
+    );
     let _ = stream.flush();
     found.then_some(query)
 }
 
 /// A token from the site's answer, kept in `account`.
 fn keep(account: &mut Account, v: &Value) -> Result<(), String> {
-    let token = v.get("access_token").and_then(Value::as_str).ok_or("signinFailed")?;
+    let token = v
+        .get("access_token")
+        .and_then(Value::as_str)
+        .ok_or("signinFailed")?;
     account.token = token.to_string();
-    account.refresh = v.get("refresh_token").and_then(Value::as_str).unwrap_or_default().to_string();
+    account.refresh = v
+        .get("refresh_token")
+        .and_then(Value::as_str)
+        .unwrap_or_default()
+        .to_string();
     account.expires = now() + v.get("expires_in").and_then(Value::as_u64).unwrap_or(3600);
     if let Some(name) = v.get("username").and_then(Value::as_str) {
         account.name = name.to_string();
@@ -138,7 +173,8 @@ fn keep(account: &mut Account, v: &Value) -> Result<(), String> {
 /// A page that checks for a browser (Cloudflare's), in place of the site's answer: it refuses calls from programs on
 /// some networks.
 fn is_challenge(body: &str) -> bool {
-    body.trim_start().starts_with('<') && (body.contains("Just a moment") || body.contains("_cf_chl"))
+    body.trim_start().starts_with('<')
+        && (body.contains("Just a moment") || body.contains("_cf_chl"))
 }
 
 fn challenged(r: ureq::Response) -> bool {
@@ -151,11 +187,23 @@ fn token_call(form: &[(&str, &str)]) -> Result<Value, String> {
         .set("User-Agent", &agent())
         .send_form(form);
     match r {
-        Ok(r) => r.into_string().ok().and_then(|b| serde_json::from_str(&b).ok()).ok_or_else(|| "network: not JSON".into()),
+        Ok(r) => r
+            .into_string()
+            .ok()
+            .and_then(|b| serde_json::from_str(&b).ok())
+            .ok_or_else(|| "network: not JSON".into()),
         Err(ureq::Error::Status(code, r)) => {
             let body = r.into_string().unwrap_or_default();
-            log::warn!("oauth: token HTTP {code}: {}", body.chars().take(300).collect::<String>());
-            Err(if code == 403 && is_challenge(&body) { "blocked" } else { "signinFailed" }.into())
+            log::warn!(
+                "oauth: token HTTP {code}: {}",
+                body.chars().take(300).collect::<String>()
+            );
+            Err(if code == 403 && is_challenge(&body) {
+                "blocked"
+            } else {
+                "signinFailed"
+            }
+            .into())
         }
         Err(e) => Err(format!("network: {e}")),
     }
@@ -181,7 +229,12 @@ pub fn sign_in(account: &mut Account) -> Result<(), String> {
         return Err("signinFailed".into());
     }
     let Some(code) = param(&query, "code") else {
-        log::warn!("oauth: {}", param(&query, "error_description").or_else(|| param(&query, "error")).unwrap_or_default());
+        log::warn!(
+            "oauth: {}",
+            param(&query, "error_description")
+                .or_else(|| param(&query, "error"))
+                .unwrap_or_default()
+        );
         return Err("signinDenied".into());
     };
     let v = token_call(&[
@@ -195,7 +248,11 @@ pub fn sign_in(account: &mut Account) -> Result<(), String> {
     keep(account, &v)?;
     if account.name.is_empty() {
         if let Ok(profile) = call(account, "/profile") {
-            account.name = profile.get("name").and_then(Value::as_str).unwrap_or_default().to_string();
+            account.name = profile
+                .get("name")
+                .and_then(Value::as_str)
+                .unwrap_or_default()
+                .to_string();
         }
     }
     Ok(())
@@ -207,7 +264,11 @@ fn refresh(account: &mut Account) -> bool {
         return false;
     }
     let refresh = account.refresh.clone();
-    match token_call(&[("client_id", CLIENT), ("grant_type", "refresh_token"), ("refresh_token", &refresh)]) {
+    match token_call(&[
+        ("client_id", CLIENT),
+        ("grant_type", "refresh_token"),
+        ("refresh_token", &refresh),
+    ]) {
         Ok(v) => keep(account, &v).is_ok(),
         Err(_) => false,
     }
@@ -222,11 +283,20 @@ fn call(account: &Account, path: &str) -> Result<Value, String> {
         .set("Authorization", &format!("Bearer {}", account.token))
         .call();
     match r {
-        Ok(r) => r.into_string().ok().and_then(|b| serde_json::from_str(&b).ok()).ok_or_else(|| "network: not JSON".into()),
+        Ok(r) => r
+            .into_string()
+            .ok()
+            .and_then(|b| serde_json::from_str(&b).ok())
+            .ok_or_else(|| "network: not JSON".into()),
         Err(ureq::Error::Status(401, _)) => Err("expired".into()),
-        Err(ureq::Error::Status(403, r)) => Err(if challenged(r) { "blocked" } else { "private" }.into()),
+        Err(ureq::Error::Status(403, r)) => {
+            Err(if challenged(r) { "blocked" } else { "private" }.into())
+        }
         Err(ureq::Error::Status(404, _)) => Err("notFound".into()),
-        Err(ureq::Error::Status(429, r)) => Err(format!("rateLimited:{}", r.header("Retry-After").unwrap_or_default())),
+        Err(ureq::Error::Status(429, r)) => Err(format!(
+            "rateLimited:{}",
+            r.header("Retry-After").unwrap_or_default()
+        )),
         Err(ureq::Error::Status(code, _)) => Err(format!("network: HTTP {code}")),
         Err(e) => Err(format!("network: {e}")),
     }
@@ -250,7 +320,13 @@ pub fn api(account: &mut Account, path: &str, signing_in: &dyn Fn()) -> Result<V
                 signing_in();
                 sign_in(account)?;
             }
-            call(account, path).map_err(|e| if e == "expired" { "signinFailed".into() } else { e })
+            call(account, path).map_err(|e| {
+                if e == "expired" {
+                    "signinFailed".into()
+                } else {
+                    e
+                }
+            })
         }
         Err(e) if e == "expired" => Err("signinFailed".into()),
         out => out,
@@ -263,22 +339,33 @@ mod tests {
 
     #[test]
     fn decodes_queries() {
-        assert_eq!(param("code=a%2Fb&state=x+y", "code").as_deref(), Some("a/b"));
-        assert_eq!(param("code=a%2Fb&state=x+y", "state").as_deref(), Some("x y"));
+        assert_eq!(
+            param("code=a%2Fb&state=x+y", "code").as_deref(),
+            Some("a/b")
+        );
+        assert_eq!(
+            param("code=a%2Fb&state=x+y", "state").as_deref(),
+            Some("x y")
+        );
         assert_eq!(param("code=a", "error"), None);
         assert_eq!(decode("100%"), "100%");
     }
 
     #[test]
     fn knows_a_browser_check() {
-        assert!(is_challenge("<!DOCTYPE html><html><head><title>Just a moment...</title>"));
+        assert!(is_challenge(
+            "<!DOCTYPE html><html><head><title>Just a moment...</title>"
+        ));
         assert!(!is_challenge(r#"{"error":"invalid_grant"}"#));
     }
 
     /// The challenge of RFC 7636's example verifier.
     #[test]
     fn pkce_challenge() {
-        assert_eq!(challenge("dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"), "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM");
+        assert_eq!(
+            challenge("dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"),
+            "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM"
+        );
         assert_ne!(random(16), random(16));
     }
 

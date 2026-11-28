@@ -38,11 +38,16 @@ static REGISTRY: OnceLock<Mutex<Registry>> = OnceLock::new();
 static WORKER: OnceLock<Mutex<mpsc::Sender<Job>>> = OnceLock::new();
 
 fn registry() -> std::sync::MutexGuard<'static, Registry> {
-    REGISTRY.get_or_init(Default::default).lock().unwrap_or_else(|e| e.into_inner())
+    REGISTRY
+        .get_or_init(Default::default)
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
 }
 
 pub fn cache_dir() -> PathBuf {
-    let base = std::env::var_os("LOCALAPPDATA").map(PathBuf::from).unwrap_or_else(std::env::temp_dir);
+    let base = std::env::var_os("LOCALAPPDATA")
+        .map(PathBuf::from)
+        .unwrap_or_else(std::env::temp_dir);
     let dir = base.join("pobt").join("cache");
     let _ = std::fs::create_dir_all(&dir);
     dir
@@ -53,7 +58,9 @@ pub fn uri_of(path: &Path) -> Arc<str> {
     let abs = if path.is_absolute() {
         path.to_path_buf()
     } else {
-        std::env::current_dir().map(|d| d.join(path)).unwrap_or_else(|_| path.to_path_buf())
+        std::env::current_dir()
+            .map(|d| d.join(path))
+            .unwrap_or_else(|_| path.to_path_buf())
     };
     Arc::from(abs.to_string_lossy().replace('\\', "/").as_str())
 }
@@ -65,8 +72,15 @@ fn hash_of(parts: impl Hash) -> u64 {
 }
 
 fn canvas_loads(path: &Path) -> bool {
-    let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("").to_ascii_lowercase();
-    matches!(ext.as_str(), "png" | "jpg" | "jpeg" | "webp" | "bmp" | "gif")
+    let ext = path
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("")
+        .to_ascii_lowercase();
+    matches!(
+        ext.as_str(),
+        "png" | "jpg" | "jpeg" | "webp" | "bmp" | "gif"
+    )
 }
 
 /// Decodes any image POB uses into RGBA.
@@ -84,7 +98,13 @@ fn push(reg: &mut Registry, info: ImageInfo) -> u32 {
 }
 
 fn file_info(file: PathBuf, w: u32, h: u32) -> ImageInfo {
-    ImageInfo { uri: Some(uri_of(&file)), file: Some(file), width: w, height: h, layers: Vec::new() }
+    ImageInfo {
+        uri: Some(uri_of(&file)),
+        file: Some(file),
+        width: w,
+        height: h,
+        layers: Vec::new(),
+    }
 }
 
 /// Converts a file the canvas cannot load into PNGs in the cache, one per
@@ -94,9 +114,16 @@ fn convert(path: &Path) -> Vec<(PathBuf, u32, u32)> {
     let key = hash_of((path, stamp));
     let out = |layer: usize| cache_dir().join(format!("conv-{key:016x}-{layer}.png"));
     let index = cache_dir().join(format!("conv-{key:016x}.layers"));
-    if let Some(count) = std::fs::read_to_string(&index).ok().and_then(|s| s.trim().parse::<usize>().ok()) {
+    if let Some(count) = std::fs::read_to_string(&index)
+        .ok()
+        .and_then(|s| s.trim().parse::<usize>().ok())
+    {
         let cached: Vec<_> = (0..count)
-            .filter_map(|l| image::image_dimensions(out(l)).ok().map(|(w, h)| (out(l), w, h)))
+            .filter_map(|l| {
+                image::image_dimensions(out(l))
+                    .ok()
+                    .map(|(w, h)| (out(l), w, h))
+            })
             .collect();
         if cached.len() == count {
             return cached;
@@ -130,10 +157,22 @@ pub fn load(path: &Path) -> (u32, u32, u32, u32) {
     };
     let mut reg = registry();
     let Some((first, w, h)) = files.first().cloned() else {
-        let id = push(&mut reg, ImageInfo { uri: None, file: None, width: 0, height: 0, layers: Vec::new() });
+        let id = push(
+            &mut reg,
+            ImageInfo {
+                uri: None,
+                file: None,
+                width: 0,
+                height: 0,
+                layers: Vec::new(),
+            },
+        );
         return (id, 0, 0, 1);
     };
-    let layers: Vec<u32> = files[1..].iter().map(|(f, w, h)| push(&mut reg, file_info(f.clone(), *w, *h))).collect();
+    let layers: Vec<u32> = files[1..]
+        .iter()
+        .map(|(f, w, h)| push(&mut reg, file_info(f.clone(), *w, *h)))
+        .collect();
     let count = layers.len() as u32 + 1;
     let mut info = file_info(first, w, h);
     info.layers = layers;
@@ -183,7 +222,10 @@ pub fn atlas(id: u32) -> Option<String> {
                 let (pw, ph) = (used_cols * (cw + PAD) - PAD, used_rows * (ch + PAD) - PAD);
                 let mut page = RgbaImage::new(pw, ph);
                 for (i, (file, w, h)) in chunk.iter().enumerate() {
-                    let (x, y) = ((i as u32 % cols) * (cw + PAD), (i as u32 / cols) * (ch + PAD));
+                    let (x, y) = (
+                        (i as u32 % cols) * (cw + PAD),
+                        (i as u32 / cols) * (ch + PAD),
+                    );
                     if let Some(img) = decode(file) {
                         imageops::replace(&mut page, &img, x as i64, y as i64);
                     }
@@ -213,7 +255,11 @@ pub fn art_load(path: &Path) -> Option<(u32, u32, u32)> {
 }
 
 fn art(id: u32) -> Option<Arc<RgbaImage>> {
-    registry().arts.get(id.checked_sub(1)? as usize).cloned().flatten()
+    registry()
+        .arts
+        .get(id.checked_sub(1)? as usize)
+        .cloned()
+        .flatten()
 }
 
 fn save_generated(key: u64, make: impl FnOnce() -> RgbaImage) -> (u32, u32, u32) {
@@ -236,9 +282,20 @@ pub fn art_rect(art_id: u32, x1: i64, y1: i64, x2: i64, y2: i64) -> Option<(u32,
     let src = art(art_id)?;
     let (x1, x2) = (x1.min(x2).max(0) as u32, x1.max(x2).max(0) as u32);
     let (y1, y2) = (y1.min(y2).max(0) as u32, y1.max(y2).max(0) as u32);
-    let key = hash_of(("rect", Arc::as_ptr(&src) as usize, src.dimensions(), x1, y1, x2, y2, src.as_raw().len()));
+    let key = hash_of((
+        "rect",
+        Arc::as_ptr(&src) as usize,
+        src.dimensions(),
+        x1,
+        y1,
+        x2,
+        y2,
+        src.as_raw().len(),
+    ));
     let key = key ^ hash_of(&src.as_raw()[..src.as_raw().len().min(4096)]);
-    Some(save_generated(key, || imageops::crop_imm(src.as_ref(), x1, y1, x2 - x1, y2 - y1).to_image()))
+    Some(save_generated(key, || {
+        imageops::crop_imm(src.as_ref(), x1, y1, x2 - x1, y2 - y1).to_image()
+    }))
 }
 
 /// `imgHandle:LoadArtArcBand`: the quarter ring between two radii, above and
@@ -251,7 +308,8 @@ pub fn art_arc(art_id: u32, xc: i64, yc: i64, rmin: i64, rmax: i64) -> Option<(u
         return None;
     }
     let (w, h) = ((xc - x1) as u32, (yc - y1) as u32);
-    let key = hash_of(("arc", src.dimensions(), xc, yc, rmin, rmax)) ^ hash_of(&src.as_raw()[..src.as_raw().len().min(4096)]);
+    let key = hash_of(("arc", src.dimensions(), xc, yc, rmin, rmax))
+        ^ hash_of(&src.as_raw()[..src.as_raw().len().min(4096)]);
     Some(save_generated(key, || {
         let mut out = RgbaImage::new(w, h);
         let (rmin_sq, rmax_sq) = ((rmin * 2).pow(2), (rmax * 2).pow(2));
@@ -289,7 +347,10 @@ pub fn art_arc(art_id: u32, xc: i64, yc: i64, rmin: i64, rmax: i64) -> Option<(u
 
 pub fn size(id: u32) -> (u32, u32) {
     let reg = registry();
-    reg.images.get(id.wrapping_sub(1) as usize).map(|i| (i.width, i.height)).unwrap_or((0, 0))
+    reg.images
+        .get(id.wrapping_sub(1) as usize)
+        .map(|i| (i.width, i.height))
+        .unwrap_or((0, 0))
 }
 
 pub fn unload(_id: u32) {}
@@ -343,7 +404,10 @@ fn worker() -> mpsc::Sender<Job> {
                         let Some(file) = job.file else { continue };
                         let out = cache_dir().join(format!(
                             "tint-{:016x}-{:04x}.png",
-                            hash_of((&file, std::fs::metadata(&file).and_then(|m| m.modified()).ok())),
+                            hash_of((
+                                &file,
+                                std::fs::metadata(&file).and_then(|m| m.modified()).ok()
+                            )),
                             job.key
                         ));
                         if !out.exists() {
@@ -359,7 +423,8 @@ fn worker() -> mpsc::Sender<Job> {
                                     img
                                 }
                             };
-                            let m = [(job.key >> 10) & 31, (job.key >> 5) & 31, job.key & 31].map(|c| c as f32 / 15.0);
+                            let m = [(job.key >> 10) & 31, (job.key >> 5) & 31, job.key & 31]
+                                .map(|c| c as f32 / 15.0);
                             let mut img = (*src).clone();
                             for p in img.pixels_mut() {
                                 for c in 0..3 {

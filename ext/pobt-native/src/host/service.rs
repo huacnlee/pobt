@@ -21,8 +21,14 @@ fn source(file: &str, embedded: &'static str) -> std::borrow::Cow<'static, str> 
         // This file's own path (src/host/service.rs) leads to src/: CARGO_MANIFEST_DIR may be a crate nsh generated
         // elsewhere (.nsh/rust/app-crates), with no Lua beside it.
         let here = std::path::Path::new(file!());
-        let here = if here.is_absolute() { here.to_path_buf() } else { std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(here) };
-        let Some(src) = here.parent().and_then(|p| p.parent()) else { return embedded.into() };
+        let here = if here.is_absolute() {
+            here.to_path_buf()
+        } else {
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(here)
+        };
+        let Some(src) = here.parent().and_then(|p| p.parent()) else {
+            return embedded.into();
+        };
         let path = src.join(file);
         if let Ok(text) = std::fs::read_to_string(path) {
             return text.into();
@@ -58,13 +64,18 @@ static RUNNING: Mutex<Option<Running>> = Mutex::new(None);
 static STATUS: Mutex<String> = Mutex::new(String::new());
 
 fn set_status(state: &str, error: &str, version: &str) {
-    *STATUS.lock().unwrap() = serde_json::json!({ "state": state, "error": error, "version": version }).to_string();
+    *STATUS.lock().unwrap() =
+        serde_json::json!({ "state": state, "error": error, "version": version }).to_string();
 }
 
 /// Where the service stands, as JSON `{ state, error, version }`.
 pub fn status() -> String {
     let s = STATUS.lock().unwrap().clone();
-    if s.is_empty() { r#"{"state":"idle","error":"","version":""}"#.into() } else { s }
+    if s.is_empty() {
+        r#"{"state":"idle","error":"","version":""}"#.into()
+    } else {
+        s
+    }
 }
 
 /// Starts the service on the POB in `pob_dir` unless it runs there; "" once started (it goes on loading: `status`),
@@ -93,7 +104,11 @@ pub fn start(pob_dir: PathBuf) -> String {
     let (tx, rx) = mpsc::channel::<Job>();
     let dir = pob_dir.clone();
     set_status("loading", "", "");
-    let thread = match std::thread::Builder::new().name("pobt-service".into()).stack_size(64 << 20).spawn(move || serve(dir, rx)) {
+    let thread = match std::thread::Builder::new()
+        .name("pobt-service".into())
+        .stack_size(64 << 20)
+        .spawn(move || serve(dir, rx))
+    {
         Ok(t) => t,
         Err(e) => {
             let why = e.to_string();
@@ -101,18 +116,27 @@ pub fn start(pob_dir: PathBuf) -> String {
             return why;
         }
     };
-    *running = Some(Running { pob_dir, jobs: tx, thread });
+    *running = Some(Running {
+        pob_dir,
+        jobs: tx,
+        thread,
+    });
     String::new()
 }
 
 /// Runs operation `op` of `service.lua` with `args` (JSON); its answer as JSON `{ ok }` or `{ err }`.
 pub async fn request(op: String, args: String) -> String {
     let (reply, rx) = oneshot::channel();
-    let sent = RUNNING.lock().unwrap().as_ref().map(|r| r.jobs.send(Job { op, args, reply }).is_ok());
+    let sent = RUNNING
+        .lock()
+        .unwrap()
+        .as_ref()
+        .map(|r| r.jobs.send(Job { op, args, reply }).is_ok());
     if sent != Some(true) {
         return serde_json::json!({ "err": "Path of Building is not running" }).to_string();
     }
-    rx.await.unwrap_or_else(|_| serde_json::json!({ "err": "Path of Building stopped" }).to_string())
+    rx.await
+        .unwrap_or_else(|_| serde_json::json!({ "err": "Path of Building stopped" }).to_string())
 }
 
 fn serve(pob_dir: PathBuf, jobs: mpsc::Receiver<Job>) {
@@ -129,15 +153,26 @@ fn serve(pob_dir: PathBuf, jobs: mpsc::Receiver<Job>) {
         return;
     };
     enter(l, &pob_dir, &shared);
-    let failed = |what: &str| shared.error.lock().unwrap().take().map(|e| format!("{what}: {e}"));
+    let failed = |what: &str| {
+        shared
+            .error
+            .lock()
+            .unwrap()
+            .take()
+            .map(|e| format!("{what}: {e}"))
+    };
     let boot = (|| -> Result<String, String> {
-        l.load(PRELUDE.as_bytes(), "pobt/prelude.lua").and_then(|_| l.pcall(0, 0))?;
+        l.load(PRELUDE.as_bytes(), "pobt/prelude.lua")
+            .and_then(|_| l.pcall(0, 0))?;
         launch(l, &pob_dir)?;
         l.get_global("__pobt_hookLaunch");
         let _ = l.pcall(0, 0);
         callback(l, CALLBACK_INIT, &[])?;
         // The dispatcher, kept as a global for every request.
-        l.load(source("service.lua", SERVICE).as_bytes(), "pobt/service.lua")?;
+        l.load(
+            source("service.lua", SERVICE).as_bytes(),
+            "pobt/service.lua",
+        )?;
         l.pcall(0, 1)?;
         l.set_global("__pobt_service");
         for (name, code) in MODULES {
@@ -169,7 +204,8 @@ fn serve(pob_dir: PathBuf, jobs: mpsc::Receiver<Job>) {
         }
     }
     for job in jobs {
-        let answer = run(l, &shared, &job.op, &job.args).unwrap_or_else(|e| serde_json::json!({ "err": e }).to_string());
+        let answer = run(l, &shared, &job.op, &job.args)
+            .unwrap_or_else(|e| serde_json::json!({ "err": e }).to_string());
         let _ = job.reply.send(answer);
     }
     l.close();
@@ -211,16 +247,21 @@ mod tests {
     use super::*;
 
     fn block<F: std::future::Future>(f: F) -> F::Output {
-        tokio::runtime::Builder::new_current_thread().build().unwrap().block_on(f)
+        tokio::runtime::Builder::new_current_thread()
+            .build()
+            .unwrap()
+            .block_on(f)
     }
 
     /// Needs `POB_DIR` and `POB2_DIR` (both games' Path of Building) and `POBT_TEST_BUILD2` (a PoE2 build's XML):
     /// one process runs one, then the other, as switching games in POBT does.
     #[test]
     fn switches_games() {
-        let (Some(dir), Some(dir2), Some(xml)) =
-            (std::env::var_os("POB_DIR"), std::env::var_os("POB2_DIR"), std::env::var_os("POBT_TEST_BUILD2"))
-        else {
+        let (Some(dir), Some(dir2), Some(xml)) = (
+            std::env::var_os("POB_DIR"),
+            std::env::var_os("POB2_DIR"),
+            std::env::var_os("POBT_TEST_BUILD2"),
+        ) else {
             eprintln!("POB_DIR, POB2_DIR or POBT_TEST_BUILD2 not set: skipped");
             return;
         };
@@ -236,39 +277,70 @@ mod tests {
         assert_eq!(start(PathBuf::from(dir2)), "");
         assert!(ready().contains("\"ready\""), "{}", status());
         let xml = std::fs::read_to_string(xml).unwrap();
-        let opened = block(request("open".into(), serde_json::json!({ "xml": xml }).to_string()));
+        let opened = block(request(
+            "open".into(),
+            serde_json::json!({ "xml": xml }).to_string(),
+        ));
         assert!(opened.contains("\"ok\""), "{opened}");
     }
 
     /// Needs `POB_DIR` (an installed Path of Building) and `POBT_TEST_BUILD` (a build's XML); skipped without them.
     #[test]
     fn opens_a_build_and_reads_its_sidebar() {
-        let (Some(dir), Some(xml)) = (std::env::var_os("POB_DIR"), std::env::var_os("POBT_TEST_BUILD")) else {
+        let (Some(dir), Some(xml)) = (
+            std::env::var_os("POB_DIR"),
+            std::env::var_os("POBT_TEST_BUILD"),
+        ) else {
             eprintln!("POB_DIR or POBT_TEST_BUILD not set: skipped");
             return;
         };
         let xml = std::fs::read_to_string(xml).unwrap();
         assert_eq!(start(PathBuf::from(dir)), "");
-        let opened = block(request("open".into(), serde_json::json!({ "xml": xml }).to_string()));
+        let opened = block(request(
+            "open".into(),
+            serde_json::json!({ "xml": xml }).to_string(),
+        ));
         assert!(opened.contains("\"ok\""), "{opened}");
         let sidebar = block(request("sidebar".into(), String::new()));
         let v: serde_json::Value = serde_json::from_str(&sidebar).unwrap();
-        let lines = v["ok"]["lines"].as_array().unwrap_or_else(|| panic!("{sidebar}"));
-        eprintln!("{}", serde_json::to_string_pretty(&v["ok"]["summary"]).unwrap());
+        let lines = v["ok"]["lines"]
+            .as_array()
+            .unwrap_or_else(|| panic!("{sidebar}"));
+        eprintln!(
+            "{}",
+            serde_json::to_string_pretty(&v["ok"]["summary"]).unwrap()
+        );
         for l in lines.iter().take(40) {
-            eprintln!("{} | {}", l["left"].as_str().unwrap_or(""), l["right"].as_str().unwrap_or(""));
+            eprintln!(
+                "{} | {}",
+                l["left"].as_str().unwrap_or(""),
+                l["right"].as_str().unwrap_or("")
+            );
         }
-        assert!(lines.iter().any(|l| l["left"].as_str().is_some_and(|s| s.contains("Life"))), "{sidebar}");
+        assert!(
+            lines
+                .iter()
+                .any(|l| l["left"].as_str().is_some_and(|s| s.contains("Life"))),
+            "{sidebar}"
+        );
         // POBT_TEST_OPS: more operations to try, as JSON [[op, args], ...]; each answer is printed.
         if let Some(extra) = std::env::var_os("POBT_TEST_OPS") {
-            let list: Vec<(String, serde_json::Value)> = serde_json::from_str(&extra.to_string_lossy()).unwrap();
+            let list: Vec<(String, serde_json::Value)> =
+                serde_json::from_str(&extra.to_string_lossy()).unwrap();
             for (op, args) in list {
                 let answer = block(request(op.clone(), args.to_string()));
-                let end = answer.char_indices().nth(4000).map_or(answer.len(), |(i, _)| i);
+                let end = answer
+                    .char_indices()
+                    .nth(4000)
+                    .map_or(answer.len(), |(i, _)| i);
                 eprintln!("== {op}: {}", &answer[..end]);
             }
         }
         let code = block(request("export".into(), String::new()));
-        assert!(code.contains("\"code\""), "{}", &code[..code.len().min(300)]);
+        assert!(
+            code.contains("\"code\""),
+            "{}",
+            &code[..code.len().min(300)]
+        );
     }
 }

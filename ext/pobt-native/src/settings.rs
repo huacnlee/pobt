@@ -1,6 +1,9 @@
 //! The launcher's choices, kept in `%APPDATA%\pobt\settings.json`.
 
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    sync::atomic::{AtomicBool, Ordering},
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -37,6 +40,39 @@ pub struct Settings {
     /// Start the classic Path of Building (its own Lua window) instead of POBT's build editor.
     #[serde(default)]
     pub legacy: bool,
+    /// Download from GitHub through a mirror (gh-proxy.org), for where GitHub cannot be reached.
+    #[serde(default)]
+    pub github_proxy: bool,
+}
+
+/// The mirror that serves a GitHub address put after it.
+const GITHUB_PROXY: &str = "https://gh-proxy.org/";
+
+static USE_GITHUB_PROXY: AtomicBool = AtomicBool::new(false);
+
+/// `url` through the GitHub mirror when the launcher's option is on and `url` is GitHub's; else `url`.
+pub fn github_url(url: &str) -> String {
+    proxied(url, USE_GITHUB_PROXY.load(Ordering::Relaxed))
+}
+
+fn proxied(url: &str, on: bool) -> String {
+    let host = url
+        .strip_prefix("https://")
+        .and_then(|r| r.split('/').next())
+        .unwrap_or("");
+    let github = matches!(
+        host,
+        "github.com"
+            | "raw.githubusercontent.com"
+            | "objects.githubusercontent.com"
+            | "codeload.github.com"
+            | "api.github.com"
+    );
+    if on && github {
+        format!("{GITHUB_PROXY}{url}")
+    } else {
+        url.to_string()
+    }
 }
 
 fn file() -> Option<PathBuf> {
@@ -51,16 +87,24 @@ impl Settings {
             .and_then(|f| std::fs::read(f).ok())
             .and_then(|b| serde_json::from_slice(&b).ok())
             .unwrap_or_default();
-        if s.poe1_dir.as_deref().is_none_or(|d| !is_pob_dir(d, Game::Poe1)) {
+        USE_GITHUB_PROXY.store(s.github_proxy, Ordering::Relaxed);
+        if s.poe1_dir
+            .as_deref()
+            .is_none_or(|d| !is_pob_dir(d, Game::Poe1))
+        {
             s.poe1_dir = detect(Game::Poe1);
         }
-        if s.poe2_dir.as_deref().is_none_or(|d| !is_pob_dir(d, Game::Poe2)) {
+        if s.poe2_dir
+            .as_deref()
+            .is_none_or(|d| !is_pob_dir(d, Game::Poe2))
+        {
             s.poe2_dir = detect(Game::Poe2);
         }
         s
     }
 
     pub fn save(&self) {
+        USE_GITHUB_PROXY.store(self.github_proxy, Ordering::Relaxed);
         if let (Some(f), Ok(json)) = (file(), serde_json::to_vec_pretty(self)) {
             let _ = std::fs::write(f, json);
         }
@@ -83,13 +127,23 @@ impl Settings {
 
 /// A Path of Building install we can run: its Launch.lua and its LuaJIT.
 pub fn is_pob_dir(dir: &Path, game: Game) -> bool {
-    dir.join("Launch.lua").is_file() && dir.join("lua51.dll").is_file() && dir.join(game.exe()).is_file()
+    dir.join("Launch.lua").is_file()
+        && dir.join("lua51.dll").is_file()
+        && dir.join(game.exe()).is_file()
 }
 
 fn detect(game: Game) -> Option<PathBuf> {
     let names: &[&str] = match game {
-        Game::Poe1 => &["Path of Building Community", "PathOfBuildingCommunity", "Path of Building"],
-        Game::Poe2 => &["Path of Building Community (PoE2)", "PathOfBuildingCommunity-PoE2", "Path of Building-PoE2"],
+        Game::Poe1 => &[
+            "Path of Building Community",
+            "PathOfBuildingCommunity",
+            "Path of Building",
+        ],
+        Game::Poe2 => &[
+            "Path of Building Community (PoE2)",
+            "PathOfBuildingCommunity-PoE2",
+            "Path of Building-PoE2",
+        ],
     };
     let mut roots: Vec<PathBuf> = Vec::new();
     if let Some(d) = dirs::data_dir() {
@@ -115,3 +169,23 @@ fn detect(game: Game) -> Option<PathBuf> {
         .find(|d| is_pob_dir(d, game))
 }
 
+#[cfg(test)]
+mod tests {
+    use super::proxied;
+
+    #[test]
+    fn github_through_the_mirror() {
+        let zip = "https://github.com/PathOfBuildingCommunity/PathOfBuilding/releases/latest/download/x.zip";
+        assert_eq!(proxied(zip, false), zip);
+        assert_eq!(proxied(zip, true), format!("https://gh-proxy.org/{zip}"));
+        let raw = "https://raw.githubusercontent.com/a/b/master/manifest.xml";
+        assert_eq!(proxied(raw, true), format!("https://gh-proxy.org/{raw}"));
+        // Not GitHub's: as it is.
+        let other = "https://www.pathofexile.com/character-window/get-characters";
+        assert_eq!(proxied(other, true), other);
+        assert_eq!(
+            proxied("https://github.com.evil.example/x", true),
+            "https://github.com.evil.example/x"
+        );
+    }
+}

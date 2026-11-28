@@ -219,7 +219,8 @@ impl Lua {
     }
 
     pub fn string(self, idx: c_int) -> Option<String> {
-        self.bytes(idx).map(|b| String::from_utf8_lossy(b).into_owned())
+        self.bytes(idx)
+            .map(|b| String::from_utf8_lossy(b).into_owned())
     }
 
     pub fn userdata(self, idx: c_int) -> *mut c_void {
@@ -322,7 +323,12 @@ impl Lua {
         };
         let chunk = CString::new(format!("@{name}")).unwrap();
         let rc = unsafe {
-            (api().luaL_loadbuffer)(self.0, code.as_ptr() as *const c_char, code.len(), chunk.as_ptr())
+            (api().luaL_loadbuffer)(
+                self.0,
+                code.as_ptr() as *const c_char,
+                code.len(),
+                chunk.as_ptr(),
+            )
         };
         if rc != 0 {
             let msg = self.string(-1).unwrap_or_default();
@@ -343,7 +349,9 @@ impl Lua {
         let rc = unsafe { (api().lua_pcall)(self.0, nargs, nresults, base) };
         self.remove(base);
         if rc != 0 {
-            let msg = self.string(-1).unwrap_or_else(|| "(error object is not a string)".into());
+            let msg = self
+                .string(-1)
+                .unwrap_or_else(|| "(error object is not a string)".into());
             self.pop(1);
             return Err(msg);
         }
@@ -352,7 +360,11 @@ impl Lua {
 
     pub fn register(self, table_idx: c_int, name: &str, f: lua_CFunction) {
         self.push_fn(f);
-        let idx = if table_idx < 0 && table_idx > LUA_REGISTRYINDEX { table_idx - 1 } else { table_idx };
+        let idx = if table_idx < 0 && table_idx > LUA_REGISTRYINDEX {
+            table_idx - 1
+        } else {
+            table_idx
+        };
         self.set_field(idx, name);
     }
 }
@@ -404,7 +416,9 @@ macro_rules! native {
     ($name:ident, |$l:ident| $body:block) => {
         unsafe extern "C" fn $name(raw: *mut $crate::lua::lua_State) -> std::ffi::c_int {
             let $l = $crate::lua::Lua(raw);
-            match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| -> std::ffi::c_int { $body })) {
+            match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| -> std::ffi::c_int {
+                $body
+            })) {
                 Ok(n) => n,
                 Err(_) => {
                     log::error!(concat!("native ", stringify!($name), " panicked"));

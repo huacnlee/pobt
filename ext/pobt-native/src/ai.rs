@@ -34,14 +34,26 @@ const AGENTS: [(&str, &str); 2] = [("claude", "Claude Code"), ("codex", "Codex")
 pub fn agents() -> Vec<Agent> {
     AGENTS
         .iter()
-        .filter_map(|(id, name)| find_program(id).map(|p| Agent { id: id.to_string(), name: name.to_string(), path: p.display().to_string() }))
+        .filter_map(|(id, name)| {
+            find_program(id).map(|p| Agent {
+                id: id.to_string(),
+                name: name.to_string(),
+                path: p.display().to_string(),
+            })
+        })
         .collect()
 }
 
 /// `name`'s program on the PATH: on Windows a `.exe`, or the `.cmd` npm makes.
 pub(crate) fn find_program(name: &str) -> Option<PathBuf> {
-    let exts: &[&str] = if cfg!(windows) { &[".exe", ".cmd", ".bat"] } else { &[""] };
-    let mut dirs: Vec<PathBuf> = std::env::var_os("PATH").map(|p| std::env::split_paths(&p).collect()).unwrap_or_default();
+    let exts: &[&str] = if cfg!(windows) {
+        &[".exe", ".cmd", ".bat"]
+    } else {
+        &[""]
+    };
+    let mut dirs: Vec<PathBuf> = std::env::var_os("PATH")
+        .map(|p| std::env::split_paths(&p).collect())
+        .unwrap_or_default();
     // Where Claude Code's own installer puts it, which a program started from the desktop may not have on its PATH.
     if let Some(home) = dirs::home_dir() {
         dirs.push(home.join(".local").join("bin"));
@@ -50,7 +62,9 @@ pub(crate) fn find_program(name: &str) -> Option<PathBuf> {
     if let Some(data) = dirs::data_dir() {
         dirs.push(data.join("npm"));
     }
-    dirs.iter().flat_map(|d| exts.iter().map(move |e| d.join(format!("{name}{e}")))).find(|p| p.is_file())
+    dirs.iter()
+        .flat_map(|d| exts.iter().map(move |e| d.join(format!("{name}{e}"))))
+        .find(|p| p.is_file())
 }
 
 /// A folder of builds: where POB keeps them (its `buildPath`, or `Builds` beside its settings), and what is in it.
@@ -70,7 +84,9 @@ pub fn roots(pob_dirs: &[PathBuf]) -> Vec<Root> {
     }
     let mut seen: Vec<PathBuf> = Vec::new();
     for base in bases {
-        let set = std::fs::read_to_string(base.join("Settings.xml")).ok().and_then(|xml| build_path(&xml));
+        let set = std::fs::read_to_string(base.join("Settings.xml"))
+            .ok()
+            .and_then(|xml| build_path(&xml));
         for dir in set.into_iter().chain([base.join("Builds")]) {
             let key = std::fs::canonicalize(&dir).unwrap_or_else(|_| dir.clone());
             if dir.is_dir() && !seen.contains(&key) {
@@ -82,7 +98,10 @@ pub fn roots(pob_dirs: &[PathBuf]) -> Vec<Root> {
         .map(|dir| {
             let shown = dir.display().to_string();
             let shown = shown.strip_prefix(r"\\?\").unwrap_or(&shown).to_string();
-            Root { tree: crate::account::entries(&dir, "", 6, &mut 2000), root: shown }
+            Root {
+                tree: crate::account::entries(&dir, "", 6, &mut 2000),
+                root: shown,
+            }
         })
         .collect()
 }
@@ -90,7 +109,10 @@ pub fn roots(pob_dirs: &[PathBuf]) -> Vec<Root> {
 /// The `buildPath` POB's `Settings.xml` sets, if one.
 fn build_path(xml: &str) -> Option<PathBuf> {
     let doc = roxmltree::Document::parse(xml).ok()?;
-    let path = doc.descendants().find_map(|n| n.attribute("buildPath"))?.trim();
+    let path = doc
+        .descendants()
+        .find_map(|n| n.attribute("buildPath"))?
+        .trim();
     (!path.is_empty()).then(|| PathBuf::from(path.trim_end_matches(['/', '\\'])))
 }
 
@@ -148,7 +170,11 @@ pub struct Job {
 
 impl Job {
     pub const fn new() -> Self {
-        Self { progress: Mutex::new(None), child: Mutex::new(None), cancel: AtomicBool::new(false) }
+        Self {
+            progress: Mutex::new(None),
+            child: Mutex::new(None),
+            cancel: AtomicBool::new(false),
+        }
     }
 
     pub fn progress(&self) -> Option<Progress> {
@@ -178,7 +204,10 @@ impl Job {
             if job.as_ref().is_some_and(|p| p.state == "running") {
                 return false;
             }
-            *job = Some(Progress { state: "running".into(), ..first });
+            *job = Some(Progress {
+                state: "running".into(),
+                ..first
+            });
         }
         self.cancel.store(false, Ordering::SeqCst);
         std::thread::spawn(move || {
@@ -187,7 +216,10 @@ impl Job {
                 log::warn!("ai: {e}");
             }
             let cancelled = self.cancelled();
-            let finished = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
+            let finished = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_secs())
+                .unwrap_or(0);
             self.update(|p| {
                 p.finished = finished;
                 match out {
@@ -236,14 +268,18 @@ pub fn start(request: Request) -> bool {
         save_to: request.save_to.clone(),
         ..Default::default()
     };
-    ANALYSIS.start(first, move || analyse(&request), |p| {
-        // Kept beside its build, to be shown when the build is opened again
-        if p.state == "done" && !p.save_to.is_empty() {
-            if let Err(e) = save(Path::new(&p.save_to), p) {
-                log::warn!("ai: keeping the report beside {}: {e}", p.save_to);
+    ANALYSIS.start(
+        first,
+        move || analyse(&request),
+        |p| {
+            // Kept beside its build, to be shown when the build is opened again
+            if p.state == "done" && !p.save_to.is_empty() {
+                if let Err(e) = save(Path::new(&p.save_to), p) {
+                    log::warn!("ai: keeping the report beside {}: {e}", p.save_to);
+                }
             }
-        }
-    })
+        },
+    )
 }
 
 /// Where the report of the build in `build` (`<name>.xml`) is kept: `<name>.ai.json` beside it.
@@ -275,7 +311,10 @@ fn kill(child: &mut Child) {
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;
-        let _ = Command::new("taskkill").args(["/T", "/F", "/PID", &child.id().to_string()]).creation_flags(CREATE_NO_WINDOW).status();
+        let _ = Command::new("taskkill")
+            .args(["/T", "/F", "/PID", &child.id().to_string()])
+            .creation_flags(CREATE_NO_WINDOW)
+            .status();
     }
     let _ = child.kill();
 }
@@ -306,7 +345,10 @@ fn read_build(req: &Request) -> Result<(String, String), String> {
     }
     let path = Path::new(&req.path);
     let xml = std::fs::read_to_string(path).map_err(|_| "noBuild".to_string())?;
-    let name = path.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
+    let name = path
+        .file_stem()
+        .map(|s| s.to_string_lossy().into_owned())
+        .unwrap_or_default();
     Ok((name, xml))
 }
 
@@ -316,12 +358,15 @@ pub fn decode_code(code: &str) -> Option<String> {
     let code = code.replace('+', "-").replace('/', "_");
     let bytes = base64::engine::GeneralPurpose::new(
         &base64::alphabet::URL_SAFE,
-        base64::engine::GeneralPurposeConfig::new().with_decode_padding_mode(base64::engine::DecodePaddingMode::Indifferent),
+        base64::engine::GeneralPurposeConfig::new()
+            .with_decode_padding_mode(base64::engine::DecodePaddingMode::Indifferent),
     )
     .decode(code.trim_end_matches('='))
     .ok()?;
     let mut xml = String::new();
-    flate2::read::ZlibDecoder::new(&bytes[..]).read_to_string(&mut xml).ok()?;
+    flate2::read::ZlibDecoder::new(&bytes[..])
+        .read_to_string(&mut xml)
+        .ok()?;
     xml.contains("<PathOfBuilding").then_some(xml)
 }
 
@@ -339,8 +384,18 @@ pub fn digest(xml: &str) -> Result<String, String> {
     };
 
     line("# Character".into());
-    line(format!("Level {} {} / {}", attr(build, "level"), attr(build, "className"), attr(build, "ascendClassName")));
-    for a in ["targetVersion", "bandit", "pantheonMajorGod", "pantheonMinorGod"] {
+    line(format!(
+        "Level {} {} / {}",
+        attr(build, "level"),
+        attr(build, "className"),
+        attr(build, "ascendClassName")
+    ));
+    for a in [
+        "targetVersion",
+        "bandit",
+        "pantheonMajorGod",
+        "pantheonMinorGod",
+    ] {
         if let Some(v) = build.attribute(a) {
             line(format!("{a}: {v}"));
         }
@@ -349,26 +404,52 @@ pub fn digest(xml: &str) -> Result<String, String> {
     line("\n# Stats Path of Building computed (main skill, configuration below)".into());
     for s in build.children().filter(|c| c.has_tag_name("PlayerStat")) {
         let value = s.attribute("value").unwrap_or("");
-        let value = value.parse::<f64>().map(|v| format!("{}", (v * 100.0).round() / 100.0)).unwrap_or(value.to_string());
+        let value = value
+            .parse::<f64>()
+            .map(|v| format!("{}", (v * 100.0).round() / 100.0))
+            .unwrap_or(value.to_string());
         line(format!("{}: {value}", attr(s, "stat")));
     }
     for minion in build.children().filter(|c| c.has_tag_name("MinionStat")) {
-        line(format!("Minion {}: {}", attr(minion, "stat"), attr(minion, "value")));
+        line(format!(
+            "Minion {}: {}",
+            attr(minion, "stat"),
+            attr(minion, "value")
+        ));
     }
 
     if let Some(skills) = child(root, "Skills") {
         line("\n# Skills (socket groups; * the main one)".into());
-        let main: usize = build.attribute("mainSocketGroup").and_then(|v| v.parse().ok()).unwrap_or(0);
+        let main: usize = build
+            .attribute("mainSocketGroup")
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(0);
         let active = skills.attribute("activeSkillSet").unwrap_or("1");
         // POB 2.x keeps them in skill sets; older builds right in `Skills`.
-        let set = skills.children().filter(|c| c.has_tag_name("SkillSet")).find(|s| s.attribute("id") == Some(active)).unwrap_or(skills);
-        for (i, skill) in set.children().filter(|c| c.has_tag_name("Skill")).enumerate() {
+        let set = skills
+            .children()
+            .filter(|c| c.has_tag_name("SkillSet"))
+            .find(|s| s.attribute("id") == Some(active))
+            .unwrap_or(skills);
+        for (i, skill) in set
+            .children()
+            .filter(|c| c.has_tag_name("Skill"))
+            .enumerate()
+        {
             let gems: Vec<String> = skill
                 .children()
                 .filter(|g| g.has_tag_name("Gem"))
                 .map(|g| {
-                    let name = g.attribute("nameSpec").filter(|n| !n.is_empty()).or(g.attribute("skillId")).unwrap_or("?");
-                    let off = if g.attribute("enabled") == Some("false") { " (off)" } else { "" };
+                    let name = g
+                        .attribute("nameSpec")
+                        .filter(|n| !n.is_empty())
+                        .or(g.attribute("skillId"))
+                        .unwrap_or("?");
+                    let off = if g.attribute("enabled") == Some("false") {
+                        " (off)"
+                    } else {
+                        ""
+                    };
                     format!("{name} {}/{}{off}", attr(g, "level"), attr(g, "quality"))
                 })
                 .collect();
@@ -376,27 +457,54 @@ pub fn digest(xml: &str) -> Result<String, String> {
                 continue;
             }
             let mark = if i + 1 == main { "*" } else { "-" };
-            let off = if skill.attribute("enabled") == Some("false") { " (disabled)" } else { "" };
+            let off = if skill.attribute("enabled") == Some("false") {
+                " (disabled)"
+            } else {
+                ""
+            };
             let label = attr(skill, "label");
-            let label = if label.is_empty() { String::new() } else { format!("{label}: ") };
-            line(format!("{mark} [{}] {label}{}{off}", attr(skill, "slot"), gems.join(", ")));
+            let label = if label.is_empty() {
+                String::new()
+            } else {
+                format!("{label}: ")
+            };
+            line(format!(
+                "{mark} [{}] {label}{}{off}",
+                attr(skill, "slot"),
+                gems.join(", ")
+            ));
         }
     }
 
     if let Some(items) = child(root, "Items") {
-        let by_id: std::collections::HashMap<&str, roxmltree::Node<'_, '_>> =
-            items.children().filter(|c| c.has_tag_name("Item")).filter_map(|i| Some((i.attribute("id")?, i))).collect();
+        let by_id: std::collections::HashMap<&str, roxmltree::Node<'_, '_>> = items
+            .children()
+            .filter(|c| c.has_tag_name("Item"))
+            .filter_map(|i| Some((i.attribute("id")?, i)))
+            .collect();
         let active = items.attribute("activeItemSet").unwrap_or("1");
-        let set = items.children().filter(|c| c.has_tag_name("ItemSet")).find(|s| s.attribute("id") == Some(active)).unwrap_or(items);
+        let set = items
+            .children()
+            .filter(|c| c.has_tag_name("ItemSet"))
+            .find(|s| s.attribute("id") == Some(active))
+            .unwrap_or(items);
         let mut slots: Vec<(String, &str)> = set
             .children()
             .filter(|c| c.has_tag_name("Slot"))
-            .filter_map(|s| Some((attr(s, "name"), s.attribute("itemId").filter(|id| *id != "0")?)))
+            .filter_map(|s| {
+                Some((
+                    attr(s, "name"),
+                    s.attribute("itemId").filter(|id| *id != "0")?,
+                ))
+            })
             .collect();
         // The jewels in the tree.
         if let Some(tree) = child(root, "Tree") {
             let spec = active_spec(tree);
-            for socket in spec.into_iter().flat_map(|s| s.descendants().filter(|c| c.has_tag_name("Socket"))) {
+            for socket in spec
+                .into_iter()
+                .flat_map(|s| s.descendants().filter(|c| c.has_tag_name("Socket")))
+            {
                 if let Some(id) = socket.attribute("itemId").filter(|id| *id != "0") {
                     slots.push((format!("Tree jewel (node {})", attr(socket, "nodeId")), id));
                 }
@@ -414,23 +522,44 @@ pub fn digest(xml: &str) -> Result<String, String> {
 
     if let Some(spec) = child(root, "Tree").and_then(active_spec) {
         line("\n# Passive tree".into());
-        let nodes = spec.attribute("nodes").map(|n| n.split(',').filter(|s| !s.is_empty()).count()).unwrap_or(0);
-        let masteries = spec.attribute("masteryEffects").map(|m| m.matches('{').count()).unwrap_or(0);
-        line(format!("{} ({}): {nodes} nodes allocated, {masteries} masteries", attr(spec, "title"), attr(spec, "treeVersion")));
+        let nodes = spec
+            .attribute("nodes")
+            .map(|n| n.split(',').filter(|s| !s.is_empty()).count())
+            .unwrap_or(0);
+        let masteries = spec
+            .attribute("masteryEffects")
+            .map(|m| m.matches('{').count())
+            .unwrap_or(0);
+        line(format!(
+            "{} ({}): {nodes} nodes allocated, {masteries} masteries",
+            attr(spec, "title"),
+            attr(spec, "treeVersion")
+        ));
         line("Node names are not given: judge the tree by the stats above.".into());
     }
 
     if let Some(config) = child(root, "Config") {
         line("\n# Configuration (the conditions POB's stats assume)".into());
         let active = config.attribute("activeConfigSet");
-        let set = config.children().filter(|c| c.has_tag_name("ConfigSet")).find(|s| s.attribute("id") == active).unwrap_or(config);
+        let set = config
+            .children()
+            .filter(|c| c.has_tag_name("ConfigSet"))
+            .find(|s| s.attribute("id") == active)
+            .unwrap_or(config);
         for input in set.children().filter(|c| c.has_tag_name("Input")) {
-            let value = ["boolean", "number", "string"].iter().find_map(|k| input.attribute(*k)).unwrap_or("");
+            let value = ["boolean", "number", "string"]
+                .iter()
+                .find_map(|k| input.attribute(*k))
+                .unwrap_or("");
             line(format!("{}: {value}", attr(input, "name")));
         }
     }
 
-    if let Some(notes) = child(root, "Notes").and_then(|n| n.text()).map(str::trim).filter(|n| !n.is_empty()) {
+    if let Some(notes) = child(root, "Notes")
+        .and_then(|n| n.text())
+        .map(str::trim)
+        .filter(|n| !n.is_empty())
+    {
         line("\n# The author's notes".into());
         line(strip_colours(notes).chars().take(3000).collect());
     }
@@ -445,17 +574,39 @@ fn child<'a, 'i>(n: roxmltree::Node<'a, 'i>, tag: &str) -> Option<roxmltree::Nod
 /// The passive tree in use.
 fn active_spec<'a, 'i>(tree: roxmltree::Node<'a, 'i>) -> Option<roxmltree::Node<'a, 'i>> {
     let specs: Vec<_> = tree.children().filter(|c| c.has_tag_name("Spec")).collect();
-    let active: usize = tree.attribute("activeSpec").and_then(|v| v.parse().ok()).unwrap_or(1);
-    specs.get(active.saturating_sub(1)).or(specs.first()).copied()
+    let active: usize = tree
+        .attribute("activeSpec")
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(1);
+    specs
+        .get(active.saturating_sub(1))
+        .or(specs.first())
+        .copied()
 }
 
 /// An item's text as POB shows it: no blank lines, no `{tags}` before its mods.
 fn item_text(item: roxmltree::Node<'_, '_>) -> Vec<String> {
-    let text: String = item.children().filter(|c| c.is_text()).filter_map(|c| c.text()).collect();
+    let text: String = item
+        .children()
+        .filter(|c| c.is_text())
+        .filter_map(|c| c.text())
+        .collect();
     text.lines()
         .map(str::trim)
         .filter(|l| !l.is_empty())
-        .filter(|l| !["Unique ID:", "Item Level:", "LevelReq:", "Implicits:", "Prefix:", "Suffix:", "Catalyst"].iter().any(|p| l.starts_with(p)))
+        .filter(|l| {
+            ![
+                "Unique ID:",
+                "Item Level:",
+                "LevelReq:",
+                "Implicits:",
+                "Prefix:",
+                "Suffix:",
+                "Catalyst",
+            ]
+            .iter()
+            .any(|p| l.starts_with(p))
+        })
         .map(|l| {
             let mut l = l;
             while l.starts_with('{') {
@@ -496,12 +647,25 @@ fn strip_colours(s: &str) -> String {
 }
 
 /// The dimensions of a report, in their order.
-pub const DIMENSIONS: [&str; 6] = ["offence", "defence", "recovery", "ailments", "utility", "gear"];
+pub const DIMENSIONS: [&str; 6] = [
+    "offence", "defence", "recovery", "ailments", "utility", "gear",
+];
 
 /// What the agent is asked: the report's JSON, then the build.
 pub fn prompt(digest: &str, language: &str, question: &str) -> String {
-    let language = if language.trim().is_empty() { "English" } else { language.trim() };
-    let question = if question.trim().is_empty() { String::new() } else { format!("\nThe player also asks, answer it in `summary` and the dimensions it concerns: {}\n", question.trim()) };
+    let language = if language.trim().is_empty() {
+        "English"
+    } else {
+        language.trim()
+    };
+    let question = if question.trim().is_empty() {
+        String::new()
+    } else {
+        format!(
+            "\nThe player also asks, answer it in `summary` and the dimensions it concerns: {}\n",
+            question.trim()
+        )
+    };
     format!(
         r#"You are an expert Path of Exile build analyst. Below is a character build from Path of Building (for Path of Exile, or Path of Exile 2 when its targetVersion says so): the stats POB computed for its main skill, its skills, items, tree and configuration. Analyse it for endgame play (red maps, pinnacle bosses) and answer with ONE JSON object only — no prose around it, no code fence — of this shape:
 
@@ -539,36 +703,71 @@ Two to four metrics, and one to four of each list, per dimension. Base every jud
 
 /// The agent's answer, `prompt` on its stdin; its last message. With no `folder` it has no tools and starts somewhere
 /// of its own; with one, it starts there and may read it, and only read.
-pub fn run_agent(job: &'static Job, agent: &str, prompt: &str, folder: Option<&Path>) -> Result<String, String> {
+pub fn run_agent(
+    job: &'static Job,
+    agent: &str,
+    prompt: &str,
+    folder: Option<&Path>,
+) -> Result<String, String> {
     let program = find_program(agent).ok_or("noAgent")?;
     // Somewhere of its own: the agents read the folder they start in.
     let work = std::env::temp_dir().join("pobt-ai");
     let _ = std::fs::create_dir_all(&work);
-    let tools = if folder.is_some() { "Read,Grep,Glob" } else { "" };
+    let tools = if folder.is_some() {
+        "Read,Grep,Glob"
+    } else {
+        ""
+    };
     let last = work.join(format!("last-{}.txt", std::process::id()));
     let _ = std::fs::remove_file(&last);
     let mut cmd = Command::new(&program);
     match agent {
         // Each streams its events as JSON lines, read as they come (`event`): what it does, and its answer.
         "claude" => {
-            cmd.args(["-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages", "--no-session-persistence", "--tools", tools]);
+            cmd.args([
+                "-p",
+                "--output-format",
+                "stream-json",
+                "--verbose",
+                "--include-partial-messages",
+                "--no-session-persistence",
+                "--tools",
+                tools,
+            ]);
             if folder.is_some() {
                 cmd.args(["--allowedTools", tools]);
             }
         }
         "codex" => {
-            cmd.args(["exec", "--skip-git-repo-check", "--sandbox", "read-only", "--ephemeral", "--color", "never", "--json", "-o"]).arg(&last).arg("-");
+            cmd.args([
+                "exec",
+                "--skip-git-repo-check",
+                "--sandbox",
+                "read-only",
+                "--ephemeral",
+                "--color",
+                "never",
+                "--json",
+                "-o",
+            ])
+            .arg(&last)
+            .arg("-");
         }
         _ => return Err("noAgent".into()),
     }
-    cmd.current_dir(folder.unwrap_or(&work)).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
+    cmd.current_dir(folder.unwrap_or(&work))
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;
         cmd.creation_flags(CREATE_NO_WINDOW);
     }
     job.update(|p| p.step = "starting".into());
-    let mut child = cmd.spawn().map_err(|e| format!("agentFailed: {}: {e}", program.display()))?;
+    let mut child = cmd
+        .spawn()
+        .map_err(|e| format!("agentFailed: {}: {e}", program.display()))?;
     let mut stdin = child.stdin.take().ok_or("agentFailed: no stdin")?;
     let stdout = child.stdout.take().ok_or("agentFailed: no stdout")?;
     let stderr = child.stderr.take().ok_or("agentFailed: no stderr")?;
@@ -584,7 +783,12 @@ pub fn run_agent(job: &'static Job, agent: &str, prompt: &str, folder: Option<&P
     let began = std::time::Instant::now();
     let mut timed_out = false;
     let status = loop {
-        if let Some(status) = child.lock().unwrap().try_wait().map_err(|e| format!("agentFailed: {e}"))? {
+        if let Some(status) = child
+            .lock()
+            .unwrap()
+            .try_wait()
+            .map_err(|e| format!("agentFailed: {e}"))?
+        {
             break status;
         }
         if !timed_out && began.elapsed() > TIMEOUT {
@@ -602,7 +806,10 @@ pub fn run_agent(job: &'static Job, agent: &str, prompt: &str, folder: Option<&P
     if timed_out {
         return Err("timedOut".into());
     }
-    let text = std::fs::read_to_string(&last).ok().filter(|t| !t.trim().is_empty()).unwrap_or(out.answer);
+    let text = std::fs::read_to_string(&last)
+        .ok()
+        .filter(|t| !t.trim().is_empty())
+        .unwrap_or(out.answer);
     let _ = std::fs::remove_file(&last);
     // What it said went wrong (not signed in, out of usage…)
     if let Some(e) = out.error.filter(|e| !e.trim().is_empty()) {
@@ -610,7 +817,16 @@ pub fn run_agent(job: &'static Job, agent: &str, prompt: &str, folder: Option<&P
     }
     if !status.success() || text.trim().is_empty() {
         let why = if err.trim().is_empty() { &text } else { &err };
-        let tail: String = why.trim().lines().rev().take(6).collect::<Vec<_>>().into_iter().rev().collect::<Vec<_>>().join("\n");
+        let tail: String = why
+            .trim()
+            .lines()
+            .rev()
+            .take(6)
+            .collect::<Vec<_>>()
+            .into_iter()
+            .rev()
+            .collect::<Vec<_>>()
+            .join("\n");
         return Err(format!("agentFailed: {tail}"));
     }
     Ok(text)
@@ -676,9 +892,17 @@ fn event(s: &mut Stream, line: &str) -> Option<Event> {
     let Ok(v) = serde_json::from_str::<Value>(line) else {
         s.pieces.push_str(line);
         s.pieces.push('\n');
-        return Some(Event { step: "writing", activity: tail(&s.pieces) });
+        return Some(Event {
+            step: "writing",
+            activity: tail(&s.pieces),
+        });
     };
-    let text_of = |v: &Value, k: &str| v.get(k).and_then(Value::as_str).unwrap_or_default().to_string();
+    let text_of = |v: &Value, k: &str| {
+        v.get(k)
+            .and_then(Value::as_str)
+            .unwrap_or_default()
+            .to_string()
+    };
     match v.get("type").and_then(Value::as_str).unwrap_or_default() {
         // Claude Code: its thinking and its answer in pieces, then the result
         "stream_event" => {
@@ -686,16 +910,26 @@ fn event(s: &mut Stream, line: &str) -> Option<Event> {
             match delta.get("type").and_then(Value::as_str)? {
                 "text_delta" => {
                     s.pieces.push_str(&text_of(delta, "text"));
-                    Some(Event { step: "writing", activity: tail(&s.pieces) })
+                    Some(Event {
+                        step: "writing",
+                        activity: tail(&s.pieces),
+                    })
                 }
-                "thinking_delta" => Some(Event { step: "thinking", activity: tail(&text_of(delta, "thinking")) }),
+                "thinking_delta" => Some(Event {
+                    step: "thinking",
+                    activity: tail(&text_of(delta, "thinking")),
+                }),
                 _ => None,
             }
         }
         "result" => {
             let text = text_of(&v, "result");
             if v.get("is_error").and_then(Value::as_bool).unwrap_or(false) {
-                s.error = Some(if text.is_empty() { text_of(&v, "subtype") } else { text });
+                s.error = Some(if text.is_empty() {
+                    text_of(&v, "subtype")
+                } else {
+                    text
+                });
             } else {
                 s.answer = text;
             }
@@ -706,12 +940,18 @@ fn event(s: &mut Stream, line: &str) -> Option<Event> {
             let item = v.get("item")?;
             let text = text_of(item, "text");
             match item.get("type").and_then(Value::as_str)? {
-                "reasoning" => Some(Event { step: "thinking", activity: tail(&text) }),
+                "reasoning" => Some(Event {
+                    step: "thinking",
+                    activity: tail(&text),
+                }),
                 "agent_message" => {
                     if kind == "item.completed" {
                         s.answer = text.clone();
                     }
-                    Some(Event { step: "writing", activity: tail(&text) })
+                    Some(Event {
+                        step: "writing",
+                        activity: tail(&text),
+                    })
                 }
                 _ => None,
             }
@@ -721,7 +961,12 @@ fn event(s: &mut Stream, line: &str) -> Option<Event> {
             None
         }
         "turn.failed" => {
-            s.error = Some(v.pointer("/error/message").and_then(Value::as_str).unwrap_or("turn failed").to_string());
+            s.error = Some(
+                v.pointer("/error/message")
+                    .and_then(Value::as_str)
+                    .unwrap_or("turn failed")
+                    .to_string(),
+            );
             None
         }
         _ => None,
@@ -730,7 +975,12 @@ fn event(s: &mut Stream, line: &str) -> Option<Event> {
 
 /// The last line of `text` with words in it: at most its last 160 characters.
 fn tail(text: &str) -> String {
-    let line = text.lines().rev().map(str::trim).find(|l| !l.is_empty()).unwrap_or_default();
+    let line = text
+        .lines()
+        .rev()
+        .map(str::trim)
+        .find(|l| !l.is_empty())
+        .unwrap_or_default();
     let n = line.chars().count();
     line.chars().skip(n.saturating_sub(160)).collect()
 }
@@ -792,12 +1042,21 @@ mod tests {
         let d = digest(BUILD).unwrap();
         assert!(d.contains("Level 93 Witch / Elementalist"), "{d}");
         assert!(d.contains("TotalDPS: 30440.36"), "{d}");
-        assert!(d.contains("* [Body Armour] Main: Fireball 21/20, Ignite Proliferation 20/0 (off)"), "{d}");
+        assert!(
+            d.contains("* [Body Armour] Main: Fireball 21/20, Ignite Proliferation 20/0 (off)"),
+            "{d}"
+        );
         assert!(d.contains("- [Helmet] Hatred 20/0"), "{d}");
         assert!(d.contains("## Helmet\nRarity: RARE\nDoom Visor\nHubris Circlet\n+80 to maximum Life\n+30% to Fire Resistance\n"), "{d}");
         assert!(!d.contains("Unique ID"), "{d}");
-        assert!(d.contains("## Tree jewel (node 26725)\nRarity: UNIQUE\nWatcher's Eye"), "{d}");
-        assert!(d.contains("Lv 93 (3_25): 3 nodes allocated, 1 masteries"), "{d}");
+        assert!(
+            d.contains("## Tree jewel (node 26725)\nRarity: UNIQUE\nWatcher's Eye"),
+            "{d}"
+        );
+        assert!(
+            d.contains("Lv 93 (3_25): 3 nodes allocated, 1 masteries"),
+            "{d}"
+        );
         assert!(d.contains("enemyIsBoss: Pinnacle"), "{d}");
         assert!(d.contains("Ignite league starter"), "{d}");
         assert!(!d.contains("Gloves"), "{d}");
@@ -815,7 +1074,10 @@ mod tests {
 
     #[test]
     fn finds_the_report_in_an_answer() {
-        let r = report("Here it is:\n```json\n{\"score\": 70, \"dimensions\": [{\"key\": \"offence\"}]}\n```").unwrap();
+        let r = report(
+            "Here it is:\n```json\n{\"score\": 70, \"dimensions\": [{\"key\": \"offence\"}]}\n```",
+        )
+        .unwrap();
         assert_eq!(r["score"], 70);
         assert!(report("{\"score\": 70}").is_none());
         assert!(report("no json").is_none());
@@ -824,8 +1086,14 @@ mod tests {
     #[test]
     fn reads_the_build_path_of_pob_settings() {
         let xml = r#"<PathOfBuilding><Misc buildPath="C:\Users\x\Documents\My Games\POB\Builds/" /></PathOfBuilding>"#;
-        assert_eq!(build_path(xml), Some(PathBuf::from(r"C:\Users\x\Documents\My Games\POB\Builds")));
-        assert_eq!(build_path("<PathOfBuilding><Misc buildPath=\"\"/></PathOfBuilding>"), None);
+        assert_eq!(
+            build_path(xml),
+            Some(PathBuf::from(r"C:\Users\x\Documents\My Games\POB\Builds"))
+        );
+        assert_eq!(
+            build_path("<PathOfBuilding><Misc buildPath=\"\"/></PathOfBuilding>"),
+            None
+        );
     }
 
     /// A real analysis: `POBT_AI_BUILD` a build's file, `POBT_AI_AGENT` "claude" or "codex".
@@ -835,12 +1103,21 @@ mod tests {
     fn analyses_a_build() {
         let path = std::env::var("POBT_AI_BUILD").expect("POBT_AI_BUILD");
         let agent = std::env::var("POBT_AI_AGENT").unwrap_or("claude".into());
-        let req = Request { agent, path, language: "Simplified Chinese".into(), ..Default::default() };
+        let req = Request {
+            agent,
+            path,
+            language: "Simplified Chinese".into(),
+            ..Default::default()
+        };
         let (_, xml) = read_build(&req).unwrap();
         eprintln!("{}", digest(&xml).unwrap());
         let (report, raw) = analyse(&req).unwrap();
         eprintln!("{raw}");
-        assert_eq!(report["dimensions"].as_array().map(Vec::len), Some(6), "{raw}");
+        assert_eq!(
+            report["dimensions"].as_array().map(Vec::len),
+            Some(6),
+            "{raw}"
+        );
     }
 
     #[test]
@@ -848,29 +1125,56 @@ mod tests {
         let mut s = Stream::default();
         assert_eq!(event(&mut s, r#"{"type":"system","subtype":"init"}"#), None);
         let e = event(&mut s, r#"{"type":"stream_event","event":{"type":"content_block_delta","delta":{"type":"thinking_delta","thinking":"Looking at the defences"}}}"#).unwrap();
-        assert_eq!((e.step, e.activity.as_str()), ("thinking", "Looking at the defences"));
-        event(&mut s, r#"{"type":"stream_event","event":{"type":"content_block_delta","delta":{"type":"text_delta","text":"{\"title\":"}}}"#);
+        assert_eq!(
+            (e.step, e.activity.as_str()),
+            ("thinking", "Looking at the defences")
+        );
+        event(
+            &mut s,
+            r#"{"type":"stream_event","event":{"type":"content_block_delta","delta":{"type":"text_delta","text":"{\"title\":"}}}"#,
+        );
         let e = event(&mut s, r#"{"type":"stream_event","event":{"type":"content_block_delta","delta":{"type":"text_delta","text":" \"Fireball\""}}}"#).unwrap();
-        assert_eq!((e.step, e.activity.as_str()), ("writing", r#"{"title": "Fireball""#));
-        event(&mut s, r#"{"type":"result","subtype":"success","is_error":false,"result":"{\"dimensions\":[]}"}"#);
+        assert_eq!(
+            (e.step, e.activity.as_str()),
+            ("writing", r#"{"title": "Fireball""#)
+        );
+        event(
+            &mut s,
+            r#"{"type":"result","subtype":"success","is_error":false,"result":"{\"dimensions\":[]}"}"#,
+        );
         assert_eq!(s.answer, r#"{"dimensions":[]}"#);
         assert_eq!(s.error, None);
         // Not signed in: the result says so
         let mut s = Stream::default();
-        event(&mut s, r#"{"type":"result","subtype":"success","is_error":true,"result":"Invalid API key · Please run /login"}"#);
-        assert_eq!(s.error.as_deref(), Some("Invalid API key · Please run /login"));
+        event(
+            &mut s,
+            r#"{"type":"result","subtype":"success","is_error":true,"result":"Invalid API key · Please run /login"}"#,
+        );
+        assert_eq!(
+            s.error.as_deref(),
+            Some("Invalid API key · Please run /login")
+        );
     }
 
     #[test]
     fn reads_codexs_events() {
         let mut s = Stream::default();
-        assert_eq!(event(&mut s, r#"{"type":"thread.started","thread_id":"x"}"#), None);
+        assert_eq!(
+            event(&mut s, r#"{"type":"thread.started","thread_id":"x"}"#),
+            None
+        );
         let e = event(&mut s, r#"{"type":"item.completed","item":{"id":"0","type":"reasoning","text":"**Weighing the resistances**"}}"#).unwrap();
         assert_eq!(e.step, "thinking");
-        event(&mut s, r#"{"type":"item.completed","item":{"id":"1","type":"agent_message","text":"{\"dimensions\":[]}"}}"#);
+        event(
+            &mut s,
+            r#"{"type":"item.completed","item":{"id":"1","type":"agent_message","text":"{\"dimensions\":[]}"}}"#,
+        );
         assert_eq!(s.answer, r#"{"dimensions":[]}"#);
         let mut s = Stream::default();
-        event(&mut s, r#"{"type":"turn.failed","error":{"message":"You've hit your usage limit"}}"#);
+        event(
+            &mut s,
+            r#"{"type":"turn.failed","error":{"message":"You've hit your usage limit"}}"#,
+        );
         assert_eq!(s.error.as_deref(), Some("You've hit your usage limit"));
     }
 
@@ -891,7 +1195,14 @@ mod tests {
         };
         save(&build, &p).unwrap();
         let back = saved(&build).unwrap();
-        assert_eq!((back.state.as_str(), back.finished, back.report["score"].as_i64()), ("done", 42, Some(70)));
+        assert_eq!(
+            (
+                back.state.as_str(),
+                back.finished,
+                back.report["score"].as_i64()
+            ),
+            ("done", 42, Some(70))
+        );
         assert_eq!(back.save_to, build.display().to_string());
         assert!(back.activity.is_empty());
         let _ = std::fs::remove_dir_all(&dir);
